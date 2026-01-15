@@ -1,0 +1,26 @@
+@{
+    Layout = "_AuthLayout";
+}
+
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-body text-center">
+            <h4 class="text-warning mb-3">Email Doğrulama Gerekli</h4>
+
+            <p>
+                Hesabınızı kullanabilmek için email adresinizi doğrulamanız gerekiyor.
+                Mail kutunuzu kontrol edin.
+            </p>
+
+            <p class="text-muted">
+                Mail gelmediyse spam klasörünü kontrol edin.
+            </p>
+
+            <form method="post" action="/api/auth/resend-confirmation">
+                <button class="btn btn-primary mt-3">
+                    Maili Tekrar Gönder
+                </button>
+            </form>
+        </div>
+    </div>
+</div>

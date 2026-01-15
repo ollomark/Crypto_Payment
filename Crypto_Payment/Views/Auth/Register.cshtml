@@ -1,0 +1,156 @@
+@{
+    ViewBag.Title = "title";
+    Layout = "_AuthLayout";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="text-center mt-sm-5 mb-4 text-white-50">
+                <div>
+                    <a href="index.html" class="d-inline-block auth-logo">
+                        <img src="assets/images/logo-light.png" alt="" height="20">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end row -->
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 col-xl-5">
+            <div class="card mt-4 card-bg-fill">
+
+                <div class="card-body p-4">
+                    <div class="text-center mt-2">
+                        <h5 class="text-primary">WandaPlay'e Üye Olun</h5>
+                    </div>
+                    <div class="p-2 mt-4">
+                        <form id="registerForm" class="needs-validation" novalidate>
+                            @Html.AntiForgeryToken()
+                            <div class="mb-3">
+                                <label for="fullname" class="form-label">Ad Soyad <span class="text-danger">*</span></label>
+                                <input type="text" name="FullName" class="form-control" id="fullname" placeholder="Ad Soyad girin" required>
+                                <div class="invalid-feedback">Ad Soyad zorunludur.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="useremail" class="form-label">E-posta <span class="text-danger">*</span></label>
+                                <input type="email" name="Email" class="form-control" id="useremail" placeholder="E-posta adresinizi girin" required>
+                                <div class="invalid-feedback">Geçerli bir e-posta girin.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Kullanıcı Adı <span class="text-danger">*</span></label>
+                                <input type="text" name="UserName" class="form-control" id="username" placeholder="Kullanıcı adınızı girin" required>
+                                <div class="invalid-feedback">Kullanıcı adı zorunludur.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="password-input">Şifre</label>
+                                <div class="position-relative auth-pass-inputgroup">
+                                    <input type="password" name="Password"
+                                           class="form-control pe-5 password-input"
+                                           onpaste="return false"
+                                           placeholder="Şifrenizi girin"
+                                           id="password-input"
+                                           pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+                                           required>
+                                    <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon material-shadow-none"
+                                            type="button" id="password-addon">
+                                        <i class="ri-eye-fill align-middle"></i>
+                                    </button>
+                                    <div class="invalid-feedback">Şifre kurallara uygun olmalıdır.</div>
+                                </div>
+                            </div>
+
+                            <div id="apiError" class="alert alert-danger mt-3 d-none"></div>
+
+                            <div class="mt-4">
+                                <button class="btn btn-success w-100" type="submit">Kayıt Ol</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <!-- end card body -->
+            </div>
+            <!-- end card -->
+
+            <div class="mt-4 text-center">
+                <p class="mb-0">Zaten Bir Hesabınız Var mı ? <a href="/auth/login" class="fw-semibold text-primary text-decoration-underline"> Giriş Yapın </a> </p>
+            </div>
+
+        </div>
+    </div>
+    <!-- end row -->
+</div>
+<!-- end container -->
+
+
+@section Scripts {
+    <script>
+        (() => {
+          'use strict';
+            const form = document.getElementById('registerForm');
+          const apiError = document.getElementById('apiError');
+        
+          if (!form) return;
+        
+          form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+
+              apiError.classList.add('d-none');
+            apiError.innerHTML = '';
+        
+            if (!form.checkValidity()) {
+              form.classList.add('was-validated');
+              return;
+            }
+        
+            const payload = {
+              fullName: document.getElementById('fullname').value.trim(),
+              email: document.getElementById('useremail').value.trim(),
+              userName: document.getElementById('username').value.trim(),
+              password: document.getElementById('password-input').value
+            };
+
+              const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            
+            
+            try {
+              const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                body: JSON.stringify(payload)
+              });
+
+
+                const data = await res.json().catch(() => ({}));
+        
+              if (res.ok) {
+                // API ister redirectUrl döndürsün, ister mesaj
+                window.location.href = data.redirectUrl ?? '/api/auth/register-success';
+                return;
+              }
+        
+              // ProblemDetails errors (ApiController)
+              if (data.errors) {
+                const messages = [];
+                for (const key in data.errors) messages.push(...data.errors[key]);
+                apiError.innerHTML = messages.map(m => `<div>${m}</div>`).join('');
+              } else {
+                apiError.textContent = data.title ?? 'Kayıt işlemi başarısız.';
+              }
+        
+              apiError.classList.remove('d-none');
+        
+            } catch {
+              apiError.textContent = 'Sunucuya bağlanılamadı.';
+              apiError.classList.remove('d-none');
+            }
+          });
+        })();
+    </script>
+}
