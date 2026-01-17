@@ -27,7 +27,10 @@ public class InvoiceManager : IInvoiceService
             Email = x.Email,
             OrderName = x.OrderName,
             CallbackUrl = x.CallbackUrl,
-            CustomerId = x.CustomerId
+            CustomerId = x.CustomerId,
+            InvoiceUrl = x.InvoiceUrl,
+            TxnId = x.TxnId,
+            Status = x.Status
         }).ToListAsync();
     }
 
@@ -46,7 +49,10 @@ public class InvoiceManager : IInvoiceService
             Email = x.Email,
             OrderName = x.OrderName,
             CallbackUrl = x.CallbackUrl,
-            CustomerId = x.CustomerId
+            CustomerId = x.CustomerId,
+            InvoiceUrl = x.InvoiceUrl,
+            TxnId = x.TxnId,
+            Status = x.Status
         };
     }
 
@@ -68,13 +74,19 @@ public class InvoiceManager : IInvoiceService
             Email = dto.Email,
             OrderName = dto.OrderName,
             CallbackUrl = dto.CallbackUrl,
-            CustomerId = dto.CustomerId
+            CustomerId = dto.CustomerId,
+            InvoiceUrl = plisio.InvoiceUrl,
+            TxnId = plisio.TxnId,
+            Status = "pending"
         };
         
         _db.Invoices.Add(invoice);
         await _db.SaveChangesAsync();
 
         dto.Id = invoice.Id;
+        dto.InvoiceUrl = invoice.InvoiceUrl;
+        dto.TxnId = invoice.TxnId;
+        dto.Status = invoice.Status;
         return dto;
     }
 
@@ -95,6 +107,9 @@ public class InvoiceManager : IInvoiceService
         await _db.SaveChangesAsync();
 
         dto.Id = invoice.Id;
+        dto.InvoiceUrl = invoice.InvoiceUrl;
+        dto.TxnId = invoice.TxnId;
+        dto.Status = invoice.Status;
         return dto;
     }
 

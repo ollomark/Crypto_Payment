@@ -11,6 +11,11 @@ public class Invoice
     public string OrderName { get; set; }        // usdt
     public string CallbackUrl { get; set; }      // http://...
     
+    // Plisio entegrasyonu
+    public string? InvoiceUrl { get; set; }      // Plisio ödeme linki
+    public string? TxnId { get; set; }           // Plisio işlem ID'si
+    public string? Status { get; set; }          // pending, completed, expired, cancelled
+    
     // Müşteri ilişkisi
     public int? CustomerId { get; set; }
     public Customer? Customer { get; set; }
