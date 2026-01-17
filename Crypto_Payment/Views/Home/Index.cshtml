@@ -1,5 +1,9 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Dashboard";
+    var totalCustomers = ViewBag.TotalCustomers ?? 0;
+    var totalInvoices = ViewBag.TotalInvoices ?? 0;
+    var totalInvoiceAmount = ViewBag.TotalInvoiceAmount ?? 0m;
+    var recentInvoices = ViewBag.RecentInvoices as List<Crypto_Payment.DTOS.InvoiceDto> ?? new List<Crypto_Payment.DTOS.InvoiceDto>();
 }
 
 <div class="container-fluid">
@@ -8,12 +12,12 @@
     <div class="row">
         <div class="col-12">
             <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
-                <h4 class="mb-sm-0">Crypto</h4>
+                <h4 class="mb-sm-0">Dashboard</h4>
 
                 <div class="page-title-right">
                     <ol class="breadcrumb m-0">
-                        <li class="breadcrumb-item"><a href="javascript: void(0);">Dashboards</a></li>
-                        <li class="breadcrumb-item active">Crypto</li>
+                        <li class="breadcrumb-item"><a href="/">Ana Sayfa</a></li>
+                        <li class="breadcrumb-item active">Dashboard</li>
                     </ol>
                 </div>
 
@@ -22,587 +26,222 @@
     </div>
     <!-- end page title -->
 
+    <!-- İstatistik Kartları -->
     <div class="row">
-        <div class="col-xxl-3">
-            <div class="card card-height-100">
-                <div class="card-header border-0 align-items-center d-flex">
-                    <h4 class="card-title mb-0 flex-grow-1">My Portfolio</h4>
-                    <div>
-                        <div class="dropdown">
-                            <button class="btn btn-soft-primary btn-sm material-shadow-none" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="text-uppercase">Btc<i class="mdi mdi-chevron-down align-middle ms-1"></i></span>
-                            </button>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="#">BTC</a>
-                                <a class="dropdown-item" href="#">USD</a>
-                                <a class="dropdown-item" href="#">Euro</a>
-                            </div>
-                        </div>
-                    </div>
-                </div><!-- end cardheader -->
+        <div class="col-xl-4 col-md-6">
+            <div class="card card-animate">
                 <div class="card-body">
-                    <div id="portfolio_donut_charts" data-colors='["--vz-primary", "--vz-info", "--vz-warning", "--vz-success"]' data-colors-minimal='["--vz-primary", "--vz-primary-rgb, 0.85", "--vz-primary-rgb, 0.65", "--vz-primary-rgb, 0.50"]' data-colors-interactive='["--vz-primary", "--vz-primary-rgb, 0.85", "--vz-primary-rgb, 0.65", "--vz-primary-rgb, 0.50"]' data-colors-corporate='["--vz-primary", "--vz-secondary", "--vz-info", "--vz-success"]' data-colors-galaxy='["--vz-primary", "--vz-primary-rgb, 0.85", "--vz-primary-rgb, 0.65", "--vz-primary-rgb, 0.50"]' class="apex-charts" dir="ltr"></div>
-
-                    <ul class="list-group list-group-flush border-dashed mb-0 mt-3 pt-2">
-                        <li class="list-group-item px-0">
-                            <div class="d-flex">
-                                <div class="flex-shrink-0 avatar-xs">
-                                    <span class="avatar-title bg-light p-1 rounded-circle material-shadow">
-                                        <img src="~/admin/velzon-dist/assets/images/svg/crypto-icons/btc.svg" class="img-fluid" alt="">
-                                    </span>
-                                </div>
-                                <div class="flex-grow-1 ms-2">
-                                    <h6 class="mb-1">Bitcoin</h6>
-                                    <p class="fs-12 mb-0 text-muted"><i class="mdi mdi-circle fs-10 align-middle text-primary me-1"></i>BTC </p>
-                                </div>
-                                <div class="flex-shrink-0 text-end">
-                                    <h6 class="mb-1">BTC 0.00584875</h6>
-                                    <p class="text-success fs-12 mb-0">$19,405.12</p>
-                                </div>
-                            </div>
-                        </li><!-- end -->
-                        <li class="list-group-item px-0">
-                            <div class="d-flex">
-                                <div class="flex-shrink-0 avatar-xs">
-                                    <span class="avatar-title bg-light p-1 rounded-circle material-shadow">
-                                        <img src="~/admin/velzon-dist/assets/images/svg/crypto-icons/eth.svg" class="img-fluid" alt="">
-                                    </span>
-                                </div>
-                                <div class="flex-grow-1 ms-2">
-                                    <h6 class="mb-1">Ethereum</h6>
-                                    <p class="fs-12 mb-0 text-muted"><i class="mdi mdi-circle fs-10 align-middle text-info me-1"></i>ETH </p>
-                                </div>
-                                <div class="flex-shrink-0 text-end">
-                                    <h6 class="mb-1">ETH 2.25842108</h6>
-                                    <p class="text-danger fs-12 mb-0">$40552.18</p>
-                                </div>
-                            </div>
-                        </li><!-- end -->
-                        <li class="list-group-item px-0">
-                            <div class="d-flex">
-                                <div class="flex-shrink-0 avatar-xs">
-                                    <span class="avatar-title bg-light p-1 rounded-circle material-shadow">
-                                        <img src="~/admin/velzon-dist/assets/images/svg/crypto-icons/ltc.svg" class="img-fluid" alt="">
-                                    </span>
-                                </div>
-                                <div class="flex-grow-1 ms-2">
-                                    <h6 class="mb-1">Litecoin</h6>
-                                    <p class="fs-12 mb-0 text-muted"><i class="mdi mdi-circle fs-10 align-middle text-warning me-1"></i>LTC </p>
-                                </div>
-                                <div class="flex-shrink-0 text-end">
-                                    <h6 class="mb-1">LTC 10.58963217</h6>
-                                    <p class="text-success fs-12 mb-0">$15824.58</p>
-                                </div>
-                            </div>
-                        </li><!-- end -->
-                        <li class="list-group-item px-0 pb-0">
-                            <div class="d-flex">
-                                <div class="flex-shrink-0 avatar-xs">
-                                    <span class="avatar-title bg-light p-1 rounded-circle material-shadow">
-                                        <img src="~/admin/velzon-dist/assets/images/svg/crypto-icons/dash.svg" class="img-fluid" alt="">
-                                    </span>
-                                </div>
-                                <div class="flex-grow-1 ms-2">
-                                    <h6 class="mb-1">Dash</h6>
-                                    <p class="fs-12 mb-0 text-muted"><i class="mdi mdi-circle fs-10 align-middle text-success me-1"></i>DASH </p>
-                                </div>
-                                <div class="flex-shrink-0 text-end">
-                                    <h6 class="mb-1">DASH 204.28565885</h6>
-                                    <p class="text-success fs-12 mb-0">$30635.84</p>
-                                </div>
-                            </div>
-                        </li><!-- end -->
-                    </ul><!-- end -->
-                </div><!-- end card body -->
-            </div><!-- end card -->
-        </div><!-- end col -->
-
-        <div class="col-xxl-9 order-xxl-0 order-first">
-            <div class="d-flex flex-column h-100">
-                <div class="row h-100">
-                    <div class="col-lg-4 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-sm flex-shrink-0">
-                                        <span class="avatar-title bg-light text-primary rounded-circle fs-3 material-shadow">
-                                            <i class="ri-money-dollar-circle-fill align-middle"></i>
-                                        </span>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <p class="text-uppercase fw-semibold fs-12 text-muted mb-1"> Toplam Müşteriler</p>
-                                        <h4 class=" mb-0">$<span class="counter-value" data-target="2390.68">0</span></h4>
-                                    </div>
-                                    <div class="flex-shrink-0 align-self-end">
-                                        <span class="badge bg-success-subtle text-success"><i class="ri-arrow-up-s-fill align-middle me-1"></i>6.24 %<span> </span></span>
-                                    </div>
-                                </div>
-                            </div><!-- end card body -->
-                        </div><!-- end card -->
-                    </div><!-- end col -->
-                    <div class="col-lg-4 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-sm flex-shrink-0">
-                                        <span class="avatar-title bg-light text-primary rounded-circle fs-3">
-                                            <i class="ri-arrow-up-circle-fill align-middle"></i>
-                                        </span>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <p class="text-uppercase fw-semibold fs-12 text-muted mb-1"> Toplam Faturalar</p>
-                                        <h4 class=" mb-0">$<span class="counter-value" data-target="19523.25">0</span></h4>
-                                    </div>
-                                    <div class="flex-shrink-0 align-self-end">
-                                        <span class="badge bg-success-subtle text-success"><i class="ri-arrow-up-s-fill align-middle me-1"></i>3.67 %<span> </span></span>
-                                    </div>
-                                </div>
-                            </div><!-- end card body -->
-                        </div><!-- end card -->
-                    </div><!-- end col -->
-                    <div class="col-lg-4 col-md-6">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    <div class="avatar-sm flex-shrink-0">
-                                        <span class="avatar-title bg-light text-primary rounded-circle fs-3 material-shadow">
-                                            <i class="ri-arrow-down-circle-fill align-middle"></i>
-                                        </span>
-                                    </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <p class="text-uppercase fw-semibold fs-12 text-muted mb-1">Toplam Hizmetler</p>
-                                        <h4 class=" mb-0">$<span class="counter-value" data-target="14799.44">0</span></h4>
-                                    </div>
-                                    <div class="flex-shrink-0 align-self-end">
-                                        <span class="badge bg-danger-subtle text-danger"><i class="ri-arrow-down-s-fill align-middle me-1"></i>4.80 %<span> </span></span>
-                                    </div>
-                                </div>
-                            </div><!-- end card body -->
-                        </div><!-- end card -->
-                    </div><!-- end col -->
-                </div><!-- end row -->
-
-                <div class="row">
-                    <div class="col-xl-12">
-                        <div class="card card-height-100">
-                            <div class="card-header align-items-center d-flex">
-                                <h4 class="card-title mb-0 flex-grow-1">Faturalar</h4>
-                                <div class="flex-shrink-0">
-                                    <button class="btn btn-soft-primary btn-sm">24H</button>
-                                </div>
-                                <div class="flex-shrink-0 ms-2">
-                                    <div class="dropdown card-header-dropdown">
-                                        <a class="btn btn-soft-primary btn-sm" role="button" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            Get Report<i class="mdi mdi-chevron-down align-middle ms-1"></i>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-end">
-                                            <a class="dropdown-item" href="#">Download Report</a>
-                                            <a class="dropdown-item" href="#">Export</a>
-                                            <a class="dropdown-item" href="#">Import</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div><!-- end card header -->
-                            <div class="card-body">
-                                <div class="table-responsive table-card">
-                                    <table id="invoicesList" class="table table-hover table-borderless table-centered align-middle table-nowrap mb-0">
-                                        <thead class="text-muted bg-light-subtle">
-                                        <tr>
-                                            <th>Para Birimi</th>
-                                            <th>Gerçek Para Birimi</th>
-                                            <th>Fatura Adı</th>
-                                            <th>Fatura Numarası</th>
-                                            <th>Miktar</th>
-                                            <th>Ödeme Linki</th>
-                                        </tr>
-                                        </thead><!-- end thead -->
-                                        <tbody>
-                                            
-                                        </tbody><!-- end tbody -->
-                                    </table><!-- end table -->
-                                </div><!-- end tbody -->
-                            </div><!-- end cardbody -->
-                        </div><!-- end card -->
-                    </div><!-- end col -->
-                </div><!-- end row -->
-            </div>
-        </div><!-- end col -->
-    </div><!-- end row -->
-
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="swiper cryptoSlider">
-                <div class="swiper-wrapper">
-                    <div class="swiper-slide">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="float-end">
-                                    <div class="dropdown">
-                                        <a class="text-reset" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <span class="text-muted fs-18"><i class="mdi mdi-dots-horizontal"></i></span>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-end">
-                                            <a class="dropdown-item" href="#">Details</a>
-                                            <a class="dropdown-item" href="#">Cancel</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <img src="~/admin/velzon-dist/assets/images/svg/crypto-icons/btc.svg" class="bg-light rounded-circle p-1 avatar-xs img-fluid material-shadow" alt="">
-                                    <h6 class="ms-2 mb-0 fs-14">Bitcoin</h6>
-                                </div>
-                                <div class="row align-items-end g-0">
-                                    <div class="col-6">
-                                        <h5 class="mb-1 mt-4">$1,523,647</h5>
-                                        <p class="text-success fs-13 fw-medium mb-0">+13.11%<span class="text-muted ms-2 fs-10 text-uppercase">(btc)</span></p>
-                                    </div><!-- end col -->
-                                    <div class="col-6">
-                                        <div class="apex-charts crypto-widget" data-colors='["--vz-success" , "--vz-transparent"]' dir="ltr" id="bitcoin_sparkline_charts"></div>
-                                    </div><!-- end col -->
-                                </div><!-- end row -->
-                            </div><!-- end card body -->
-                        </div><!-- end card -->
-                    </div><!-- end -->
-
-                    <div class="swiper-slide">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="float-end">
-                                    <div class="dropdown">
-                                        <a class="text-reset" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <span class="text-muted fs-18"><i class="mdi mdi-dots-horizontal"></i></span>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-end">
-                                            <a class="dropdown-item" href="#">Details</a>
-                                            <a class="dropdown-item" href="#">Cancel</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <img src="~/admin/velzon-dist/assets/images/svg/crypto-icons/ltc.svg" class="bg-light rounded-circle p-1 avatar-xs img-fluid material-shadow" alt="">
-                                    <h6 class="ms-2 mb-0 fs-14">Litecoin</h6>
-                                </div>
-                                <div class="row align-items-end g-0">
-                                    <div class="col-6">
-                                        <h5 class="mb-1 mt-4">$2,145,687</h5>
-                                        <p class="text-success fs-13 fw-medium mb-0">+15.08%<span class="text-muted ms-2 fs-10 text-uppercase">(ltc)</span></p>
-                                    </div><!-- end col -->
-                                    <div class="col-6">
-                                        <div class="apex-charts crypto-widget" data-colors='["--vz-success", "--vz-transparent"]' dir="ltr" id="litecoin_sparkline_charts"></div>
-                                    </div><!-- end col -->
-                                </div><!-- end row -->
-                            </div><!-- end card body -->
-                        </div><!-- end card -->
-                    </div><!-- end -->
-
-                    <div class="swiper-slide">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="float-end">
-                                    <div class="dropdown">
-                                        <a class="text-reset" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"> <span class="text-muted fs-18"><i class="mdi mdi-dots-horizontal"></i></span></a>
-                                        <div class="dropdown-menu dropdown-menu-end">
-                                            <a class="dropdown-item" href="#">Details</a>
-                                            <a class="dropdown-item" href="#">Cancel</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <img src="~/admin/velzon-dist/assets/images/svg/crypto-icons/etc.svg" class="bg-light rounded-circle p-1 avatar-xs img-fluid material-shadow" alt="">
-                                    <h6 class="ms-2 mb-0 fs-14">Ethereum</h6>
-                                </div>
-                                <div class="row align-items-end g-0">
-                                    <div class="col-6">
-                                        <h5 class="mb-1 mt-4">$3,312,870</h5>
-                                        <p class="text-success fs-13 fw-medium mb-0">+08.57%<span class="text-muted ms-2 fs-10 text-uppercase">(etc)</span></p>
-                                    </div><!-- end col -->
-                                    <div class="col-6">
-                                        <div class="apex-charts crypto-widget" data-colors='["--vz-success", "--vz-transparent"]' dir="ltr" id="eathereum_sparkline_charts"></div>
-                                    </div><!-- end col -->
-                                </div><!-- end row -->
-                            </div><!-- end card body -->
-                        </div><!-- end card -->
-                    </div><!-- end -->
-
-                    <div class="swiper-slide">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="float-end">
-                                    <div class="dropdown">
-                                        <a class="text-reset" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <span class="text-muted fs-18"><i class="mdi mdi-dots-horizontal"></i></span>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-end">
-                                            <a class="dropdown-item" href="#">Details</a>
-                                            <a class="dropdown-item" href="#">Cancel</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <img src="~/admin/velzon-dist/assets/images/svg/crypto-icons/bnb.svg" class="bg-light rounded-circle p-1 avatar-xs img-fluid material-shadow" alt="">
-                                    <h6 class="ms-2 mb-0 fs-14">Binance</h6>
-                                </div>
-                                <div class="row align-items-end g-0">
-                                    <div class="col-6">
-                                        <h5 class="mb-1 mt-4">$1,820,045</h5>
-                                        <p class="text-danger fs-13 fw-medium mb-0">-09.21%<span class="text-muted ms-2 fs-10 text-uppercase">(bnb)</span></p>
-                                    </div><!-- end col -->
-                                    <div class="col-6">
-                                        <div class="apex-charts crypto-widget" data-colors='["--vz-danger", "--vz-transparent"]' dir="ltr" id="binance_sparkline_charts"></div>
-                                    </div><!-- end col -->
-                                </div><!-- end row -->
-                            </div><!-- end card body -->
-                        </div><!-- end card -->
-                    </div><!-- end -->
-
-                    <div class="swiper-slide">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="float-end">
-                                    <div class="dropdown">
-                                        <a class="text-reset" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <span class="text-muted fs-18"><i class="mdi mdi-dots-horizontal"></i></span>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-end">
-                                            <a class="dropdown-item" href="#">Details</a>
-                                            <a class="dropdown-item" href="#">Cancel</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <img src="~/admin/velzon-dist/assets/images/svg/crypto-icons/dash.svg" class="bg-light rounded-circle p-1 avatar-xs img-fluid material-shadow" alt="">
-                                    <h6 class="ms-2 mb-0 fs-14">Dash</h6>
-                                </div>
-                                <div class="row align-items-end g-0">
-                                    <div class="col-6">
-                                        <h5 class="mb-1 mt-4">$9,458,153</h5>
-                                        <p class="text-success fs-13 fw-medium mb-0">+12.07%<span class="text-muted ms-2 fs-10 text-uppercase">(dash)</span></p>
-                                    </div><!-- end col -->
-                                    <div class="col-6">
-                                        <div class="apex-charts crypto-widget" data-colors='["--vz-success", "--vz-transparent"]' dir="ltr" id="dash_sparkline_charts"></div>
-                                    </div><!-- end col -->
-                                </div><!-- end row -->
-                            </div><!-- end card body -->
-                        </div><!-- end card -->
-                    </div><!-- end -->
-
-                    <div class="swiper-slide">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="float-end">
-                                    <div class="dropdown">
-                                        <a class="text-reset" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <span class="text-muted fs-18"><i class="mdi mdi-dots-horizontal"></i></span>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-end">
-                                            <a class="dropdown-item" href="#">Details</a>
-                                            <a class="dropdown-item" href="#">Cancel</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <img src="~/admin/velzon-dist/assets/images/svg/crypto-icons/usdt.svg" class="bg-light rounded-circle p-1 avatar-xs img-fluid material-shadow" alt="">
-                                    <h6 class="ms-2 mb-0 fs-14">Tether</h6>
-                                </div>
-                                <div class="row align-items-end g-0">
-                                    <div class="col-6">
-                                        <h5 class="mb-1 mt-4">$5,201,458</h5>
-                                        <p class="text-success fs-13 fw-medium mb-0">+14.99%<span class="text-muted ms-2 fs-10 text-uppercase">(usdt)</span> </p>
-                                    </div><!-- end col -->
-                                    <div class="col-6">
-                                        <div class="apex-charts crypto-widget" data-colors='["--vz-success", "--vz-transparent"]' dir="ltr" id="tether_sparkline_charts"></div>
-                                    </div><!-- end col -->
-                                </div><!-- end row -->
-                            </div><!-- end card body -->
-                        </div><!-- end card -->
-                    </div><!-- end -->
-
-                    <div class="swiper-slide">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="float-end">
-                                    <div class="dropdown">
-                                        <a class="text-reset" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <span class="text-muted fs-18"><i class="mdi mdi-dots-horizontal"></i></span>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-end">
-                                            <a class="dropdown-item" href="#">Details</a>
-                                            <a class="dropdown-item" href="#">Cancel</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center">
-                                    <img src="~/admin/velzon-dist/assets/images/svg/crypto-icons/neo.svg"
-                                         class="bg-light rounded-circle p-1 avatar-xs img-fluid material-shadow" alt="">
-                                    <h6 class="ms-2 mb-0 fs-14">NEO</h6>
-                                </div>
-                                <div class="row align-items-end g-0">
-                                    <div class="col-6">
-                                        <h5 class="mb-1 mt-4">$6,147,957</h5>
-                                        <p class="text-danger fs-13 fw-medium mb-0">-05.07%<span class="text-muted ms-2 fs-10 text-uppercase">(neo)</span></p>
-                                    </div><!-- end col -->
-                                    <div class="col-6">
-                                        <div class="apex-charts crypto-widget" data-colors='["--vz-danger", "--vz-transparent"]' dir="ltr" id="neo_sparkline_charts"></div>
-                                    </div><!-- end col -->
-                                </div><!-- end row -->
-                            </div><!-- end card body -->
-                        </div><!-- end card -->
-                    </div><!-- end -->
-                </div><!-- end swiper wrapper -->
-            </div><!-- end swiper -->
-        </div><!-- end col -->
-    </div><!-- end row -->
-
-    <div class="row">
-        <div class="col-xl-8">
-            
-        </div><!-- end col -->
-
-        <div class="col-xl-4">
-            <div class="card card-height-100">
-                <div class="card-header align-items-center border-0 d-flex">
-                    <h4 class="card-title mb-0 flex-grow-1">Hızlı Fatura Oluştur</h4>
-                </div><!-- end cardheader -->
-                <div class="card-body p-0">
-                    <div class="p-3 bg-warning-subtle">
-                       
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1 overflow-hidden">
+                            <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Toplam Müşteri</p>
+                        </div>
                     </div>
-                    <div class="p-3">
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label>Crypto Para Birimi :</label>
-                                    <select class="form-select" id="currency">
-                                        <option>USDT_TRX</option>
-                                        <option>BTC</option>
-                                        <option>ETH</option>
-                                    </select>
-                                </div>
-                            </div><!-- end col -->
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label>Gerçek Para Birimi :</label>
-                                    <select class="form-select" id="sourceCurrency">
-                                        <option>USD</option>
-                                        <option>TL</option>
-                                    </select>
-                                </div>
-                            </div><!-- end col -->
-                        </div><!-- end row -->
+                    <div class="d-flex align-items-end justify-content-between mt-4">
                         <div>
-                            <div class="col-12">
-                                <div class="mb-3">
-                                    <label>Ödeme Yöntemi :</label>
-                                    <select class="form-select">
-                                        <option>Cüzdan</option>
-                                    </select>
-                                </div>
-                            </div><!-- end col -->
-                            <div class="input-group mb-3">
-                                <label class="input-group-text">Miktar</label>
-                                <input id="sourceAmount" type="text" class="form-control" placeholder="0">
-                            </div>
-                            <div class="p-3 bg-warning-subtle" id="invoiceAlert" style="display:none;"></div>
+                            <h4 class="fs-22 fw-semibold ff-secondary mb-4"><span class="counter-value" data-target="@totalCustomers">0</span></h4>
+                            <a href="/customers" class="text-decoration-underline text-muted">Müşterileri Görüntüle</a>
                         </div>
-                        <div class="mt-3 pt-2">
-                            <div class="d-flex mb-2">
-                                <div class="flex-grow-1">
-                                    <p class="fs-13 mb-0">İşlem Ücreti<span class="text-muted ms-1 fs-11">(0.05%)</span></p>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <h6 class="mb-0">$1.08</h6>
-                                </div>
-                            </div>
-                            <div class="d-flex mb-2">
-                                <div class="flex-grow-1">
-                                    <p class="fs-13 mb-0">Minimum Received<span class="text-muted ms-1 fs-11">(2%)</span></p>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <h6 class="mb-0">$7.85</h6>
-                                </div>
-                            </div>
-                            <div class="d-flex">
-                                <div class="flex-grow-1">
-                                    <p class="fs-13 mb-0">Estimated Rate</p>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <h6 class="mb-0">1 BTC ~ $34572.00</h6>
-                                </div>
-                            </div>
+                        <div class="avatar-sm flex-shrink-0">
+                            <span class="avatar-title bg-primary-subtle rounded fs-3">
+                                <i class="ri-user-line text-primary"></i>
+                            </span>
                         </div>
-                        <div class="mt-3 pt-2">
-                            <button id="btnCreateInvoice" type="button" class="btn btn-primary w-100">Fatura Oluştur</button>
-                        </div>
-                    </div> 
-                </div><!-- end card body -->
-            </div><!-- end card -->
-        </div><!-- end col -->
-    </div><!-- end row -->
-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-@section Scripts {
-    <script>
-      document.getElementById("btnCreateInvoice").addEventListener("click", function () {
-    
-        fetch("/api/invoices/invoice-add", {   // gerekiyorsa: /api/invoice/invoice-add
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            Currency: document.getElementById("currency").value,
-            SourceCurrency: document.getElementById("sourceCurrency").value,
-            SourceAmount: Number(document.getElementById("sourceAmount").value),
-            OrderNumber: "ORD-" + Date.now(),
-            OrderName: "HizliFatura",
-            Email: "customer@site.com",
-            CallbackUrl: "https://senin-domain.com/api/plisio/callback"
-          })
-        })
-        .then(r => r.text())
-        .then(t => {
-          document.getElementById("invoiceAlert").style.display = "block";
-          document.getElementById("invoiceAlert").innerText = t || "Fatura oluşturuldu";
-        })
-        .catch(() => {
-          document.getElementById("invoiceAlert").style.display = "block";
-          document.getElementById("invoiceAlert").innerText = "Hata oluştu";
-        });
-    
-      });
-    </script>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            const tbody = document.getElementById('invoicesList');
-            if (!tbody) return;
-        
-            const res = await fetch('/api/invoices/GetAll');
-            const list = await res.json();
-        
-            tbody.innerHTML = '';
-        
-            list.forEach(i => {
-                tbody.innerHTML += `
-                <tr>
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <div class="me-2">
-                                <img src="admin/velzon-dist/assets/images/svg/crypto-icons/eth.svg" alt="" class="avatar-xxs material-shadow">
-                            </div>
-                            <div>
-                                <h6 class="fs-14 mb-0">${i.currency}</h6>
-                            </div>
+        <div class="col-xl-4 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1 overflow-hidden">
+                            <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Toplam Fatura</p>
                         </div>
-                    </td>
-                    <td>${i.sourceCurrency}</td>
-                    <td>${i.orderName}</td>
-                    <td>${i.orderNumber}</td>
-                    <td>${i.sourceAmount}</td>
-                    <td><a href="apps-crypto-buy-sell.html" class="btn btn-sm btn-soft-secondary material-shadow-none">Ödeme Linki</a></td>
-                </tr>
-                `;
-            });
-        });
-    </script>
-}
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div>
+                            <h4 class="fs-22 fw-semibold ff-secondary mb-4"><span class="counter-value" data-target="@totalInvoices">0</span></h4>
+                            <a href="/invoices" class="text-decoration-underline text-muted">Faturaları Görüntüle</a>
+                        </div>
+                        <div class="avatar-sm flex-shrink-0">
+                            <span class="avatar-title bg-success-subtle rounded fs-3">
+                                <i class="ri-file-list-3-line text-success"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1 overflow-hidden">
+                            <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Toplam Tutar</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div>
+                            <h4 class="fs-22 fw-semibold ff-secondary mb-4">$<span class="counter-value" data-target="@totalInvoiceAmount">0</span></h4>
+                            <a href="/invoices/invoice-add" class="text-decoration-underline text-muted">Yeni Fatura Oluştur</a>
+                        </div>
+                        <div class="avatar-sm flex-shrink-0">
+                            <span class="avatar-title bg-warning-subtle rounded fs-3">
+                                <i class="ri-money-dollar-circle-line text-warning"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end row -->
+
+    <!-- Son Faturalar -->
+    <div class="row">
+        <div class="col-xl-12">
+            <div class="card">
+                <div class="card-header align-items-center d-flex">
+                    <h4 class="card-title mb-0 flex-grow-1">Son Faturalar</h4>
+                    <div class="flex-shrink-0">
+                        <a href="/invoices" class="btn btn-soft-primary btn-sm">
+                            Tümünü Gör <i class="ri-arrow-right-line align-middle"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="table-responsive table-card">
+                        <table class="table table-hover table-centered align-middle mb-0">
+                            <thead class="text-muted table-light">
+                                <tr>
+                                    <th scope="col">Sipariş No</th>
+                                    <th scope="col">Müşteri</th>
+                                    <th scope="col">Para Birimi</th>
+                                    <th scope="col">Tutar</th>
+                                    <th scope="col">Durum</th>
+                                    <th scope="col">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (recentInvoices != null && recentInvoices.Any())
+                                {
+                                    foreach (var invoice in recentInvoices)
+                                    {
+                                        var statusClass = invoice.Status switch
+                                        {
+                                            "completed" => "success",
+                                            "pending" => "warning",
+                                            "expired" => "danger",
+                                            "cancelled" => "secondary",
+                                            _ => "info"
+                                        };
+                                        var statusText = invoice.Status switch
+                                        {
+                                            "completed" => "Ödendi",
+                                            "pending" => "Bekliyor",
+                                            "expired" => "Süresi Doldu",
+                                            "cancelled" => "İptal",
+                                            _ => "Yeni"
+                                        };
+                                        <tr>
+                                            <td>
+                                                <span class="fw-medium">@invoice.OrderNumber</span>
+                                            </td>
+                                            <td>@invoice.OrderName</td>
+                                            <td>
+                                                <span class="badge bg-info-subtle text-info">@invoice.SourceCurrency → @invoice.Currency</span>
+                                            </td>
+                                            <td>
+                                                <span class="text-success fw-medium">$@invoice.SourceAmount</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-@statusClass-subtle text-@statusClass">@statusText</span>
+                                            </td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(invoice.InvoiceUrl))
+                                                {
+                                                    <a href="@invoice.InvoiceUrl" target="_blank" class="btn btn-sm btn-success">
+                                                        <i class="ri-external-link-line"></i> Ödeme
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            <i class="ri-file-list-3-line fs-24 mb-2 d-block"></i>
+                                            Henüz fatura bulunmuyor.
+                                            <br>
+                                            <a href="/invoices/invoice-add" class="btn btn-primary btn-sm mt-2">İlk Faturanı Oluştur</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end row -->
+
+    <!-- Hızlı İşlemler -->
+    <div class="row">
+        <div class="col-xl-4 col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="avatar-md mx-auto mb-3">
+                        <span class="avatar-title bg-primary-subtle rounded-circle fs-1">
+                            <i class="ri-user-add-line text-primary"></i>
+                        </span>
+                    </div>
+                    <h5 class="card-title">Yeni Müşteri</h5>
+                    <p class="text-muted mb-3">Sisteme yeni müşteri ekleyin</p>
+                    <a href="/customers" class="btn btn-primary">Müşteri Ekle</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="avatar-md mx-auto mb-3">
+                        <span class="avatar-title bg-success-subtle rounded-circle fs-1">
+                            <i class="ri-file-add-line text-success"></i>
+                        </span>
+                    </div>
+                    <h5 class="card-title">Yeni Fatura</h5>
+                    <p class="text-muted mb-3">Crypto ödeme faturası oluşturun</p>
+                    <a href="/invoices/invoice-add" class="btn btn-success">Fatura Oluştur</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="avatar-md mx-auto mb-3">
+                        <span class="avatar-title bg-info-subtle rounded-circle fs-1">
+                            <i class="ri-list-check text-info"></i>
+                        </span>
+                    </div>
+                    <h5 class="card-title">Fatura Listesi</h5>
+                    <p class="text-muted mb-3">Tüm faturaları görüntüleyin</p>
+                    <a href="/invoices" class="btn btn-info">Faturaları Gör</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end row -->
+
+</div>
