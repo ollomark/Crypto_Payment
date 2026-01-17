@@ -15,6 +15,9 @@ public class CustomerDto
     [Required(ErrorMessage = "Telefon boş geçilemez.")]
     public string Phone { get; set; }
 
+    [EmailAddress(ErrorMessage = "Geçerli bir e-posta adresi giriniz.")]
+    public string Email { get; set; }
+
     [Required(ErrorMessage = "Şirket adı boş geçilemez.")]
     public string CompanyName { get; set; }
 

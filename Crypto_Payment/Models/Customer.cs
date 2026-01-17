@@ -7,6 +7,7 @@ public class Customer
     public string FirstName { get; set; }      // Ad
     public string LastName { get; set; }       // Soyad
     public string Phone { get; set; }          // Telefon
+    public string Email { get; set; }          // E-posta
 
     public string CompanyName { get; set; }    // Şirket Adı
 

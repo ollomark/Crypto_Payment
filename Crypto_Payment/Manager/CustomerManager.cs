@@ -23,6 +23,7 @@ public class CustomerManager : ICustomerService
             FirstName   = dto.FirstName.Trim(),
             LastName    = dto.LastName.Trim(),
             Phone       = dto.Phone.Trim(),
+            Email       = dto.Email?.Trim(),
             CompanyName = dto.CompanyName.Trim(),
             Telegram    = dto.Telegram.Trim(),
             Skype       = dto.Skype.Trim()
@@ -43,6 +44,7 @@ public class CustomerManager : ICustomerService
         customer.FirstName   = dto.FirstName.Trim();
         customer.LastName    = dto.LastName.Trim();
         customer.Phone       = dto.Phone.Trim();
+        customer.Email       = dto.Email?.Trim();
         customer.CompanyName = dto.CompanyName.Trim();
         customer.Telegram    = dto.Telegram.Trim();
         customer.Skype       = dto.Skype.Trim();
@@ -62,6 +64,7 @@ public class CustomerManager : ICustomerService
                 FirstName   = x.FirstName,
                 LastName    = x.LastName,
                 Phone       = x.Phone,
+                Email       = x.Email,
                 CompanyName = x.CompanyName,
                 Telegram    = x.Telegram,
                 Skype       = x.Skype
@@ -80,6 +83,7 @@ public class CustomerManager : ICustomerService
             FirstName   = x.FirstName,
             LastName    = x.LastName,
             Phone       = x.Phone,
+            Email       = x.Email,
             CompanyName = x.CompanyName,
             Telegram    = x.Telegram,
             Skype       = x.Skype

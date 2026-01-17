@@ -1,5 +1,5 @@
 @{
-    ViewBag.Title = "title";
+    ViewBag.Title = "Fatura Oluştur";
     Layout = "_Layout";
 }
 
@@ -36,7 +36,7 @@
                             <div class="col-lg-3 col-sm-6">
                                 <label for="choices-customer">Müşteri</label>
                                 <div class="input-light">
-                                    <select class="form-control bg-light border-0" data-choices data-choices-search-true id="choices-customer" required>
+                                    <select class="form-control bg-light border-0" id="choices-customer" required>
                                         <option value="">Müşteri Seçin</option>
                                     </select>
                                 </div>
@@ -45,7 +45,7 @@
                             <div class="col-lg-3 col-sm-6">
                                 <label for="choices-currency">Para Birimi</label>
                                 <div class="input-light">
-                                    <select class="form-control bg-light border-0" data-choices data-choices-search-false id="choices-currency" required>
+                                    <select class="form-control bg-light border-0" id="choices-currency" required>
                                         <option value="">Bir Para Birimi Seçin</option>
                                         <option value="USDT_TRX">USDT_TRX</option>
                                         <option value="BTC">BTC</option>
@@ -57,7 +57,7 @@
                             <div class="col-lg-3 col-sm-6">
                                 <label for="choices-source-currency">Gerçek Para Birimi</label>
                                 <div class="input-light">
-                                    <select class="form-control bg-light border-0" data-choices data-choices-search-false id="choices-source-currency" required>
+                                    <select class="form-control bg-light border-0" id="choices-source-currency" required>
                                         <option value="">Gerçek Bir Para Birimi Seçin</option>
                                         <option value="USD">USD</option>
                                         <option value="EURO">EURO</option>
@@ -68,14 +68,24 @@
                             <!--end col-->
                         </div>
                         <!--end row-->
+                        
                         <div class="row g-3 mt-2">
                             <div class="col-lg-3 col-sm-6">
-                                <div>
-                                    <label for="sourceAmount">Toplam Tutar</label>
-                                    <input type="text" class="form-control bg-light border-0" id="sourceAmount" placeholder="$0.00" readonly />
-                                </div>
+                                <label for="orderName">Sipariş Adı</label>
+                                <input type="text" class="form-control bg-light border-0" id="orderName" placeholder="Sipariş Adı" required />
                             </div>
-                            <!--end col-->
+                            <div class="col-lg-3 col-sm-6">
+                                <label for="email">E-posta</label>
+                                <input type="email" class="form-control bg-light border-0" id="email" placeholder="ornek@email.com" required />
+                            </div>
+                            <div class="col-lg-3 col-sm-6">
+                                <label for="callbackUrl">Callback URL</label>
+                                <input type="url" class="form-control bg-light border-0" id="callbackUrl" placeholder="https://..." value="https://cryptopayment-34be79722fc3.herokuapp.com/api/callback" />
+                            </div>
+                            <div class="col-lg-3 col-sm-6">
+                                <label for="sourceAmount">Toplam Tutar</label>
+                                <input type="number" step="0.01" class="form-control bg-light border-0" id="sourceAmount" placeholder="0.00" required />
+                            </div>
                         </div>
                         <!--end row-->
                     </div>
@@ -85,20 +95,8 @@
                                 <thead class="align-middle">
                                     <tr class="table-active">
                                         <th scope="col" style="width: 50px;">#</th>
-                                        <th scope="col">
-                                            Ürün Adı
-                                        </th>
-                                        <th scope="col" style="width: 120px;">
-                                            <div class="d-flex currency-select input-light align-items-center">
-                                                Para Birimi
-                                                <select class="form-selectborder-0 bg-light" data-choices data-choices-search-false id="choices-payment-currency" onchange="otherPayment()">
-                                                    <option value="$">($)</option>
-                                                    <option value="£">(£)</option>
-                                                    <option value="₹">(₹)</option>
-                                                    <option value="€">(€)</option>
-                                                </select>
-                                            </div>
-                                        </th>
+                                        <th scope="col">Ürün Adı</th>
+                                        <th scope="col" style="width: 120px;">Birim Fiyat</th>
                                         <th scope="col" style="width: 120px;">Adet</th>
                                         <th scope="col" class="text-end" style="width: 150px;">Tutar</th>
                                         <th scope="col" class="text-end" style="width: 105px;"></th>
@@ -109,24 +107,18 @@
                                         <th scope="row" class="product-id">1</th>
                                         <td class="text-start">
                                             <div class="mb-2">
-                                                <input type="text" class="form-control bg-light border-0" id="productName-1" placeholder="Product Name" required />
-                                                <div class="invalid-feedback">
-                                                    Please enter a product name
-                                                </div>
+                                                <input type="text" class="form-control bg-light border-0" id="productName-1" placeholder="Ürün Adı" required />
                                             </div>
-                                            <textarea class="form-control bg-light border-0" id="productDetails-1" rows="2" placeholder="Product Details"></textarea>
+                                            <textarea class="form-control bg-light border-0" id="productDetails-1" rows="2" placeholder="Ürün Detayları"></textarea>
                                         </td>
                                         <td>
-                                            <input type="number" class="form-control product-price bg-light border-0" id="productRate-1" step="0.01" placeholder="0.00" required />
-                                            <div class="invalid-feedback">
-                                                Please enter a rate
-                                            </div>
+                                            <input type="number" class="form-control product-price bg-light border-0" id="productRate-1" step="0.01" placeholder="0.00" required onchange="calculateTotal()" />
                                         </td>
                                         <td>
                                             <div class="input-step">
-                                                <button type="button" class='minus'>–</button>
-                                                <input type="number" class="product-quantity" id="product-qty-1" value="0" readonly>
-                                                <button type="button" class='plus'>+</button>
+                                                <button type="button" class='minus' onclick="decreaseQty(1)">–</button>
+                                                <input type="number" class="product-quantity" id="product-qty-1" value="1" min="1" onchange="calculateTotal()">
+                                                <button type="button" class='plus' onclick="increaseQty(1)">+</button>
                                             </div>
                                         </td>
                                         <td class="text-end">
@@ -135,7 +127,7 @@
                                             </div>
                                         </td>
                                         <td class="product-removal">
-                                            <a href="javascript:void(0)" class="btn btn-success">Delete</a>
+                                            <a href="javascript:void(0)" class="btn btn-danger" onclick="removeProduct(1)">Sil</a>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -143,7 +135,7 @@
                                     <tr id="newForm" style="display: none;"><td class="d-none" colspan="5"><p>Add New Form</p></td></tr>
                                     <tr>
                                         <td colspan="5">
-                                            <a href="javascript:new_link()" id="add-item" class="btn btn-soft-secondary fw-medium"><i class="ri-add-fill me-1 align-bottom"></i> Add Item</a>
+                                            <a href="javascript:addNewProduct()" id="add-item" class="btn btn-soft-secondary fw-medium"><i class="ri-add-fill me-1 align-bottom"></i> Ürün Ekle</a>
                                         </td>
                                     </tr>
                                     <tr class="border-top border-top-dashed mt-2">
@@ -152,69 +144,95 @@
                                             <table class="table table-borderless table-sm table-nowrap align-middle mb-0">
                                                 <tbody>
                                                     <tr>
-                                                        <th scope="row">Sub Total</th>
+                                                        <th scope="row">Ara Toplam</th>
                                                         <td style="width:150px;">
                                                             <input type="text" class="form-control bg-light border-0" id="cart-subtotal" placeholder="$0.00" readonly />
                                                         </td>
                                                     </tr>
                                                     <tr>
-                                                        <th scope="row">Estimated Tax (12.5%)</th>
+                                                        <th scope="row">Vergi (18%)</th>
                                                         <td>
                                                             <input type="text" class="form-control bg-light border-0" id="cart-tax" placeholder="$0.00" readonly />
                                                         </td>
                                                     </tr>
-                                                    <tr>
-                                                        <th scope="row">Discount <small class="text-muted">(VELZON15)</small></th>
-                                                        <td>
-                                                            <input type="text" class="form-control bg-light border-0" id="cart-discount" placeholder="$0.00" readonly />
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th scope="row">Shipping Charge</th>
-                                                        <td>
-                                                            <input type="text" class="form-control bg-light border-0" id="cart-shipping" placeholder="$0.00" readonly />
-                                                        </td>
-                                                    </tr>
                                                     <tr class="border-top border-top-dashed">
-                                                        <th scope="row">Total Amount</th>
+                                                        <th scope="row">Toplam Tutar</th>
                                                         <td>
                                                             <input type="text" class="form-control bg-light border-0" id="cart-total" placeholder="$0.00" readonly />
                                                         </td>
                                                     </tr>
                                                 </tbody>
                                             </table>
-                                            <!--end table-->
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
-                            <!--end table-->
                         </div>
-                        <!--end row-->
                         <div class="mt-4">
-                            <label for="exampleFormControlTextarea1" class="form-label text-muted text-uppercase fw-semibold">NOTES</label>
-                            <textarea class="form-control alert alert-info" id="exampleFormControlTextarea1" placeholder="Notes" rows="2" required>All accounts are to be paid within 7 days from receipt of invoice. To be paid by cheque or credit card or direct payment online. If account is not paid within 7 days the credits details supplied as confirmation of work undertaken will be charged the agreed quoted fee noted above.</textarea>
+                            <label for="notes" class="form-label text-muted text-uppercase fw-semibold">NOTLAR</label>
+                            <textarea class="form-control alert alert-info" id="notes" placeholder="Notlar" rows="2">Tüm ödemeler fatura tarihinden itibaren 7 gün içinde yapılmalıdır.</textarea>
                         </div>
                         <div class="hstack gap-2 justify-content-end d-print-none mt-4">
-                            <button type="submit" class="btn btn-success"><i class="ri-printer-line align-bottom me-1"></i> Save</button>
-                            <a href="javascript:void(0);" class="btn btn-primary"><i class="ri-download-2-line align-bottom me-1"></i> Download Invoice</a>
-                            <a href="javascript:void(0);" class="btn btn-danger"><i class="ri-send-plane-fill align-bottom me-1"></i> Send Invoice</a>
+                            <button type="submit" class="btn btn-success"><i class="ri-save-line align-bottom me-1"></i> Fatura Oluştur</button>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
-        <!--end col-->
     </div>
-    <!--end row-->
+</div>
 
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Yükleniyor...</span>
+                </div>
+                <p class="mt-3 mb-0">Fatura oluşturuluyor, lütfen bekleyin...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <i class="ri-checkbox-circle-line text-success" style="font-size: 64px;"></i>
+                <h4 class="mt-3">Fatura Başarıyla Oluşturuldu!</h4>
+                <p id="successMessage" class="text-muted"></p>
+                <a href="/invoices" class="btn btn-primary mt-3">Faturalara Git</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <i class="ri-close-circle-line text-danger" style="font-size: 64px;"></i>
+                <h4 class="mt-3">Hata Oluştu!</h4>
+                <p id="errorMessage" class="text-muted"></p>
+                <button type="button" class="btn btn-secondary mt-3" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
 <script>
-    // Sayfa yüklendiğinde müşterileri getir
+    let productCount = 1;
+    let customers = [];
+
+    // Sayfa yüklendiğinde
     document.addEventListener('DOMContentLoaded', function() {
         loadCustomers();
+        calculateTotal();
     });
 
     // Müşterileri API'den yükle
@@ -222,42 +240,206 @@
         try {
             const response = await fetch('/api/customers/GetAll');
             if (response.ok) {
-                const customers = await response.json();
+                customers = await response.json();
                 const select = document.getElementById('choices-customer');
                 
                 customers.forEach(customer => {
                     const option = document.createElement('option');
                     option.value = customer.id;
-                    option.textContent = `${customer.firstName} ${customer.lastName} - ${customer.companyName}`;
+                    option.textContent = `${customer.firstName} ${customer.lastName}${customer.companyName ? ' - ' + customer.companyName : ''}`;
+                    option.dataset.email = customer.email || '';
                     select.appendChild(option);
                 });
-                
-                // Choices.js'i yeniden başlat (eğer kullanılıyorsa)
-                if (typeof Choices !== 'undefined') {
-                    new Choices(select, {
-                        searchEnabled: true,
-                        itemSelectText: '',
-                        placeholder: true,
-                        placeholderValue: 'Müşteri Seçin'
-                    });
-                }
             }
         } catch (error) {
             console.error('Müşteriler yüklenirken hata:', error);
         }
     }
 
-    // Form gönderildiğinde customerId'yi ekle
-    document.getElementById('invoice_form').addEventListener('submit', function(e) {
-        const customerId = document.getElementById('choices-customer').value;
-        // Form verilerine customerId ekle
-        if (customerId) {
-            const hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = 'customerId';
-            hiddenInput.value = customerId;
-            this.appendChild(hiddenInput);
+    // Müşteri seçildiğinde email'i otomatik doldur
+    document.getElementById('choices-customer').addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const email = selectedOption.dataset.email;
+        if (email) {
+            document.getElementById('email').value = email;
         }
     });
+
+    // Adet artır
+    function increaseQty(id) {
+        const input = document.getElementById('product-qty-' + id);
+        input.value = parseInt(input.value) + 1;
+        calculateTotal();
+    }
+
+    // Adet azalt
+    function decreaseQty(id) {
+        const input = document.getElementById('product-qty-' + id);
+        if (parseInt(input.value) > 1) {
+            input.value = parseInt(input.value) - 1;
+            calculateTotal();
+        }
+    }
+
+    // Yeni ürün ekle
+    function addNewProduct() {
+        productCount++;
+        const tbody = document.getElementById('newlink');
+        const newRow = document.createElement('tr');
+        newRow.id = productCount;
+        newRow.className = 'product';
+        newRow.innerHTML = `
+            <th scope="row" class="product-id">${productCount}</th>
+            <td class="text-start">
+                <div class="mb-2">
+                    <input type="text" class="form-control bg-light border-0" id="productName-${productCount}" placeholder="Ürün Adı" required />
+                </div>
+                <textarea class="form-control bg-light border-0" id="productDetails-${productCount}" rows="2" placeholder="Ürün Detayları"></textarea>
+            </td>
+            <td>
+                <input type="number" class="form-control product-price bg-light border-0" id="productRate-${productCount}" step="0.01" placeholder="0.00" required onchange="calculateTotal()" />
+            </td>
+            <td>
+                <div class="input-step">
+                    <button type="button" class='minus' onclick="decreaseQty(${productCount})">–</button>
+                    <input type="number" class="product-quantity" id="product-qty-${productCount}" value="1" min="1" onchange="calculateTotal()">
+                    <button type="button" class='plus' onclick="increaseQty(${productCount})">+</button>
+                </div>
+            </td>
+            <td class="text-end">
+                <div>
+                    <input type="text" class="form-control bg-light border-0 product-line-price" id="productPrice-${productCount}" placeholder="$0.00" readonly />
+                </div>
+            </td>
+            <td class="product-removal">
+                <a href="javascript:void(0)" class="btn btn-danger" onclick="removeProduct(${productCount})">Sil</a>
+            </td>
+        `;
+        tbody.appendChild(newRow);
+    }
+
+    // Ürün sil
+    function removeProduct(id) {
+        const row = document.getElementById(id);
+        if (row && document.querySelectorAll('.product').length > 1) {
+            row.remove();
+            calculateTotal();
+        }
+    }
+
+    // Toplam hesapla
+    function calculateTotal() {
+        let subtotal = 0;
+        const products = document.querySelectorAll('.product');
+        
+        products.forEach(product => {
+            const id = product.id;
+            const price = parseFloat(document.getElementById('productRate-' + id)?.value) || 0;
+            const qty = parseInt(document.getElementById('product-qty-' + id)?.value) || 0;
+            const lineTotal = price * qty;
+            
+            const linePriceInput = document.getElementById('productPrice-' + id);
+            if (linePriceInput) {
+                linePriceInput.value = '$' + lineTotal.toFixed(2);
+            }
+            
+            subtotal += lineTotal;
+        });
+
+        const tax = subtotal * 0.18;
+        const total = subtotal + tax;
+
+        document.getElementById('cart-subtotal').value = '$' + subtotal.toFixed(2);
+        document.getElementById('cart-tax').value = '$' + tax.toFixed(2);
+        document.getElementById('cart-total').value = '$' + total.toFixed(2);
+        document.getElementById('sourceAmount').value = total.toFixed(2);
+    }
+
+    // Form gönderimi
+    document.getElementById('invoice_form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Form validasyonu
+        if (!this.checkValidity()) {
+            this.classList.add('was-validated');
+            return;
+        }
+
+        const customerId = document.getElementById('choices-customer').value;
+        const currency = document.getElementById('choices-currency').value;
+        const sourceCurrency = document.getElementById('choices-source-currency').value;
+        const sourceAmount = parseFloat(document.getElementById('sourceAmount').value) || 0;
+        const orderName = document.getElementById('orderName').value;
+        const email = document.getElementById('email').value;
+        const callbackUrl = document.getElementById('callbackUrl').value;
+
+        // Validasyon kontrolleri
+        if (!customerId) {
+            showError('Lütfen bir müşteri seçin.');
+            return;
+        }
+        if (!currency) {
+            showError('Lütfen bir para birimi seçin.');
+            return;
+        }
+        if (!sourceCurrency) {
+            showError('Lütfen gerçek para birimini seçin.');
+            return;
+        }
+        if (sourceAmount <= 0) {
+            showError('Tutar 0\'dan büyük olmalıdır.');
+            return;
+        }
+
+        // Sipariş numarası oluştur
+        const orderNumber = 'ORD-' + Date.now();
+
+        const invoiceData = {
+            customerId: parseInt(customerId),
+            currency: currency,
+            sourceCurrency: sourceCurrency,
+            sourceAmount: sourceAmount,
+            orderNumber: orderNumber,
+            orderName: orderName,
+            email: email,
+            callbackUrl: callbackUrl
+        };
+
+        // Loading modal göster
+        const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+        loadingModal.show();
+
+        try {
+            const response = await fetch('/api/invoices/invoice-add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(invoiceData)
+            });
+
+            loadingModal.hide();
+
+            if (response.ok) {
+                const result = await response.json();
+                document.getElementById('successMessage').textContent = 'Fatura numarası: ' + orderNumber;
+                const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                successModal.show();
+            } else {
+                const error = await response.json();
+                showError(error.message || 'Fatura oluşturulurken bir hata oluştu.');
+            }
+        } catch (error) {
+            loadingModal.hide();
+            showError('Sunucu ile bağlantı kurulamadı. Lütfen tekrar deneyin.');
+            console.error('Hata:', error);
+        }
+    });
+
+    function showError(message) {
+        document.getElementById('errorMessage').textContent = message;
+        const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+        errorModal.show();
+    }
 </script>
 }
