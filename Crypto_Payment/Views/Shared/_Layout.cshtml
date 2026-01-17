@@ -1,11 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr" data-layout="vertical" data-topbar="light" data-sidebar="dark" data-sidebar-size="lg" data-sidebar-image="none" data-preloader="disable">
 <head>
     <meta charset="utf-8"/>
     <title>@ViewData["Title"] - Crypto_Payment</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta content="Premium Multipurpose Admin & Dashboard Template" name="description" />
-    <meta content="Themesbrand" name="author" />
+    <meta content="Crypto Payment System" name="description" />
+    <meta content="CryptoPayment" name="author" />
     <!-- App favicon -->
     <link rel="shortcut icon" href="~/admin/velzon-dist/assets/images/favicon.ico">
 
@@ -23,56 +23,110 @@
     <link href="~/admin/velzon-dist/assets/css/custom.min.css" rel="stylesheet" type="text/css" />
     
     <style>
-        /* Sol menü düzeltmeleri */
-        .app-menu {
-            z-index: 1050;
+        /* Menü toggle düzeltmeleri */
+        .hamburger-icon {
+            cursor: pointer;
         }
         
+        .hamburger-icon span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background-color: #495057;
+            margin: 6px 0;
+            transition: 0.3s;
+        }
+        
+        /* Sidebar açık/kapalı durumu */
+        [data-sidebar-size="sm"] .app-menu {
+            width: 70px;
+        }
+        
+        [data-sidebar-size="sm"] .app-menu .menu-title,
+        [data-sidebar-size="sm"] .app-menu .nav-link span,
+        [data-sidebar-size="sm"] .app-menu .menu-dropdown {
+            display: none;
+        }
+        
+        [data-sidebar-size="sm"] .main-content {
+            margin-left: 70px;
+        }
+        
+        /* Mobil menü overlay */
         .vertical-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1040;
-            display: none;
+            background-color: rgba(0, 0, 0, 0.35);
+            z-index: 1002;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
         }
         
         body.vertical-sidebar-enable .vertical-overlay {
-            display: block;
+            opacity: 1;
+            visibility: visible;
         }
         
-        /* Menü kapalıyken */
-        @@media (max-width: 1024px) {
+        /* Mobil menü */
+        @@media (max-width: 991.98px) {
             .app-menu {
-                margin-left: -300px;
-                transition: all 0.3s ease;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
             }
             
             body.vertical-sidebar-enable .app-menu {
-                margin-left: 0;
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0 !important;
             }
         }
         
-        /* Menü öğeleri düzeni */
-        .navbar-nav .nav-item {
-            width: 100%;
-        }
-        
+        /* Menü öğeleri */
         .navbar-nav .nav-link {
-            padding: 10px 15px;
             display: flex;
             align-items: center;
+            padding: 0.625rem 1.5rem;
+            color: rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-nav .nav-link:hover,
+        .navbar-nav .nav-link.active {
+            color: #fff;
         }
         
         .navbar-nav .nav-link i {
-            margin-right: 10px;
-            font-size: 18px;
+            font-size: 1.1rem;
+            margin-right: 0.5rem;
+            min-width: 1.75rem;
+        }
+        
+        .menu-dropdown {
+            padding-left: 0;
         }
         
         .menu-dropdown .nav-link {
-            padding-left: 45px;
+            padding-left: 3.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .menu-dropdown .nav-link i {
+            font-size: 0.5rem;
+        }
+        
+        .menu-title {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.6875rem;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.4);
+            font-weight: 600;
+            letter-spacing: 0.05em;
         }
     </style>
 </head>
@@ -82,113 +136,72 @@
     <div id="layout-wrapper">
 
         <header id="page-topbar">
-    <div class="layout-width">
-        <div class="navbar-header">
-            <div class="d-flex">
-                <!-- LOGO -->
-                <div class="navbar-brand-box horizontal-logo">
-                    <a href="/" class="logo logo-dark">
-                        <span class="logo-sm">
-                            <img src="~/admin/velzon-dist/assets/images/logo-sm.png" alt="" height="22">
-                        </span>
-                        <span class="logo-lg">
-                            <img src="~/admin/velzon-dist/assets/images/logo-dark.png" alt="" height="17">
-                        </span>
-                    </a>
+            <div class="layout-width">
+                <div class="navbar-header">
+                    <div class="d-flex">
+                        <!-- LOGO -->
+                        <div class="navbar-brand-box horizontal-logo">
+                            <a href="/" class="logo logo-dark">
+                                <span class="logo-sm">
+                                    <img src="~/admin/velzon-dist/assets/images/logo-sm.png" alt="" height="22">
+                                </span>
+                                <span class="logo-lg">
+                                    <img src="~/admin/velzon-dist/assets/images/logo-dark.png" alt="" height="17">
+                                </span>
+                            </a>
+                            <a href="/" class="logo logo-light">
+                                <span class="logo-sm">
+                                    <img src="~/admin/velzon-dist/assets/images/logo-sm.png" alt="" height="22">
+                                </span>
+                                <span class="logo-lg">
+                                    <img src="~/admin/velzon-dist/assets/images/logo-light.png" alt="" height="17">
+                                </span>
+                            </a>
+                        </div>
 
-                    <a href="/" class="logo logo-light">
-                        <span class="logo-sm">
-                            <img src="~/admin/velzon-dist/assets/images/logo-sm.png" alt="" height="22">
-                        </span>
-                        <span class="logo-lg">
-                            <img src="~/admin/velzon-dist/assets/images/logo-light.png" alt="" height="17">
-                        </span>
-                    </a>
-                </div>
+                        <button type="button" class="btn btn-sm px-3 fs-16 header-item vertical-menu-btn topnav-hamburger" id="topnav-hamburger-icon">
+                            <span class="hamburger-icon">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </span>
+                        </button>
 
-                <button type="button" class="btn btn-sm px-3 fs-16 header-item vertical-menu-btn topnav-hamburger material-shadow-none" id="topnav-hamburger-icon">
-                    <span class="hamburger-icon">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </span>
-                </button>
-
-                <!-- App Search-->
-                <form class="app-search d-none d-md-block">
-                    <div class="position-relative">
-                        <input type="text" class="form-control" placeholder="Ara..." autocomplete="off" id="search-options" value="">
-                        <span class="mdi mdi-magnify search-widget-icon"></span>
-                        <span class="mdi mdi-close-circle search-widget-icon search-widget-icon-close d-none" id="search-close-options"></span>
-                    </div>
-                </form>
-            </div>
-
-            <div class="d-flex align-items-center">
-
-                <div class="dropdown d-md-none topbar-head-dropdown header-item">
-                    <button type="button" class="btn btn-icon btn-topbar material-shadow-none btn-ghost-secondary rounded-circle" id="page-header-search-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="bx bx-search fs-22"></i>
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0" aria-labelledby="page-header-search-dropdown">
-                        <form class="p-3">
-                            <div class="form-group m-0">
-                                <div class="input-group">
-                                    <input type="text" class="form-control" placeholder="Ara..." aria-label="Recipient's username">
-                                    <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i></button>
-                                </div>
+                        <!-- App Search-->
+                        <form class="app-search d-none d-md-block">
+                            <div class="position-relative">
+                                <input type="text" class="form-control" placeholder="Ara..." autocomplete="off" id="search-options" value="">
+                                <span class="mdi mdi-magnify search-widget-icon"></span>
                             </div>
                         </form>
                     </div>
-                </div>
 
-                <div class="ms-1 header-item d-none d-sm-flex">
-                    <button type="button" class="btn btn-icon btn-topbar material-shadow-none btn-ghost-secondary rounded-circle light-dark-mode">
-                        <i class='bx bx-moon fs-22'></i>
-                    </button>
-                </div>
+                    <div class="d-flex align-items-center">
+                        <div class="ms-1 header-item d-none d-sm-flex">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle light-dark-mode">
+                                <i class='bx bx-moon fs-22'></i>
+                            </button>
+                        </div>
 
-                <div class="dropdown topbar-head-dropdown ms-1 header-item" id="notificationDropdown">
-                    <button type="button" class="btn btn-icon btn-topbar material-shadow-none btn-ghost-secondary rounded-circle" id="page-header-notifications-dropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false">
-                        <i class='bx bx-bell fs-22'></i>
-                        <span class="position-absolute topbar-badge fs-10 translate-middle badge rounded-pill bg-danger">4<span class="visually-hidden">Okunmamış Mesajlar</span></span>
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0" aria-labelledby="page-header-notifications-dropdown">
-                        <div class="dropdown-head bg-primary bg-pattern rounded-top">
-                            <div class="p-3">
-                                <div class="row align-items-center">
-                                    <div class="col">
-                                        <h6 class="m-0 fs-16 fw-semibold text-white"> Bildirimler </h6>
-                                    </div>
-                                </div>
+                        <div class="dropdown ms-sm-3 header-item topbar-user">
+                            <button type="button" class="btn" id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="d-flex align-items-center">
+                                    <img class="rounded-circle header-profile-user" src="~/admin/velzon-dist/assets/images/users/avatar-1.jpg" alt="Header Avatar">
+                                    <span class="text-start ms-xl-2">
+                                        <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">Kullanıcı</span>
+                                        <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text">Admin</span>
+                                    </span>
+                                </span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <h6 class="dropdown-header">Hoş Geldiniz!</h6>
+                                <a class="dropdown-item" href="/api/auth/logout"><i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Çıkış Yap</span></a>
                             </div>
                         </div>
-                        <div class="p-2 text-center">
-                            <p class="text-muted mb-0">Yeni bildirim yok</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="dropdown ms-sm-3 header-item topbar-user">
-                    <button type="button" class="btn material-shadow-none" id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <span class="d-flex align-items-center">
-                            <img class="rounded-circle header-profile-user" src="~/admin/velzon-dist/assets/images/users/avatar-1.jpg" alt="Header Avatar">
-                            <span class="text-start ms-xl-2">
-                                <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">Kullanıcı</span>
-                                <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text">Admin</span>
-                            </span>
-                        </span>
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-end">
-                        <h6 class="dropdown-header">Hoş Geldiniz!</h6>
-                        <a class="dropdown-item" href="/profile"><i class="mdi mdi-account-circle text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Profil</span></a>
-                        <a class="dropdown-item" href="/api/auth/logout"><i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Çıkış</span></a>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</header>
+        </header>
 
         <!-- ========== App Menu ========== -->
         <div class="app-menu navbar-menu">
@@ -215,9 +228,8 @@
                 </button>
             </div>
 
-            <div id="scrollbar">
+            <div id="scrollbar" data-simplebar>
                 <div class="container-fluid">
-                    <div id="two-column-menu"></div>
                     <ul class="navbar-nav" id="navbar-nav">
                         <li class="menu-title"><span>MENÜ</span></li>
                         
@@ -228,47 +240,41 @@
                         </li>
                         
                         <li class="nav-item">
-                            <a class="nav-link menu-link" href="#sidebarDashboards" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDashboards">
-                                <i class="ri-apps-2-line"></i> <span>Yönetim</span>
+                            <a class="nav-link" href="/customers">
+                                <i class="ri-user-line"></i> <span>Müşteriler</span>
                             </a>
-                            <div class="collapse menu-dropdown" id="sidebarDashboards">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="/customers" class="nav-link"><i class="ri-user-line"></i> Müşteriler</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="/invoices" class="nav-link"><i class="ri-file-list-3-line"></i> Faturalar</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="/invoices/invoice-add" class="nav-link"><i class="ri-add-line"></i> Fatura Oluştur</a>
-                                    </li>
-                                </ul>
-                            </div>
                         </li>
                         
                         <li class="nav-item">
-                            <a class="nav-link menu-link" href="#sidebarRolesAndUsers" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarRolesAndUsers">
-                                <i class="ri-shield-user-line"></i> <span>Kullanıcı Yönetimi</span>
+                            <a class="nav-link" href="/invoices">
+                                <i class="ri-file-list-3-line"></i> <span>Faturalar</span>
                             </a>
-                            <div class="collapse menu-dropdown" id="sidebarRolesAndUsers">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="/users" class="nav-link"><i class="ri-user-settings-line"></i> Kullanıcılar</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="/roles" class="nav-link"><i class="ri-admin-line"></i> Roller</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="/authorisations" class="nav-link"><i class="ri-key-2-line"></i> Yetkiler</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="/user-roles" class="nav-link"><i class="ri-user-star-line"></i> Kullanıcı Rolleri</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="/role-authorisations" class="nav-link"><i class="ri-lock-unlock-line"></i> Rol Yetkileri</a>
-                                    </li>
-                                </ul>
-                            </div>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link" href="/invoices/invoice-add">
+                                <i class="ri-add-circle-line"></i> <span>Fatura Oluştur</span>
+                            </a>
+                        </li>
+                        
+                        <li class="menu-title"><span>YÖNETİM</span></li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link" href="/users">
+                                <i class="ri-user-settings-line"></i> <span>Kullanıcılar</span>
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link" href="/roles">
+                                <i class="ri-admin-line"></i> <span>Roller</span>
+                            </a>
+                        </li>
+                        
+                        <li class="nav-item">
+                            <a class="nav-link" href="/authorisations">
+                                <i class="ri-key-2-line"></i> <span>Yetkiler</span>
+                            </a>
                         </li>
                     </ul>
                 </div>
@@ -281,15 +287,11 @@
         <!-- Vertical Overlay-->
         <div class="vertical-overlay"></div>
 
-        <!-- ============================================================== -->
-        <!-- Start right Content here -->
-        <!-- ============================================================== -->
+        <!-- Main Content -->
         <div class="main-content">
-
             <div class="page-content">
                 @RenderBody()
             </div>
-            <!-- End Page-content -->
 
             <footer class="footer">
                 <div class="container-fluid">
@@ -306,25 +308,9 @@
                 </div>
             </footer>
         </div>
-        <!-- end main content-->
 
     </div>
     <!-- END layout-wrapper -->
-
-    <!--start back-to-top-->
-    <button onclick="topFunction()" class="btn btn-danger btn-icon" id="back-to-top">
-        <i class="ri-arrow-up-line"></i>
-    </button>
-    <!--end back-to-top-->
-
-    <!--preloader-->
-    <div id="preloader">
-        <div id="status">
-            <div class="spinner-border text-primary avatar-sm" role="status">
-                <span class="visually-hidden">Yükleniyor...</span>
-            </div>
-        </div>
-    </div>
 
     <!-- JAVASCRIPT -->
     <script src="~/admin/velzon-dist/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -334,60 +320,59 @@
     <script src="~/admin/velzon-dist/assets/js/pages/plugins/lord-icon-2.1.0.js"></script>
     <script src="~/admin/velzon-dist/assets/js/plugins.js"></script>
 
-    <!-- apexcharts -->
-    <script src="~/admin/velzon-dist/assets/libs/apexcharts/apexcharts.min.js"></script>
-
-    <!-- Swiper Js -->
-    <script src="~/admin/velzon-dist/assets/libs/swiper/swiper-bundle.min.js"></script>
-
-    <!-- CRM js -->
-    <script src="~/admin/velzon-dist/assets/js/pages/dashboard-crypto.init.js"></script>
-
     <!-- App js -->
     <script src="~/admin/velzon-dist/assets/js/app.js"></script>
     
-    <!-- Menü toggle düzeltmesi -->
+    <!-- Menü Toggle Script -->
     <script>
+    (function() {
+        'use strict';
+        
         document.addEventListener('DOMContentLoaded', function() {
-            // Hamburger menü toggle
             var hamburgerBtn = document.getElementById('topnav-hamburger-icon');
             var verticalOverlay = document.querySelector('.vertical-overlay');
+            var html = document.documentElement;
             
+            // Hamburger buton click
             if (hamburgerBtn) {
-                hamburgerBtn.addEventListener('click', function() {
-                    document.body.classList.toggle('vertical-sidebar-enable');
+                hamburgerBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
                     
-                    if (window.innerWidth >= 1025) {
-                        document.documentElement.setAttribute('data-sidebar-size', 
-                            document.documentElement.getAttribute('data-sidebar-size') === 'sm' ? 'lg' : 'sm');
+                    if (window.innerWidth >= 992) {
+                        // Desktop: sidebar boyutunu değiştir
+                        var currentSize = html.getAttribute('data-sidebar-size');
+                        if (currentSize === 'sm') {
+                            html.setAttribute('data-sidebar-size', 'lg');
+                        } else {
+                            html.setAttribute('data-sidebar-size', 'sm');
+                        }
+                    } else {
+                        // Mobil: sidebar'ı aç/kapat
+                        document.body.classList.toggle('vertical-sidebar-enable');
                     }
                 });
             }
             
-            // Overlay'a tıklandığında menüyü kapat
+            // Overlay click - menüyü kapat
             if (verticalOverlay) {
                 verticalOverlay.addEventListener('click', function() {
                     document.body.classList.remove('vertical-sidebar-enable');
                 });
             }
             
-            // Alt menü toggle
-            var menuLinks = document.querySelectorAll('.menu-link[data-bs-toggle="collapse"]');
-            menuLinks.forEach(function(link) {
-                link.addEventListener('click', function(e) {
-                    var target = document.querySelector(this.getAttribute('href'));
-                    if (target) {
-                        // Diğer açık menüleri kapat
-                        document.querySelectorAll('.menu-dropdown.show').forEach(function(dropdown) {
-                            if (dropdown !== target) {
-                                dropdown.classList.remove('show');
-                            }
-                        });
-                        target.classList.toggle('show');
-                    }
-                });
+            // Sayfa yüklendiğinde sidebar durumunu ayarla
+            if (window.innerWidth < 992) {
+                html.setAttribute('data-sidebar-size', 'lg');
+            }
+            
+            // Pencere boyutu değiştiğinde
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 992) {
+                    document.body.classList.remove('vertical-sidebar-enable');
+                }
             });
         });
+    })();
     </script>
     
     @await RenderSectionAsync("Scripts", required: false)
