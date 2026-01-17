@@ -23,10 +23,10 @@ public class CustomerManager : ICustomerService
             FirstName   = dto.FirstName.Trim(),
             LastName    = dto.LastName.Trim(),
             Phone       = dto.Phone.Trim(),
-            Email       = dto.Email?.Trim(),
-            CompanyName = dto.CompanyName.Trim(),
-            Telegram    = dto.Telegram.Trim(),
-            Skype       = dto.Skype.Trim()
+            Email       = dto.Email?.Trim() ?? "",
+            CompanyName = dto.CompanyName?.Trim() ?? "",
+            Telegram    = dto.Telegram?.Trim() ?? "",
+            Skype       = dto.Skype?.Trim() ?? ""
         };
 
         _db.Customers.Add(customer);
@@ -44,10 +44,10 @@ public class CustomerManager : ICustomerService
         customer.FirstName   = dto.FirstName.Trim();
         customer.LastName    = dto.LastName.Trim();
         customer.Phone       = dto.Phone.Trim();
-        customer.Email       = dto.Email?.Trim();
-        customer.CompanyName = dto.CompanyName.Trim();
-        customer.Telegram    = dto.Telegram.Trim();
-        customer.Skype       = dto.Skype.Trim();
+        customer.Email       = dto.Email?.Trim() ?? "";
+        customer.CompanyName = dto.CompanyName?.Trim() ?? "";
+        customer.Telegram    = dto.Telegram?.Trim() ?? "";
+        customer.Skype       = dto.Skype?.Trim() ?? "";
 
         await _db.SaveChangesAsync();
 

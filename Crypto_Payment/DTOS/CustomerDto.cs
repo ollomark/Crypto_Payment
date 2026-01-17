@@ -16,14 +16,11 @@ public class CustomerDto
     public string Phone { get; set; }
 
     [EmailAddress(ErrorMessage = "Geçerli bir e-posta adresi giriniz.")]
-    public string Email { get; set; }
+    public string? Email { get; set; }
 
-    [Required(ErrorMessage = "Şirket adı boş geçilemez.")]
-    public string CompanyName { get; set; }
+    public string? CompanyName { get; set; }
 
-    [Required(ErrorMessage = "Telegram boş geçilemez.")]
-    public string Telegram { get; set; }
+    public string? Telegram { get; set; }
 
-    [Required(ErrorMessage = "Skype boş geçilemez.")]
-    public string Skype { get; set; }
+    public string? Skype { get; set; }
 }
