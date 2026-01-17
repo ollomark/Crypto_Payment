@@ -293,7 +293,7 @@ public class AuthController : Controller
     private static string SafeReturnUrl(string? returnUrl)
         => (!string.IsNullOrWhiteSpace(returnUrl) && Uri.IsWellFormedUriString(returnUrl, UriKind.Relative))
             ? returnUrl
-            : "/dashboard";
+            : "/";
 
     private static string BuildOtpAuthUri(string issuer, string email, string secretKey)
     {
