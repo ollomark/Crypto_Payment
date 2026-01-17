@@ -83,12 +83,13 @@ using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         db.Database.Migrate();
+        Console.WriteLine("MIGRATE OK");
     }
     catch (Exception ex)
     {
-        Console.WriteLine("MIGRATE FAIL => " + ex.Message);
+        Console.WriteLine("MIGRATE FAIL: " + ex.Message);
         Console.WriteLine(ex.ToString());
-        // throw yok
+        throw; // burada throw kalsın ki deploy fail olup hatayı net görelim
     }
 }
 
