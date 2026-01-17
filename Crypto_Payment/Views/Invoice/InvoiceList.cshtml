@@ -208,8 +208,9 @@
                                     <th class="sort text-uppercase" data-sort="source_currency">Gerçek Para Birimi</th>
                                     <th class="sort text-uppercase" data-sort="order_name">Fatura Adı</th>
                                     <th class="sort text-uppercase" data-sort="order_number">Fatura Numarası</th>
-                                    <th class="sort text-uppercase" data-sort="source_amount">55</th>
-                                    <th class="sort text-uppercase" data-sort="status">Ödeme Linki</th>
+                                    <th class="sort text-uppercase" data-sort="source_amount">Tutar</th>
+                                    <th class="sort text-uppercase" data-sort="status">Durum</th>
+                                    <th class="sort text-uppercase" data-sort="payment_link">Ödeme Linki</th>
                                     <th class="sort text-uppercase" data-sort="action">Eylemler</th>
                                 </tr>
                             </thead>
@@ -278,6 +279,35 @@
             tbody.innerHTML = '';
         
             list.forEach(i => {
+                // Durum badge'i
+                let statusBadge = '';
+                switch(i.status) {
+                    case 'completed':
+                        statusBadge = '<span class="badge bg-success-subtle text-success text-uppercase">Ödendi</span>';
+                        break;
+                    case 'pending':
+                        statusBadge = '<span class="badge bg-warning-subtle text-warning text-uppercase">Bekliyor</span>';
+                        break;
+                    case 'expired':
+                        statusBadge = '<span class="badge bg-danger-subtle text-danger text-uppercase">Süresi Doldu</span>';
+                        break;
+                    case 'cancelled':
+                        statusBadge = '<span class="badge bg-secondary-subtle text-secondary text-uppercase">İptal</span>';
+                        break;
+                    default:
+                        statusBadge = '<span class="badge bg-info-subtle text-info text-uppercase">Bilinmiyor</span>';
+                }
+                
+                // Ödeme linki
+                let paymentLink = '';
+                if (i.invoiceUrl) {
+                    paymentLink = `<a href="${i.invoiceUrl}" target="_blank" class="btn btn-sm btn-success">
+                        <i class="ri-external-link-line me-1"></i>Ödeme Yap
+                    </a>`;
+                } else {
+                    paymentLink = '<span class="text-muted">Link yok</span>';
+                }
+                
                 tbody.innerHTML += `
                 <tr data-id="${i.id}">
                     <th scope="row">
@@ -295,8 +325,9 @@
                     <td class="source_currency">${i.sourceCurrency}</td>
                     <td class="order_name">${i.orderName}</td>
                     <td class="order_number">${i.orderNumber}</td>
-                    <td class="source_amount">${i.sourceAmount}</td>
-                    <td class="status"><span class="badge bg-success-subtle text-success text-uppercase">Ödeme Linki</span></td>
+                    <td class="source_amount">${i.sourceAmount} ${i.sourceCurrency}</td>
+                    <td class="status">${statusBadge}</td>
+                    <td class="payment_link">${paymentLink}</td>
                     <td>
                         <div class="dropdown">
                             <button class="btn btn-soft-secondary btn-sm dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -309,6 +340,7 @@
                                         Güncelle</button></li>
                                 <li><a class="dropdown-item" href="javascript:void(0);"><i class="ri-download-2-line align-bottom me-2 text-muted"></i>
                                         İndir</a></li>
+                                ${i.invoiceUrl ? `<li><a class="dropdown-item" href="${i.invoiceUrl}" target="_blank"><i class="ri-link align-bottom me-2 text-muted"></i>Ödeme Linki</a></li>` : ''}
                                 <li class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item remove-item-btn" data-bs-toggle="modal" href="#deleteOrder">

@@ -30,4 +30,9 @@ public class InvoiceDto
 
     // Müşteri seçimi
     public int? CustomerId { get; set; }
+    
+    // Plisio entegrasyonu (sadece okuma için)
+    public string? InvoiceUrl { get; set; }
+    public string? TxnId { get; set; }
+    public string? Status { get; set; }
 }

@@ -44,11 +44,15 @@ public class PlisioManager : IPlisioService
         if (string.Equals(status, "success", StringComparison.OrdinalIgnoreCase))
         {
             var data = doc.RootElement.GetProperty("data");
+            var txnId = data.GetProperty("txn_id").GetString();
+            var invoiceUrl = data.GetProperty("invoice_url").GetString();
+            
             return new PlisioInvoiceResult
             {
                 IsSuccess = true,
-                InvoiceId = data.GetProperty("txn_id").GetString(),
-                InvoiceUrl = data.GetProperty("invoice_url").GetString()
+                InvoiceId = txnId,
+                TxnId = txnId,
+                InvoiceUrl = invoiceUrl
             };
         }
         else
@@ -76,6 +80,7 @@ public class PlisioInvoiceResult
 {
     public bool IsSuccess { get; set; }
     public string? InvoiceId { get; set; }   // txn_id
+    public string? TxnId { get; set; }       // txn_id (aynı değer)
     public string? InvoiceUrl { get; set; }  // invoice_url
     public string? ErrorMessage { get; set; }
     public int? ErrorCode { get; set; }
