@@ -16,4 +16,5 @@ public class PlisioInvoiceDetails
     public DateTime? ExpireTime { get; set; }
     public string? QrCodeUrl { get; set; }
     public string? Status { get; set; }
+    public List<string>? TxIds { get; set; }
 }
