@@ -300,8 +300,8 @@
                 
                 // Ödeme linki
                 let paymentLink = '';
-                if (i.invoiceUrl) {
-                    paymentLink = `<a href="${i.invoiceUrl}" target="_blank" class="btn btn-sm btn-success">
+                if (i.txnId) {
+                    paymentLink = `<a href="/pay/${i.id}" target="_blank" class="btn btn-sm btn-success">
                         <i class="ri-external-link-line me-1"></i>Ödeme Yap
                     </a>`;
                 } else {

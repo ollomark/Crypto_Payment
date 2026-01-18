@@ -68,6 +68,62 @@ public class PlisioManager : IPlisioService
         }
     }
     
+    public async Task<PlisioInvoiceDetails?> GetInvoiceDetailsAsync(string? txnId)
+    {
+        if (string.IsNullOrEmpty(txnId)) return null;
+
+        try
+        {
+            var url = $"https://api.plisio.net/api/v1/operations/{txnId}?api_key={Uri.EscapeDataString(_apiKey)}";
+            var resp = await _http.GetAsync(url);
+            var body = await resp.Content.ReadAsStringAsync();
+
+            using var doc = JsonDocument.Parse(body);
+            var status = doc.RootElement.GetProperty("status").GetString();
+
+            if (!string.Equals(status, "success", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            var data = doc.RootElement.GetProperty("data");
+            
+            var details = new PlisioInvoiceDetails
+            {
+                Status = data.TryGetProperty("status", out var s) ? s.GetString() : null,
+                Amount = data.TryGetProperty("amount", out var a) ? a.GetString() : null,
+                Currency = data.TryGetProperty("currency", out var cur) ? cur.GetString() : null
+            };
+
+            // Cüzdan adresi
+            if (data.TryGetProperty("wallet_hash", out var wh))
+            {
+                details.WalletAddress = wh.GetString();
+            }
+
+            // Expire time (Unix timestamp)
+            if (data.TryGetProperty("expire_utc", out var exp))
+            {
+                if (exp.TryGetInt64(out var expUnix))
+                {
+                    details.ExpireTime = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
+                }
+            }
+
+            // QR Code URL
+            if (data.TryGetProperty("qr_code", out var qr))
+            {
+                details.QrCodeUrl = qr.GetString();
+            }
+
+            return details;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+    
     private static string AddJsonTrue(string url)
     {
         if (string.IsNullOrWhiteSpace(url)) return url;
