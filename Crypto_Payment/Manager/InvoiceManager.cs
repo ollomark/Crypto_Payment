@@ -55,6 +55,28 @@ public class InvoiceManager : IInvoiceService
             Status = x.Status
         };
     }
+    
+    public async Task<InvoiceDto?> GetByTxnIdAsync(string txnId)
+    {
+        var x = await _db.Invoices.FirstOrDefaultAsync(c => c.TxnId == txnId);
+        if (x == null) return null;
+        
+        return new InvoiceDto
+        {
+            Id = x.Id,
+            SourceCurrency = x.SourceCurrency,
+            SourceAmount = x.SourceAmount,
+            OrderNumber = x.OrderNumber,
+            Currency = x.Currency,
+            Email = x.Email,
+            OrderName = x.OrderName,
+            CallbackUrl = x.CallbackUrl,
+            CustomerId = x.CustomerId,
+            InvoiceUrl = x.InvoiceUrl,
+            TxnId = x.TxnId,
+            Status = x.Status
+        };
+    }
 
     public async Task<InvoiceDto> CreateAsync(InvoiceDto dto)
     {
@@ -111,6 +133,15 @@ public class InvoiceManager : IInvoiceService
         dto.TxnId = invoice.TxnId;
         dto.Status = invoice.Status;
         return dto;
+    }
+    
+    public async Task UpdateStatusAsync(int id, string status)
+    {
+        var invoice = await _db.Invoices.FirstOrDefaultAsync(x => x.Id == id);
+        if (invoice == null) throw new KeyNotFoundException("Fatura bulunamadı.");
+        
+        invoice.Status = status;
+        await _db.SaveChangesAsync();
     }
 
     public async Task DeleteAsync(int id)

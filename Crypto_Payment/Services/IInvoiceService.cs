@@ -13,4 +13,8 @@ public interface IInvoiceService
     public Task<InvoiceDto> UpdateAsync(int id, InvoiceDto dto);
 
     public Task DeleteAsync(int id);
+    
+    public Task UpdateStatusAsync(int id, string status);
+    
+    public Task<InvoiceDto?> GetByTxnIdAsync(string txnId);
 }
