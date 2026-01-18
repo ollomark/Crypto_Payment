@@ -46,6 +46,13 @@ namespace Crypto_Payment.Controllers
                 viewModel.Network = GetNetworkName(invoice.Currency);
                 viewModel.ExpireTime = plisioDetails.ExpireTime;
                 viewModel.QrCodeUrl = plisioDetails.QrCodeUrl;
+                viewModel.TxIds = plisioDetails.TxIds ?? new List<string>();
+                
+                // Update status from Plisio if available
+                if (!string.IsNullOrEmpty(plisioDetails.Status))
+                {
+                    viewModel.Status = plisioDetails.Status;
+                }
             }
 
             return View(viewModel);
@@ -54,7 +61,7 @@ namespace Crypto_Payment.Controllers
         private string GetNetworkName(string? currency)
         {
             if (string.IsNullOrEmpty(currency)) return "Unknown";
-            
+
             return currency.ToUpper() switch
             {
                 "USDT_TRX" => "Tron (TRC20)",
