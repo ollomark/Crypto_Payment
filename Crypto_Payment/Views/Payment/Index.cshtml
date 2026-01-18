@@ -1,211 +1,183 @@
 @model Crypto_Payment.DTOS.PaymentViewModel
 @{
-    ViewData["Title"] = "Ödeme";
     Layout = null;
 }
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ödeme - @Model.OrderNumber</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - @Model.OrderNumber</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --dark: #1e293b;
-            --gray: #64748b;
-            --light: #f8fafc;
-            --border: #e2e8f0;
-        }
-        
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
-            min-height: 100vh;
-            color: #fff;
-        }
-        
-        .payment-container { max-width: 480px; margin: 0 auto; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; }
-        .header { text-align: center; padding: 20px 0; }
-        .logo { font-size: 24px; font-weight: 700; color: #fff; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .logo i { font-size: 32px; color: var(--primary); }
-        .order-info { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
-        .order-number { font-size: 14px; color: var(--gray); margin-bottom: 5px; }
-        .order-name { font-size: 18px; font-weight: 600; }
-        .amount-section { text-align: center; padding: 30px 0; }
-        .amount-label { font-size: 14px; color: var(--gray); margin-bottom: 10px; }
-        .amount { font-size: 48px; font-weight: 700; color: var(--primary); }
-        .amount-crypto { font-size: 24px; color: var(--gray); margin-top: 5px; }
-        .payment-card { background: rgba(255,255,255,0.08); border-radius: 20px; padding: 25px; flex: 1; }
-        .network-badge { display: inline-flex; align-items: center; gap: 8px; background: var(--primary); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500; margin-bottom: 20px; }
-        .qr-section { text-align: center; margin-bottom: 25px; }
-        .qr-code { background: #fff; padding: 15px; border-radius: 16px; display: inline-block; }
-        .qr-code img { width: 180px; height: 180px; }
-        .wallet-section { margin-bottom: 25px; }
-        .wallet-label { font-size: 12px; color: var(--gray); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-        .wallet-address { background: rgba(0,0,0,0.3); border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 10px; }
-        .wallet-address code { flex: 1; font-size: 13px; word-break: break-all; color: #fff; }
-        .copy-btn { background: var(--primary); border: none; color: #fff; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
-        .copy-btn:hover { background: var(--primary-dark); }
-        .copy-btn.copied { background: var(--success); }
-        .timer-section { text-align: center; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 12px; margin-bottom: 20px; }
-        .timer-label { font-size: 12px; color: var(--gray); margin-bottom: 8px; }
-        .timer { font-size: 32px; font-weight: 700; font-family: 'Courier New', monospace; }
-        .timer.warning { color: var(--warning); }
-        .timer.danger { color: var(--danger); }
-        .status-section { text-align: center; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
-        .status-pending { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
-        .status-completed { background: rgba(16, 185, 129, 0.2); color: var(--success); }
-        .status-expired { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
-        .status-icon { font-size: 24px; margin-bottom: 5px; }
-        .footer-info { text-align: center; padding: 20px 0; color: var(--gray); font-size: 12px; }
-        .footer-info a { color: var(--primary); text-decoration: none; }
-        .pulse { animation: pulse 2s infinite; }
-        @@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .payment-container { background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 420px; width: 100%; overflow: hidden; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; }
+        .header h1 { font-size: 1.5rem; margin-bottom: 5px; }
+        .header .order-info { font-size: 0.9rem; opacity: 0.9; }
+        .amount-section { padding: 20px; text-align: center; border-bottom: 1px solid #eee; }
+        .fiat-amount { font-size: 2rem; font-weight: 700; color: #333; }
+        .crypto-amount { font-size: 1.2rem; color: #667eea; margin-top: 5px; }
+        .network-badge { display: inline-block; background: #f0f0f0; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; color: #666; margin-top: 10px; }
+        .qr-section { padding: 20px; display: flex; gap: 15px; align-items: flex-start; }
+        .qr-code { flex-shrink: 0; }
+        .qr-code img { width: 140px; height: 140px; border-radius: 8px; border: 2px solid #eee; }
+        .qr-placeholder { width: 140px; height: 140px; background: #f5f5f5; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 0.8rem; }
+        .wallet-info { flex: 1; min-width: 0; }
+        .info-label { font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+        .info-value { display: flex; align-items: center; gap: 8px; background: #f8f9fa; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; }
+        .info-value span { flex: 1; font-family: monospace; font-size: 0.85rem; word-break: break-all; color: #333; }
+        .copy-btn { background: none; border: none; cursor: pointer; padding: 5px; color: #667eea; }
+        .copy-btn svg { width: 18px; height: 18px; }
+        .timer-section { padding: 15px 20px; background: #fff8e1; border-top: 1px solid #ffe082; text-align: center; }
+        .timer-label { font-size: 0.85rem; color: #f57c00; margin-bottom: 5px; }
+        .timer-value { font-size: 1.5rem; font-weight: 700; color: #e65100; font-family: monospace; }
+        .timer-expired { color: #d32f2f; }
+        .status-section { padding: 20px; text-align: center; }
+        .status-badge { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 25px; font-weight: 600; font-size: 0.9rem; }
+        .status-pending { background: #fff3e0; color: #e65100; }
+        .status-completed, .status-confirmed { background: #e8f5e9; color: #2e7d32; }
+        .status-expired { background: #ffebee; color: #c62828; }
+        .status-icon { width: 20px; height: 20px; }
+        .tx-section { padding: 0 20px 20px; }
+        .tx-title { font-size: 0.85rem; color: #666; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+        .tx-list { background: #f8f9fa; border-radius: 8px; padding: 10px; }
+        .tx-item { display: flex; align-items: center; gap: 8px; padding: 8px; background: white; border-radius: 6px; margin-bottom: 5px; }
+        .tx-item:last-child { margin-bottom: 0; }
+        .tx-hash { flex: 1; font-family: monospace; font-size: 0.75rem; color: #667eea; word-break: break-all; }
+        .warning-section { padding: 15px 20px; background: #fff3e0; border-top: 1px solid #ffe082; }
+        .warning-text { display: flex; align-items: flex-start; gap: 10px; font-size: 0.85rem; color: #e65100; }
+        .footer { padding: 15px 20px; background: #f8f9fa; text-align: center; font-size: 0.8rem; color: #999; }
+        .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #e65100; border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; }
+        @@keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 8px; font-size: 0.9rem; opacity: 0; transition: opacity 0.3s; z-index: 1000; }
+        .toast.show { opacity: 1; }
     </style>
 </head>
 <body>
     <div class="payment-container">
         <div class="header">
-            <div class="logo">
-                <i class="ri-wallet-3-fill"></i>
-                <span>CryptoPayment</span>
-            </div>
+            <h1>Crypto Payment</h1>
+            <div class="order-info">Order: @Model.OrderNumber</div>
         </div>
-        
-        <div class="order-info">
-            <div class="order-number">Sipariş No: @Model.OrderNumber</div>
-            <div class="order-name">@Model.OrderName</div>
-        </div>
-        
         <div class="amount-section">
-            <div class="amount-label">Ödenecek Tutar</div>
-            <div class="amount">@Model.SourceAmount.ToString("N2") @Model.SourceCurrency</div>
-            @if (!string.IsNullOrEmpty(Model.CryptoAmount))
-            {
-                <div class="amount-crypto">≈ @Model.CryptoAmount @Model.CryptoCurrency</div>
-            }
+            <div class="fiat-amount">@Model.SourceAmount.ToString("N2") @Model.SourceCurrency</div>
+            <div class="crypto-amount">≈ @Model.CryptoAmount @Model.CryptoCurrency.Replace("_", " ")</div>
+            <div class="network-badge">@Model.Network</div>
         </div>
-        
-        <div class="payment-card">
-            <div class="text-center">
-                <span class="network-badge">
-                    <i class="ri-coin-fill"></i>
-                    @Model.Network
-                </span>
+        <div class="qr-section">
+            <div class="qr-code">
+                @if (!string.IsNullOrEmpty(Model.QrCodeUrl))
+                {
+                    <img src="@Model.QrCodeUrl" alt="QR Code" />
+                }
+                else
+                {
+                    <div class="qr-placeholder">QR Code</div>
+                }
             </div>
-            
-            @if (!string.IsNullOrEmpty(Model.QrCodeUrl))
-            {
-                <div class="qr-section">
-                    <div class="qr-code">
-                        <img src="@Model.QrCodeUrl" alt="QR Code" />
-                    </div>
+            <div class="wallet-info">
+                <div class="info-label">Wallet Address</div>
+                <div class="info-value">
+                    <span id="walletAddress">@Model.WalletAddress</span>
+                    <button class="copy-btn" onclick="copyToClipboard('walletAddress', 'Address copied!')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
                 </div>
-            }
-            
-            <div class="wallet-section">
-                <div class="wallet-label">Cüzdan Adresi</div>
-                <div class="wallet-address">
-                    <code id="walletAddress">@Model.WalletAddress</code>
-                    <button class="copy-btn" onclick="copyAddress()" title="Kopyala">
-                        <i class="ri-file-copy-line" id="copyIcon"></i>
+                <div class="info-label">Amount</div>
+                <div class="info-value">
+                    <span id="cryptoAmount">@Model.CryptoAmount @Model.CryptoCurrency.Replace("_", " ")</span>
+                    <button class="copy-btn" onclick="copyToClipboard('cryptoAmount', 'Amount copied!')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                     </button>
                 </div>
             </div>
-            
-            @if (Model.ExpireTime.HasValue)
-            {
-                <div class="timer-section">
-                    <div class="timer-label">Kalan Süre</div>
-                    <div class="timer" id="countdown">--:--</div>
-                </div>
-            }
-            
-            <div class="status-section status-@Model.Status.ToLower()" id="statusSection">
-                @if (Model.Status == "pending")
-                {
-                    <div class="status-icon pulse"><i class="ri-time-line"></i></div>
-                    <div>Ödeme Bekleniyor</div>
-                }
-                else if (Model.Status == "completed")
-                {
-                    <div class="status-icon"><i class="ri-checkbox-circle-fill"></i></div>
-                    <div>Ödeme Tamamlandı</div>
-                }
-                else if (Model.Status == "expired")
-                {
-                    <div class="status-icon"><i class="ri-close-circle-fill"></i></div>
-                    <div>Süre Doldu</div>
-                }
+        </div>
+        <div class="timer-section" id="timerSection">
+            <div class="timer-label"><span class="spinner"></span> Time remaining for payment</div>
+            <div class="timer-value" id="countdown">--:--:--</div>
+        </div>
+        <div class="status-section">
+            <div class="status-badge @GetStatusClass()" id="statusBadge">
+                @Html.Raw(GetStatusIcon())
+                <span id="statusText">@GetStatusText()</span>
             </div>
         </div>
-        
-        <div class="footer-info">
-            <p>Ödeme işlemi <a href="https://plisio.net" target="_blank">Plisio</a> altyapısı ile güvence altındadır.</p>
-            <p>İşlem ID: @Model.TxnId</p>
-        </div>
-    </div>
-    
-    <script>
-        function copyAddress() {
-            var address = document.getElementById('walletAddress').textContent;
-            navigator.clipboard.writeText(address).then(function() {
-                var btn = document.querySelector('.copy-btn');
-                var icon = document.getElementById('copyIcon');
-                btn.classList.add('copied');
-                icon.className = 'ri-check-line';
-                setTimeout(function() {
-                    btn.classList.remove('copied');
-                    icon.className = 'ri-file-copy-line';
-                }, 2000);
-            });
-        }
-        
-        @if (Model.ExpireTime.HasValue)
+        @if (Model.TxIds != null && Model.TxIds.Any())
         {
-            @:var expireTime = new Date('@Model.ExpireTime.Value.ToString("yyyy-MM-ddTHH:mm:ssZ")').getTime();
-            @:var countdownInterval = setInterval(updateCountdown, 1000);
-            @:updateCountdown();
-            @:function updateCountdown() {
-            @:    var now = new Date().getTime();
-            @:    var distance = expireTime - now;
-            @:    if (distance <= 0) {
-            @:        document.getElementById('countdown').innerHTML = "00:00";
-            @:        document.getElementById('countdown').classList.add('danger');
-            @:        clearInterval(countdownInterval);
-            @:        checkStatus();
-            @:        return;
-            @:    }
-            @:    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            @:    var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-            @:    var display = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
-            @:    document.getElementById('countdown').innerHTML = display;
-            @:    if (distance < 300000) { document.getElementById('countdown').classList.add('warning'); }
-            @:    if (distance < 60000) { document.getElementById('countdown').classList.remove('warning'); document.getElementById('countdown').classList.add('danger'); }
-            @:}
-        }
-        
-        function checkStatus() {
-            fetch('/api/invoice/@Model.InvoiceId/status')
-                .then(function(response) { return response.json(); })
-                .then(function(data) {
-                    if (data.status !== '@Model.Status') {
-                        location.reload();
+            <div class="tx-section" id="txSection">
+                <div class="tx-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    Transaction ID(s)
+                </div>
+                <div class="tx-list">
+                    @foreach (var txId in Model.TxIds)
+                    {
+                        <div class="tx-item">
+                            <span class="tx-hash">@txId</span>
+                            <button class="copy-btn" onclick="copyText('@txId', 'TX ID copied!')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            </button>
+                        </div>
                     }
-                })
-                .catch(function(err) { console.log('Status check failed'); });
+                </div>
+            </div>
         }
-        
-        setInterval(checkStatus, 30000);
+        else
+        {
+            <div class="tx-section hidden" id="txSection">
+                <div class="tx-title">Transaction ID(s)</div>
+                <div class="tx-list" id="txList"></div>
+            </div>
+        }
+        <div class="warning-section">
+            <div class="warning-text">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                <span>After payment, wait until you are redirected to the order confirmation page.</span>
+            </div>
+        </div>
+        <div class="footer">Powered by Plisio</div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+        const expireTime = @(Model.ExpireTime.HasValue ? $"new Date('{Model.ExpireTime.Value:yyyy-MM-ddTHH:mm:ssZ}')" : "null");
+        const currentStatus = '@Model.Status';
+        const invoiceId = @Model.InvoiceId;
+        let confettiTriggered = false;
+        function updateCountdown() {
+            if (!expireTime) { document.getElementById('countdown').textContent = '--:--:--'; return; }
+            const now = new Date();
+            const diff = expireTime - now;
+            if (diff <= 0) { document.getElementById('countdown').textContent = 'EXPIRED'; document.getElementById('countdown').classList.add('timer-expired'); return; }
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            document.getElementById('countdown').textContent = hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+        }
+        function copyToClipboard(elementId, message) { const text = document.getElementById(elementId).textContent.trim(); copyText(text, message); }
+        function copyText(text, message) { navigator.clipboard.writeText(text).then(() => { showToast(message); }); }
+        function showToast(message) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2000); }
+        function triggerConfetti() {
+            if (confettiTriggered) return;
+            confettiTriggered = true;
+            const duration = 3000;
+            const end = Date.now() + duration;
+            (function frame() {
+                confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#667eea', '#764ba2', '#2e7d32', '#ffd700'] });
+                confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#667eea', '#764ba2', '#2e7d32', '#ffd700'] });
+                if (Date.now() < end) { requestAnimationFrame(frame); }
+            }());
+        }
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+        if (currentStatus === 'completed' || currentStatus === 'confirmed') { setTimeout(triggerConfetti, 500); }
     </script>
+    @functions {
+        string GetStatusClass() { return Model.Status?.ToLower() switch { "completed" or "confirmed" => "status-completed", "expired" or "cancelled" => "status-expired", _ => "status-pending" }; }
+        string GetStatusText() { return Model.Status?.ToLower() switch { "completed" or "confirmed" => "Payment Confirmed!", "expired" => "Payment Expired", "cancelled" => "Payment Cancelled", _ => "Waiting for payment..." }; }
+        string GetStatusIcon() { return Model.Status?.ToLower() switch { "completed" or "confirmed" => "<svg class=\"status-icon\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z\"/></svg>", "expired" or "cancelled" => "<svg class=\"status-icon\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z\"/></svg>", _ => "<span class=\"spinner\"></span>" }; }
+    }
 </body>
 </html>
