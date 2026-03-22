@@ -6,32 +6,32 @@ public class InvoiceDto
 {
     public int? Id { get; set; } 
     
-    [Required(ErrorMessage = "Kaynak para birimi zorunludur.")]
-    public string SourceCurrency { get; set; } 
+    [Required(ErrorMessage = "Source currency is required.")]
+    public string SourceCurrency { get; set; }
 
-    [Required(ErrorMessage = "Kaynak tutar zorunludur.")]
-    public decimal SourceAmount { get; set; } 
+    [Required(ErrorMessage = "Source amount is required.")]
+    public decimal SourceAmount { get; set; }
 
-    [Required(ErrorMessage = "Sipariş numarası zorunludur.")]
-    public string OrderNumber { get; set; } 
+    [Required(ErrorMessage = "Order number is required.")]
+    public string OrderNumber { get; set; }
 
-    [Required(ErrorMessage = "Ödeme para birimi zorunludur.")]
-    public string Currency { get; set; } 
+    [Required(ErrorMessage = "Payment currency is required.")]
+    public string Currency { get; set; }
 
-    [Required(ErrorMessage = "E-posta adresi zorunludur.")]
-    [EmailAddress(ErrorMessage = "Geçerli bir e-posta adresi giriniz.")]
+    [Required(ErrorMessage = "Email address is required.")]
+    [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
     public string Email { get; set; }
 
-    [Required(ErrorMessage = "Sipariş adı zorunludur.")]
+    [Required(ErrorMessage = "Order name is required.")]
     public string OrderName { get; set; }
 
-    [Required(ErrorMessage = "Callback URL zorunludur.")]
+    [Required(ErrorMessage = "Callback URL is required.")]
     public string CallbackUrl { get; set; }
 
-    // Müşteri seçimi
+    // Customer selection
     public int? CustomerId { get; set; }
-    
-    // Plisio entegrasyonu (sadece okuma için)
+
+    // Plisio integration (read-only)
     public string? InvoiceUrl { get; set; }
     public string? TxnId { get; set; }
     public string? Status { get; set; }

@@ -6,16 +6,16 @@ public class CustomerDto
 {
     public int? Id { get; set; }
 
-    [Required(ErrorMessage = "Ad boş geçilemez.")]
+    [Required(ErrorMessage = "First name is required.")]
     public string FirstName { get; set; }
 
-    [Required(ErrorMessage = "Soyad boş geçilemez.")]
+    [Required(ErrorMessage = "Last name is required.")]
     public string LastName { get; set; }
 
-    [Required(ErrorMessage = "Telefon boş geçilemez.")]
+    [Required(ErrorMessage = "Phone is required.")]
     public string Phone { get; set; }
 
-    [EmailAddress(ErrorMessage = "Geçerli bir e-posta adresi giriniz.")]
+    [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
     public string? Email { get; set; }
 
     public string? CompanyName { get; set; }

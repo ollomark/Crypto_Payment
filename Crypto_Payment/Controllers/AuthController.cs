@@ -43,14 +43,14 @@ public class AuthController : Controller
 
         var existing = await _userManager.FindByEmailAsync(model.Email);
         if (existing != null)
-            return BadRequest(new { title = "Bu email zaten kayıtlı." });
+            return BadRequest(new { title = "This email is already registered." });
 
         var user = new User
         {
             FullName = model.FullName,
             UserName = model.UserName,
             Email = model.Email,
-            TwoFactorEnabled = false // <-- KRİTİK
+            TwoFactorEnabled = false // <-- CRITICAL
         };
 
         

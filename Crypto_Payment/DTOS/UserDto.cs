@@ -4,24 +4,24 @@ using System.ComponentModel.DataAnnotations;
 
 public class UserDto
 {
-    [Required(ErrorMessage = "Kullanıcı Id boş olamaz.")]
+    [Required(ErrorMessage = "User ID is required.")]
     public string Id { get; set; }
 
-    [Required(ErrorMessage = "Kullanıcı adı zorunludur.")]
+    [Required(ErrorMessage = "Username is required.")]
     public string UserName { get; set; }
 
-    [Required(ErrorMessage = "E-posta adresi zorunludur.")]
-    [EmailAddress(ErrorMessage = "Geçerli bir e-posta adresi giriniz.")]
+    [Required(ErrorMessage = "Email address is required.")]
+    [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
     public string Email { get; set; }
 
-    [Required(ErrorMessage = "Ad Soyad zorunludur.")]
-    [MaxLength(50, ErrorMessage = "Ad Soyad 50 karakter olabilir.")]
+    [Required(ErrorMessage = "Full name is required.")]
+    [MaxLength(50, ErrorMessage = "Full name can be at most 50 characters.")]
     public string FullName { get; set; }
 
-    [Required(ErrorMessage = "Telefon numarası zorunludur.")]
-    [Phone(ErrorMessage = "Geçerli bir telefon numarası giriniz.")]
+    [Required(ErrorMessage = "Phone number is required.")]
+    [Phone(ErrorMessage = "Please enter a valid phone number.")]
     public string PhoneNumber { get; set; }
 
-    [Required(ErrorMessage = "Kullanıcı durumu zorunludur.")]
+    [Required(ErrorMessage = "User status is required.")]
     public bool IsActive { get; set; }
 }

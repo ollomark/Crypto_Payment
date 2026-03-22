@@ -6,7 +6,7 @@ public class PermissionDto
 {
     public int? Id { get; set; }
 
-    [Required(ErrorMessage = "İzin adı zorunludur.")]
+    [Required(ErrorMessage = "Permission name is required.")]
     public string Name { get; set; }
 
     public int? TopPermissionId { get; set; }
