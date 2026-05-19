@@ -440,6 +440,14 @@
                                 <i class="ri-bank-card-line"></i> <span>Ödeme Yöntemleri</span>
                             </a>
                         </li>
+                        @if (User.IsInRole("MasterAdmin"))
+                        {
+                        <li class="nav-item">
+                            <a class="nav-link" href="/api-clients" data-page="/api-clients">
+                                <i class="ri-key-2-line"></i> <span>API Anahtarları</span>
+                            </a>
+                        </li>
+                        }
                         <li class="nav-item">
                             <a class="nav-link" href="/users" data-page="/users">
                                 <i class="ri-user-line"></i> <span>Kullanıcılar</span>
