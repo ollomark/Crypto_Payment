@@ -1,0 +1,376 @@
+@{
+    ViewBag.Title = "Giderler / Çekimler";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <h4 class="mb-sm-0">Giderler / Çekimler</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="/">Ana Sayfa</a></li>
+                        <li class="breadcrumb-item active">Giderler</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Özet Kartları -->
+    <div class="row" id="summaryCards">
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Toplam Gider</p></div>
+                        <div class="flex-shrink-0"><span class="badge bg-danger-subtle text-danger">Onaylanan</span></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div>
+                            <h4 class="fs-22 fw-semibold ff-secondary mb-4 text-danger"><span id="total-expense"><span class="skeleton skeleton-card-value"></span></span></h4>
+                            <span class="text-muted">Onaylanmış giderler</span>
+                        </div>
+                        <div class="avatar-sm flex-shrink-0">
+                            <span class="avatar-title bg-danger-subtle rounded fs-3"><i class="ri-arrow-down-circle-line text-danger"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Bekleyen Talep</p></div>
+                        <div class="flex-shrink-0"><span class="badge bg-warning-subtle text-warning" id="pending-count-card">0 Adet</span></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div>
+                            <h4 class="fs-22 fw-semibold ff-secondary mb-4 text-warning"><span id="pending-expense"><span class="skeleton skeleton-card-value"></span></span></h4>
+                            <span class="text-muted">Onay bekleyen</span>
+                        </div>
+                        <div class="avatar-sm flex-shrink-0">
+                            <span class="avatar-title bg-warning-subtle rounded fs-3"><i class="ri-time-line text-warning"></i></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtreler -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header border-0">
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <h5 class="card-title mb-0 flex-grow-1">
+                            <i class="ri-money-dollar-circle-line me-2 text-danger"></i>Gider Listesi
+                        </h5>
+                        <div class="d-flex gap-2 flex-wrap align-items-center">
+                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#addExpenseModal"><i class="ri-add-line me-1"></i>Gider Ekle</button>
+                            <select class="form-select form-select-sm" id="filter-period" style="width:130px;" onchange="loadExpenses()">
+                                <option value="">Tüm Zamanlar</option>
+                                <option value="today">Bugün</option>
+                                <option value="week">Bu Hafta</option>
+                                <option value="month" selected>Bu Ay</option>
+                                <option value="year">Bu Yıl</option>
+                            </select>
+                            <select class="form-select form-select-sm" id="filter-status" style="width:140px;" onchange="loadExpenses()">
+                                <option value="" selected>Tüm Durumlar</option>
+                                <option value="Pending">Bekleyen</option>
+                                <option value="Approved">Onaylanan</option>
+                                <option value="Rejected">Reddedilen</option>
+                            </select>
+                            <select class="form-select form-select-sm" id="filter-category" style="width:160px;" onchange="loadExpenses()">
+                                <option value="">Tüm Kategoriler</option>
+                                <option value="1">Maaş</option>
+                                <option value="2">Avans</option>
+                                <option value="3">Sunucu Gideri</option>
+                                <option value="4">Ofis Gideri</option>
+                                <option value="5">Kar Çekimi</option>
+                                <option value="6">Diğer</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Talep Eden</th>
+                                    <th>Kategori</th>
+                                    <th>Tutar</th>
+                                    <th>Yöntem</th>
+                                    <th>Açıklama</th>
+                                    <th>Tarih</th>
+                                    <th>Durum</th>
+                                    <th>Eylemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenseList">
+                                @for (int i = 0; i < 5; i++)
+                                {
+                                <tr class="skeleton-row">
+                                    <td><div class="skeleton skeleton-text" style="width:30px;"></div></td>
+                                    <td><div class="skeleton skeleton-text" style="width:100px;"></div></td>
+                                    <td><div class="skeleton skeleton-badge"></div></td>
+                                    <td><div class="skeleton skeleton-text" style="width:80px;"></div></td>
+                                    <td><div class="skeleton skeleton-text-sm" style="width:70px;"></div></td>
+                                    <td><div class="skeleton skeleton-text" style="width:120px;"></div></td>
+                                    <td><div class="skeleton skeleton-text-sm" style="width:80px;"></div></td>
+                                    <td><div class="skeleton skeleton-badge"></div></td>
+                                    <td><div class="d-flex gap-1"><div class="skeleton skeleton-btn" style="width:28px;"></div><div class="skeleton skeleton-btn" style="width:28px;"></div></div></td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gider Ekle Modal (MasterAdmin) -->
+<div class="modal fade" id="addExpenseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-danger-subtle p-3">
+                <h5 class="modal-title"><i class="ri-add-line me-2"></i>Gider Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2"><label class="form-label">Tutar <span class="text-danger">*</span></label><input type="number" step="0.01" id="add-exp-amount" class="form-control" required /></div>
+                <div class="mb-2"><label class="form-label">Para Birimi</label><select id="add-exp-currency" class="form-select"><option value="EUR">EUR</option><option value="USD">USD</option><option value="TRY">TRY</option></select></div>
+                <div class="mb-2"><label class="form-label">Kategori</label><select id="add-exp-category" class="form-select"><option value="6">Diğer</option><option value="1">Maaş</option><option value="2">Avans</option><option value="3">Sunucu Gideri</option><option value="4">Ofis Gideri</option><option value="5">Kar Çekimi</option></select></div>
+                <div class="mb-2"><label class="form-label">Açıklama</label><input type="text" id="add-exp-desc" class="form-control" placeholder="Gider açıklaması" /></div>
+                <div class="mb-0"><label class="form-label">Talep Eden (Opsiyonel)</label><input type="text" id="add-exp-requester" class="form-control" placeholder="Boş bırakılırsa oturum bilgisi kullanılır" /></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-danger" id="add-exp-submit"><i class="ri-add-line me-1"></i>Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Red Modal -->
+<div class="modal fade" id="rejectExpenseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-danger-subtle p-3">
+                <h5 class="modal-title">Talebi Reddet</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="reject-expense-id" />
+                <div class="mb-3">
+                    <label class="form-label">Red Notu (Opsiyonel)</label>
+                    <textarea id="reject-expense-note" class="form-control" rows="3" placeholder="Neden reddedildi?"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="button" class="btn btn-danger" id="confirm-reject-expense-btn">Reddet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detay Modal -->
+<div class="modal fade" id="expenseDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-info-subtle p-3">
+                <h5 class="modal-title">Talep Detayı</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="expense-detail-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const catLabels = { 1:'Maaş', 2:'Avans', 3:'Sunucu Gideri', 4:'Ofis Gideri', 5:'Kar Çekimi', 6:'Diğer' };
+const statusBadge = s => {
+    if (s === 'Pending') return '<span class="badge bg-warning-subtle text-warning">⏳ Bekliyor</span>';
+    if (s === 'Approved') return '<span class="badge bg-success-subtle text-success">✅ Onaylandı</span>';
+    return '<span class="badge bg-danger-subtle text-danger">❌ Reddedildi</span>';
+};
+
+function getDateRange(period) {
+    const now = new Date();
+    const start = new Date(now);
+    if (period === 'today') { start.setHours(0,0,0,0); }
+    else if (period === 'week') { start.setDate(now.getDate() - now.getDay()); start.setHours(0,0,0,0); }
+    else if (period === 'month') { start.setDate(1); start.setHours(0,0,0,0); }
+    else if (period === 'year') { start.setMonth(0,1); start.setHours(0,0,0,0); }
+    else return null;
+    return start;
+}
+
+function getCurrSym(c) {
+    return currencySymbol(c);
+}
+function cvt(amount, srcCurrency) {
+    if (window.CurrencyConverter?.convertFromSource) return window.CurrencyConverter.convertFromSource(amount, srcCurrency);
+    return amount;
+}
+
+async function loadExpenses() {
+    const tbody = document.getElementById('expenseList');
+    const status = document.getElementById('filter-status').value;
+    const cat = document.getElementById('filter-category').value;
+    const period = document.getElementById('filter-period').value;
+    const params = [];
+    if (status) params.push(`status=${status}`);
+    if (cat) params.push(`category=${cat}`);
+    const url = '/api/expenses' + (params.length ? '?' + params.join('&') : '');
+
+    try {
+        const res = await fetch(url, { credentials: 'include' });
+        if (!res.ok) { const d = await res.json().catch(()=>null); const msg = (res.status===401||res.status===403)?'Oturum süresi dolmuş. Tekrar giriş yapın.':(d?.message||d?.title||'Hata: '+res.status); tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-danger">'+msg+'</td></tr>'; return; }
+        let list = await res.json();
+        allExpenses = list;
+
+        const rangeStart = getDateRange(period);
+        if (rangeStart) {
+            list = list.filter(e => new Date(e.createdDate) >= rangeStart);
+        }
+
+        // Özet hesapla
+        const sym = window.CurrencyConverter?.getCurrentSymbol() || '€';
+        const approved = list.filter(e => e.status === 'Approved').reduce((s,e) => s + cvt(e.amount, e.currency), 0);
+        const pending = list.filter(e => e.status === 'Pending');
+        const pendingAmt = pending.reduce((s,e) => s + cvt(e.amount, e.currency), 0);
+        document.getElementById('total-expense').textContent = sym + ' ' + formatMoney(approved);
+        document.getElementById('pending-expense').textContent = sym + ' ' + formatMoney(pendingAmt);
+        document.getElementById('pending-count-card').textContent = pending.length + ' Adet';
+
+        if (!list.length) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">Kayıt bulunamadı.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = list.map(e => {
+            const d = new Date(e.createdDate).toLocaleDateString('tr-TR');
+            const cat = catLabels[e.categoryId] || e.category;
+            const actionBtns = e.status === 'Pending'
+                ? `<button class="btn btn-sm btn-success me-1" onclick="approveExpense(${e.id})"><i class="ri-check-line"></i></button>
+                   <button class="btn btn-sm btn-danger me-1" onclick="openRejectExpense(${e.id})"><i class="ri-close-line"></i></button>
+                   <button class="btn btn-sm btn-info" onclick="showDetail(${e.id})"><i class="ri-eye-line"></i></button>`
+                : `<button class="btn btn-sm btn-info" onclick="showDetail(${e.id})"><i class="ri-eye-line"></i></button>`;
+            return `<tr>
+                <td><span class="fw-medium">#${e.id}</span></td>
+                <td>${e.requesterName}${e.requesterCompany ? '<br><small class="text-muted">'+e.requesterCompany+'</small>' : ''}</td>
+                <td><span class="badge bg-secondary-subtle text-secondary">${cat}</span></td>
+                <td><span class="fw-semibold text-danger">${(window.CurrencyConverter?.getCurrentSymbol() || '€')} ${formatMoney(cvt(e.amount, e.currency))}</span></td>
+                <td>${e.method}${e.paymentNetwork ? ' ('+e.paymentNetwork+')' : ''}</td>
+                <td>${(e.description||'—').substring(0,40)}${(e.description||'').length>40?'…':''}</td>
+                <td><small class="text-muted">${d}</small></td>
+                <td>${statusBadge(e.status)}</td>
+                <td>${actionBtns}</td>
+            </tr>`;
+        }).join('');
+    } catch(err) {
+        console.error('Gider yükleme hatası:', err);
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-danger">Giderler yüklenemedi. Bağlantıyı kontrol edin veya tekrar giriş yapın.</td></tr>';
+    }
+}
+
+let allExpenses = [];
+
+async function showDetail(id) {
+    let e = allExpenses.find(x => x.id === id);
+    if (!e) {
+        try {
+            const res = await fetch('/api/expenses', { credentials: 'include' });
+            const list = await res.json();
+            e = list.find(x => x.id === id);
+        } catch {}
+    }
+    if (!e) return;
+    const body = document.getElementById('expense-detail-body');
+    body.innerHTML = `
+        <table class="table table-borderless mb-0">
+            <tr><td class="fw-medium">Talep Eden</td><td>${e.requesterName}</td></tr>
+            ${e.requesterCompany ? `<tr><td class="fw-medium">Şirket</td><td>${e.requesterCompany}</td></tr>` : ''}
+            <tr><td class="fw-medium">Tutar</td><td class="text-danger fw-semibold">${(window.CurrencyConverter?.getCurrentSymbol() || '€')} ${formatMoney(cvt(e.amount, e.currency))}</td></tr>
+            <tr><td class="fw-medium">Kategori</td><td>${catLabels[e.categoryId] || e.category}</td></tr>
+            <tr><td class="fw-medium">Yöntem</td><td>${e.method}</td></tr>
+            ${e.paymentNetwork ? `<tr><td class="fw-medium">Ağ</td><td>${e.paymentNetwork}</td></tr>` : ''}
+            ${e.walletAddress ? `<tr><td class="fw-medium">Cüzdan</td><td><code>${e.walletAddress}</code></td></tr>` : ''}
+            ${e.bankInfo ? `<tr><td class="fw-medium">Banka</td><td>${e.bankInfo}</td></tr>` : ''}
+            <tr><td class="fw-medium">Açıklama</td><td>${e.description || '—'}</td></tr>
+            <tr><td class="fw-medium">IP Adresi</td><td><code>${e.requestedByIp || '—'}</code></td></tr>
+            <tr><td class="fw-medium">Durum</td><td>${e.status === 'Approved' ? '✅ Onaylandı' : e.status === 'Rejected' ? '❌ Reddedildi' : '⏳ Bekliyor'}</td></tr>
+            ${e.adminNote ? `<tr><td class="fw-medium">Admin Notu</td><td>${e.adminNote}</td></tr>` : ''}
+        </table>`;
+    new bootstrap.Modal(document.getElementById('expenseDetailModal')).show();
+}
+
+async function approveExpense(id) {
+    const r = await Swal.fire({ title: 'Onaylamak istediğinize emin misiniz?', icon: 'question', showCancelButton: true, confirmButtonText: 'Evet, Onayla', cancelButtonText: 'Vazgeç' });
+    if (!r.isConfirmed) return;
+    const res = await fetch(`/api/expenses/${id}/approve`, { method: 'POST', credentials: 'include' });
+    if (res.ok) { Swal.fire({ icon: 'success', title: 'Onaylandı!', timer: 1500, showConfirmButton: false }); loadExpenses(); }
+    else { const d = await res.json().catch(()=>({})); Swal.fire('Hata', d.title || 'İşlem başarısız.', 'error'); }
+}
+
+function openRejectExpense(id) {
+    document.getElementById('reject-expense-id').value = id;
+    document.getElementById('reject-expense-note').value = '';
+    new bootstrap.Modal(document.getElementById('rejectExpenseModal')).show();
+}
+
+document.getElementById('confirm-reject-expense-btn')?.addEventListener('click', async () => {
+    const id = document.getElementById('reject-expense-id').value;
+    const note = document.getElementById('reject-expense-note').value.trim();
+    const res = await fetch(`/api/expenses/${id}/reject`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note })
+    });
+    bootstrap.Modal.getInstance(document.getElementById('rejectExpenseModal'))?.hide();
+    if (res.ok) { Swal.fire({ icon: 'success', title: 'Reddedildi.', timer: 1500, showConfirmButton: false }); loadExpenses(); }
+    else Swal.fire('Hata', 'İşlem başarısız.', 'error');
+});
+
+document.getElementById('add-exp-submit')?.addEventListener('click', async () => {
+    const amt = parseFloat(document.getElementById('add-exp-amount')?.value);
+    if (!amt || amt <= 0) { Swal.fire('Hata', 'Tutar girin.', 'warning'); return; }
+    const req = {
+        amount: amt,
+        currency: document.getElementById('add-exp-currency')?.value || 'EUR',
+        category: parseInt(document.getElementById('add-exp-category')?.value || '6'),
+        description: document.getElementById('add-exp-desc')?.value || '',
+        requesterName: document.getElementById('add-exp-requester')?.value || null,
+        customerId: null
+    };
+    try {
+        const res = await fetch('/api/expenses/create', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(req) });
+        if (res.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('addExpenseModal'))?.hide();
+            document.getElementById('add-exp-amount').value = '';
+            document.getElementById('add-exp-desc').value = '';
+            Swal.fire({ icon: 'success', title: 'Gider talebi oluşturuldu.', timer: 1500, showConfirmButton: false });
+            loadExpenses();
+        } else { const d = await res.json().catch(() => ({})); Swal.fire('Hata', d.title || 'İşlem başarısız.', 'error'); }
+    } catch { Swal.fire('Hata', 'Sunucuya ulaşılamadı.', 'error'); }
+});
+
+document.addEventListener('DOMContentLoaded', loadExpenses);
+document.addEventListener('currencyChanged', loadExpenses);
+</script>
+}

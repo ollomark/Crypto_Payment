@@ -1,0 +1,198 @@
+@{
+    ViewBag.Title = "Yetki Listesi";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <h4 class="mb-sm-0">Yetkiler</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <div class="flex-grow-1">
+                            <button class="btn btn-info add-btn" data-bs-toggle="modal" data-bs-target="#addPermissionModal">
+                                <i class="ri-add-fill me-1 align-bottom"></i> Yetki Ekle
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xxl-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="search-box">
+                                <input type="text" class="form-control search" id="searchInput" placeholder="Yetki ara...">
+                                <i class="ri-search-line search-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive table-card">
+                        <table class="table align-middle table-nowrap mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col" style="width: 50px;">#</th>
+                                    <th scope="col">Yetki Adı</th>
+                                    <th scope="col">Açıklama</th>
+                                    <th scope="col">Eylemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="permissionList">
+                                @for (int i = 0; i < 5; i++)
+                                {
+                                <tr class="skeleton-row">
+                                    <td><div class="skeleton skeleton-text" style="width:25px;"></div></td>
+                                    <td><div class="skeleton skeleton-text" style="width:140px;"></div></td>
+                                    <td><div class="skeleton skeleton-text-sm" style="width:180px;"></div></td>
+                                    <td><div class="d-flex gap-1"><div class="skeleton skeleton-btn" style="width:28px;"></div><div class="skeleton skeleton-btn" style="width:28px;"></div></div></td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <div class="noresult" style="display: none" id="noResult">
+                            <div class="text-center">
+                                <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop"
+                                    colors="primary:#121331,secondary:#08a88a" style="width:75px;height:75px"></lord-icon>
+                                <h5 class="mt-2">Sonuç Bulunamadı</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Yetki Ekle Modal -->
+<div class="modal fade" id="addPermissionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-info-subtle p-3">
+                <h5 class="modal-title">Yetki Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <form id="permissionAddForm" autocomplete="off">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="permissionName" class="form-label">Yetki Adı</label>
+                        <input type="text" id="permissionName" class="form-control" placeholder="Yetki adı girin" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="permissionDesc" class="form-label">Açıklama</label>
+                        <input type="text" id="permissionDesc" class="form-control" placeholder="Açıklama girin" />
+                    </div>
+                    <div id="permApiError" class="alert alert-danger d-none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Kapat</button>
+                    <button type="submit" class="btn btn-success">Yetki Ekle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    const tbody = document.getElementById('permissionList');
+    if (!tbody) return;
+
+    try {
+        const res = await fetch('/api/permissions/GetAll');
+        const list = await res.json();
+
+        tbody.innerHTML = '';
+
+        if (list.length === 0) {
+            document.getElementById('noResult').style.display = 'block';
+            return;
+        }
+
+        list.forEach((p, idx) => {
+            tbody.innerHTML += `
+            <tr data-id="${p.id}">
+                <td>${idx + 1}</td>
+                <td class="perm-name">${p.name ?? ''}</td>
+                <td>${p.description ?? ''}</td>
+                <td>
+                    <ul class="list-inline hstack gap-2 mb-0">
+                        <li class="list-inline-item">
+                            <a href="javascript:void(0);" class="text-danger btn-delete-perm" data-id="${p.id}" title="Sil">
+                                <i class="ri-delete-bin-2-line fs-16"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </td>
+            </tr>`;
+        });
+
+        // Silme
+        tbody.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.btn-delete-perm');
+            if (!btn) return;
+            const id = btn.dataset.id;
+            if (!confirm('Bu yetkiyi silmek istediğinize emin misiniz?')) return;
+            try {
+                const res = await fetch(`/api/permissions/${id}`, { method: 'DELETE' });
+                if (res.ok) btn.closest('tr')?.remove();
+                else alert('Silme başarısız.');
+            } catch { alert('Sunucuya ulaşılamadı.'); }
+        });
+    } catch {
+        document.getElementById('noResult').style.display = 'block';
+    }
+
+    // Arama
+    document.getElementById('searchInput')?.addEventListener('input', function() {
+        const val = this.value.toLowerCase();
+        document.querySelectorAll('#permissionList tr').forEach(row => {
+            const name = row.querySelector('.perm-name')?.textContent?.toLowerCase() || '';
+            row.style.display = name.includes(val) ? '' : 'none';
+        });
+    });
+});
+
+// Yetki ekleme formu
+document.getElementById('permissionAddForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const apiError = document.getElementById('permApiError');
+    apiError.classList.add('d-none');
+
+    const payload = {
+        name: document.getElementById('permissionName').value.trim()
+    };
+
+    try {
+        const res = await fetch('/api/permissions/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            window.location.href = '/permissions';
+        } else {
+            const data = await res.json().catch(() => ({}));
+            apiError.textContent = data.title || 'Kayıt başarısız.';
+            apiError.classList.remove('d-none');
+        }
+    } catch {
+        apiError.textContent = 'Sunucuya ulaşılamadı.';
+        apiError.classList.remove('d-none');
+    }
+});
+</script>
+}

@@ -1,0 +1,137 @@
+@{
+    ViewData["Title"] = "Sistem Sağlık Kontrolü";
+    Layout = "_Layout";
+    var results = ViewBag.Results as Dictionary<string, object> ?? new Dictionary<string, object>();
+    var allOk = ViewBag.AllOk ?? false;
+}
+
+<!-- Skeleton Placeholder -->
+<div class="container-fluid" id="page-skeleton">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <div class="skeleton skeleton-title"></div>
+                <div class="skeleton skeleton-breadcrumb"></div>
+            </div>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header">
+                    <div class="skeleton skeleton-text" style="width:200px;"></div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0"><tbody>
+                            @for (int sk = 0; sk < 5; sk++)
+                            {
+                            <tr>
+                                <td><div class="skeleton skeleton-text" style="width:140px;"></div></td>
+                                <td><div class="skeleton skeleton-badge"></div></td>
+                                <td><div class="skeleton skeleton-text-sm" style="width:180px;"></div></td>
+                            </tr>
+                            }
+                        </tbody></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid" id="page-real" style="display:none;">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <h4 class="mb-sm-0">Sistem Sağlık Kontrolü</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="/">Ana Sayfa</a></li>
+                        <li class="breadcrumb-item active">Sağlık Kontrolü</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header @(allOk ? "bg-success-subtle" : "bg-danger-subtle")">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h5 class="card-title mb-0 @(allOk ? "text-success" : "text-danger")">
+                                @if (allOk) { <i class="ri-checkbox-circle-line me-2"></i> } else { <i class="ri-error-warning-line me-2"></i> }
+                                Sistem Durumu: @(allOk ? "SAĞLIKLI" : "SORUN VAR")
+                            </h5>
+                        </div>
+                        <div>
+                            <small class="text-muted">@DateTime.UtcNow.ToString("dd.MM.yyyy HH:mm:ss") UTC</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Kontrol</th>
+                                    <th>Durum</th>
+                                    <th>Mesaj</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in results)
+                                {
+                                    if (item.Key == "timestamp" || item.Key == "overall") continue;
+                                    var val = item.Value?.ToString() ?? "";
+                                    var isOk = val.Contains("\"ok\": true") || val.Contains("\"ok\":true");
+                                    var label = item.Key switch
+                                    {
+                                        "database" => "PostgreSQL Veritabanı",
+                                        "approvalRequests" => "ApprovalRequests Tablosu",
+                                        "expenses" => "Expenses Tablosu",
+                                        "viewFiles" => "View Dosyaları",
+                                        "plisioApi" => "Plisio API",
+                                        _ => item.Key
+                                    };
+                                    <tr>
+                                        <td class="fw-medium">@label</td>
+                                        <td>
+                                            @if (isOk)
+                                            {
+                                                <span class="badge bg-success-subtle text-success"><i class="ri-checkbox-circle-line me-1"></i>OK</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger-subtle text-danger"><i class="ri-close-circle-line me-1"></i>HATA</span>
+                                            }
+                                        </td>
+                                        <td><small class="text-muted">@val</small></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer text-end">
+                    <a href="/system/health" class="btn btn-sm btn-primary">
+                        <i class="ri-refresh-line me-1"></i>Yenile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var skel = document.getElementById('page-skeleton');
+    var real = document.getElementById('page-real');
+    if (skel) skel.remove();
+    if (real) real.style.display = '';
+});
+</script>
+}

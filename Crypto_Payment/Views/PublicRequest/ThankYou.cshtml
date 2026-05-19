@@ -1,0 +1,28 @@
+@{
+    Layout = "~/Views/Shared/_LayoutPublic.cshtml";
+    ViewData["Title"] = "Talep Alındı";
+}
+
+<div class="text-center">
+    <div class="brand-logo" style="background: linear-gradient(135deg, #28a745, #20c997);">
+        <i class="ri-checkbox-circle-line"></i>
+    </div>
+    <h5 class="brand-title mt-3">Talebiniz Alınmıştır!</h5>
+    <p class="brand-sub">İncelenip en kısa sürede işleme konulacaktır.</p>
+
+    @if (!string.IsNullOrEmpty((string?)ViewBag.RequestCode))
+    {
+        <div class="alert alert-success py-3 px-4 mt-3" style="border-radius:12px;font-size:1rem;border:1.5px solid #28a745;">
+            <div class="mb-1"><strong>Talep Kodunuz</strong></div>
+            <div style="font-size:1.4rem;font-weight:700;letter-spacing:2px;color:#155724;">
+                @ViewBag.RequestCode
+            </div>
+            <div class="text-muted mt-1" style="font-size:0.8rem;">Bu kodu saklayınız. Takip için gerekli olabilir.</div>
+        </div>
+    }
+
+    <div class="alert alert-light py-3 px-4 mt-3" style="border-radius:12px;font-size:0.9rem;border:1.5px solid #e9ecef;">
+        <i class="ri-information-line text-primary me-1"></i>
+        Talebinizin durumu hakkında size bilgi verilecektir. Herhangi bir sorunuz varsa lütfen iletişime geçiniz.
+    </div>
+</div>

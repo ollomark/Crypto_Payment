@@ -1,0 +1,261 @@
+@{
+    ViewBag.Title = "Taleplerim";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <h4 class="mb-sm-0">Taleplerim</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="/">Ana Sayfa</a></li>
+                        <li class="breadcrumb-item active">Taleplerim</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Özet Kartları -->
+    <div class="row" id="summaryRow">
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Bekleyen</p></div>
+                        <div class="flex-shrink-0"><span class="badge bg-warning-subtle text-warning" id="cnt-pending">0</span></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div><h4 class="fs-22 fw-semibold ff-secondary mb-4 text-warning" id="num-pending"><span class="skeleton skeleton-card-value"></span></h4><span class="text-muted">Onay bekleniyor</span></div>
+                        <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-warning-subtle rounded fs-3"><i class="ri-time-line text-warning"></i></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Onaylanan</p></div>
+                        <div class="flex-shrink-0"><span class="badge bg-success-subtle text-success" id="cnt-approved">0</span></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div><h4 class="fs-22 fw-semibold ff-secondary mb-4 text-success" id="num-approved"><span class="skeleton skeleton-card-value"></span></h4><span class="text-muted">İşlem tamamlandı</span></div>
+                        <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-success-subtle rounded fs-3"><i class="ri-checkbox-circle-line text-success"></i></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Reddedilen</p></div>
+                        <div class="flex-shrink-0"><span class="badge bg-danger-subtle text-danger" id="cnt-rejected">0</span></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div><h4 class="fs-22 fw-semibold ff-secondary mb-4 text-danger" id="num-rejected"><span class="skeleton skeleton-card-value"></span></h4><span class="text-muted">Reddedildi</span></div>
+                        <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-danger-subtle rounded fs-3"><i class="ri-close-circle-line text-danger"></i></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate border-warning" style="border:2px solid;">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Canlı Takip</p></div>
+                        <div class="flex-shrink-0"><span class="badge bg-info-subtle text-info" id="poll-status">Aktif</span></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div><p class="text-muted mb-0 fs-13">Talepleriniz otomatik olarak güncellenir.</p><small class="text-muted" id="last-update">—</small></div>
+                        <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-info-subtle rounded fs-3"><i class="ri-refresh-line text-info"></i></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Talep Listesi -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <h5 class="card-title mb-0 flex-grow-1">
+                        <i class="ri-list-check me-2 text-primary"></i>Talep Geçmişim
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <select class="form-select form-select-sm" id="filter-period" style="width:130px;" onchange="renderTable()">
+                            <option value="">Tüm Zamanlar</option>
+                            <option value="today">Bugün</option>
+                            <option value="week">Bu Hafta</option>
+                            <option value="month">Bu Ay</option>
+                            <option value="year">Bu Yıl</option>
+                        </select>
+                        <select class="form-select form-select-sm" id="filter-status" style="width:140px;" onchange="renderTable()">
+                            <option value="">Tümü</option>
+                            <option value="Pending" selected>Bekleyen</option>
+                            <option value="Approved">Onaylanan</option>
+                            <option value="Rejected">Reddedilen</option>
+                        </select>
+                        <button class="btn btn-sm btn-outline-primary" onclick="loadRequests()">
+                            <i class="ri-refresh-line"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>İşlem Türü</th>
+                                    <th>Açıklama</th>
+                                    <th>Tarih</th>
+                                    <th>Durum</th>
+                                    <th>Yönetici Notu</th>
+                                </tr>
+                            </thead>
+                            <tbody id="requestList">
+                                @for (int i = 0; i < 5; i++)
+                                {
+                                <tr class="skeleton-row">
+                                    <td><div class="skeleton skeleton-text" style="width:30px;"></div></td>
+                                    <td><div class="skeleton skeleton-badge" style="width:100px;"></div></td>
+                                    <td><div class="skeleton skeleton-text" style="width:180px;"></div></td>
+                                    <td><div class="skeleton skeleton-text-sm" style="width:90px;"></div></td>
+                                    <td><div class="skeleton skeleton-badge"></div></td>
+                                    <td><div class="skeleton skeleton-text-sm" style="width:60px;"></div></td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let allRequests = [];
+let prevPendingIds = new Set();
+let pollInterval = null;
+
+function getDateRange(period) {
+    const now = new Date();
+    const start = new Date(now);
+    if (period === 'today') { start.setHours(0,0,0,0); }
+    else if (period === 'week') { start.setDate(now.getDate() - now.getDay()); start.setHours(0,0,0,0); }
+    else if (period === 'month') { start.setDate(1); start.setHours(0,0,0,0); }
+    else if (period === 'year') { start.setMonth(0,1); start.setHours(0,0,0,0); }
+    else return null;
+    return start;
+}
+
+const typeLabels = {
+    'InvoiceDelete': '🗑️ Fatura Silme',
+    'InvoiceStatusChange': '🔄 Fatura Durum Değişimi',
+    'ManualPayment': '💰 Manuel Ödeme Sonuçlandırma',
+    'CustomerUpdate': '✏️ Müşteri Düzenleme',
+    'CustomerDelete': '🗑️ Müşteri Silme',
+    'ExpenseApproval': '💰 Gider Onayı'
+};
+
+const statusBadge = s => {
+    if (s === 'Pending') return '<span class="badge bg-warning-subtle text-warning fs-12"><i class="ri-time-line me-1"></i>Yönetici Onayı Bekleniyor</span>';
+    if (s === 'Approved') return '<span class="badge bg-success-subtle text-success fs-12"><i class="ri-checkbox-circle-line me-1"></i>Onaylandı</span>';
+    return '<span class="badge bg-danger-subtle text-danger fs-12"><i class="ri-close-circle-line me-1"></i>Reddedildi</span>';
+};
+
+function renderTable() {
+    const filter = document.getElementById('filter-status').value;
+    const period = document.getElementById('filter-period').value;
+    const tbody = document.getElementById('requestList');
+    let list = filter ? allRequests.filter(r => r.status === filter) : [...allRequests];
+    const rangeStart = getDateRange(period);
+    if (rangeStart) {
+        list = list.filter(r => new Date(r.createdDate) >= rangeStart);
+    }
+
+    if (!list.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Kayıt bulunamadı.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = list.map(r => {
+        const d = new Date(r.createdDate).toLocaleString('tr-TR');
+        const typeLabel = typeLabels[r.requestType] || r.requestType;
+        const rowClass = r.status === 'Pending' ? 'table-warning' : r.status === 'Approved' ? 'table-success' : 'table-danger';
+        return `<tr class="${rowClass}" id="row-${r.id}">
+            <td><span class="fw-medium">#${r.id}</span></td>
+            <td>${typeLabel}</td>
+            <td>${r.description || '—'}</td>
+            <td><small class="text-muted">${d}</small></td>
+            <td>${statusBadge(r.status)}</td>
+            <td>${r.adminNote ? `<span class="text-muted fs-12">${r.adminNote}</span>` : '—'}</td>
+        </tr>`;
+    }).join('');
+}
+
+function updateSummary() {
+    const pending = allRequests.filter(r => r.status === 'Pending').length;
+    const approved = allRequests.filter(r => r.status === 'Approved').length;
+    const rejected = allRequests.filter(r => r.status === 'Rejected').length;
+
+    document.getElementById('cnt-pending').textContent = pending;
+    document.getElementById('num-pending').textContent = pending;
+    document.getElementById('cnt-approved').textContent = approved;
+    document.getElementById('num-approved').textContent = approved;
+    document.getElementById('cnt-rejected').textContent = rejected;
+    document.getElementById('num-rejected').textContent = rejected;
+}
+
+async function loadRequests(silent = false) {
+    try {
+        const res = await fetch('/api/my-approvals/my-requests');
+        if (!res.ok) return;
+        const newList = await res.json();
+
+        // Önceki bekleyen ID'leri kaydet
+        const prevPending = new Set(allRequests.filter(r => r.status === 'Pending').map(r => r.id));
+
+        allRequests = newList;
+        updateSummary();
+        renderTable();
+
+        // Onaylanan/reddedilen talepleri tespit et ve bildir
+        newList.forEach(r => {
+            if (prevPending.has(r.id) && r.status !== 'Pending') {
+                const icon = r.status === 'Approved' ? 'success' : 'error';
+                const title = r.status === 'Approved' ? '✅ Talebiniz Onaylandı!' : '❌ Talebiniz Reddedildi';
+                Swal.fire({
+                    icon,
+                    title,
+                    html: `<p>${r.description}</p>${r.adminNote ? `<p class="text-muted fs-13">Not: ${r.adminNote}</p>` : ''}`,
+                    confirmButtonText: 'Tamam'
+                });
+            }
+        });
+
+        // Son güncelleme zamanı
+        const now = new Date().toLocaleTimeString('tr-TR');
+        const el = document.getElementById('last-update');
+        if (el) el.textContent = 'Son güncelleme: ' + now;
+
+    } catch(e) {
+        const el = document.getElementById('poll-status');
+        if (el) { el.textContent = 'Hata'; el.className = 'badge bg-danger-subtle text-danger'; }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadRequests();
+    // Her 10 saniyede bir polling
+    pollInterval = setInterval(() => loadRequests(true), 10000);
+});
+</script>
+}

@@ -1,0 +1,480 @@
+@{
+    ViewBag.Title = "Kullanıcılar";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+            <h4 class="mb-sm-0">Kullanıcı Yönetimi</h4>
+            <div class="page-title-right">
+                <ol class="breadcrumb m-0">
+                    <li class="breadcrumb-item"><a href="/">Ana Sayfa</a></li>
+                    <li class="breadcrumb-item active">Kullanıcılar</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Özet Kartları -->
+<div class="row">
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Toplam Kullanıcı</p></div>
+                </div>
+                <div class="d-flex align-items-end justify-content-between mt-3">
+                    <h4 class="fs-22 fw-semibold ff-secondary mb-0" id="stat-total">0</h4>
+                    <div class="avatar-sm"><span class="avatar-title bg-primary-subtle rounded fs-3"><i class="ri-team-line text-primary"></i></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Aktif</p></div>
+                </div>
+                <div class="d-flex align-items-end justify-content-between mt-3">
+                    <h4 class="fs-22 fw-semibold ff-secondary mb-0 text-success" id="stat-active">0</h4>
+                    <div class="avatar-sm"><span class="avatar-title bg-success-subtle rounded fs-3"><i class="ri-user-follow-line text-success"></i></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Pasif</p></div>
+                </div>
+                <div class="d-flex align-items-end justify-content-between mt-3">
+                    <h4 class="fs-22 fw-semibold ff-secondary mb-0 text-danger" id="stat-inactive">0</h4>
+                    <div class="avatar-sm"><span class="avatar-title bg-danger-subtle rounded fs-3"><i class="ri-user-unfollow-line text-danger"></i></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Admin Sayısı</p></div>
+                </div>
+                <div class="d-flex align-items-end justify-content-between mt-3">
+                    <h4 class="fs-22 fw-semibold ff-secondary mb-0 text-warning" id="stat-admin">0</h4>
+                    <div class="avatar-sm"><span class="avatar-title bg-warning-subtle rounded fs-3"><i class="ri-shield-user-line text-warning"></i></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ana Kart -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header border-0">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <h5 class="card-title mb-0 flex-grow-1"><i class="ri-group-line me-1"></i>Kullanıcılar <span class="badge bg-soft-secondary text-secondary ms-1 fs-12" id="filteredCount"></span></h5>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addModal"><i class="ri-user-add-line me-1"></i>Yeni Kullanıcı</button>
+                </div>
+            </div>
+            <div class="card-body border-top border-bottom border-dashed py-3">
+                <div class="row g-3 align-items-end">
+                    <div class="col-lg-4 col-md-6">
+                        <div class="search-box">
+                            <input type="text" class="form-control bg-light border-light" id="searchInput" placeholder="Ad, email, kullanıcı adı ara...">
+                            <i class="ri-search-line search-icon"></i>
+                        </div>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <select class="form-select bg-light border-light" id="filterStatus" onchange="applyFilters()">
+                            <option value="">Tüm Durumlar</option>
+                            <option value="active">Aktif</option>
+                            <option value="inactive">Pasif</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <select class="form-select bg-light border-light" id="filterRole" onchange="applyFilters()">
+                            <option value="">Tüm Roller</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-3">
+                        <button type="button" class="btn btn-light w-100" onclick="clearFilters()"><i class="ri-refresh-line me-1"></i>Sıfırla</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive table-card">
+                    <table class="table align-middle table-hover table-nowrap mb-0">
+                        <thead class="table-light text-muted">
+                            <tr>
+                                <th style="width:50px;">#</th>
+                                <th>Kullanıcı</th>
+                                <th>Kullanıcı Adı</th>
+                                <th>Rol</th>
+                                <th>Telefon</th>
+                                <th style="width:100px;">Durum</th>
+                                <th>Kayıt Tarihi</th>
+                                <th style="width:130px;">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userList">
+                            @for (int i = 0; i < 5; i++)
+                            {
+                            <tr class="skeleton-row">
+                                <td><div class="skeleton skeleton-text" style="width:20px;"></div></td>
+                                <td><div class="d-flex align-items-center gap-2"><div class="skeleton skeleton-circle" style="width:36px;height:36px;"></div><div><div class="skeleton skeleton-text" style="width:120px;margin-bottom:4px;"></div><div class="skeleton skeleton-text-sm" style="width:140px;"></div></div></div></td>
+                                <td><div class="skeleton skeleton-text-sm" style="width:90px;"></div></td>
+                                <td><div class="skeleton skeleton-badge"></div></td>
+                                <td><div class="skeleton skeleton-text-sm" style="width:100px;"></div></td>
+                                <td><div class="skeleton skeleton-badge"></div></td>
+                                <td><div class="skeleton skeleton-text-sm" style="width:70px;"></div></td>
+                                <td><div class="skeleton skeleton-btn" style="width:80px;"></div></td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <div class="d-none text-center py-5" id="noresult">
+                        <i class="ri-user-search-line" style="font-size:48px;color:#878a99;"></i>
+                        <h5 class="mt-3">Kullanıcı Bulunamadı</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Kullanıcı Ekle Modal -->
+<div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-primary-subtle">
+                <h5 class="modal-title"><i class="ri-user-add-line me-2"></i>Yeni Kullanıcı Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addForm" autocomplete="off">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Ad Soyad <span class="text-danger">*</span></label>
+                            <div class="position-relative"><input type="text" id="add-fullName" class="form-control ps-5" placeholder="Ad Soyad" required><span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-user-line"></i></span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Kullanıcı Adı <span class="text-danger">*</span></label>
+                            <div class="position-relative"><input type="text" id="add-userName" class="form-control ps-5" placeholder="kullanici_adi" required><span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-at-line"></i></span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">E-posta <span class="text-danger">*</span></label>
+                            <div class="position-relative"><input type="email" id="add-email" class="form-control ps-5" placeholder="ornek@@email.com" required><span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-mail-line"></i></span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Telefon</label>
+                            <div class="position-relative"><input type="tel" id="add-phone" class="form-control ps-5" placeholder="+90 5XX XXX XX XX"><span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-phone-line"></i></span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Şifre <span class="text-danger">*</span></label>
+                            <div class="position-relative"><input type="password" id="add-password" class="form-control ps-5" placeholder="Min 8 karakter" required minlength="6"><span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-lock-2-line"></i></span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Rol</label>
+                            <select id="add-role" class="form-select">
+                                <option value="User">User</option>
+                                <option value="Admin">Admin</option>
+                                <option value="MasterAdmin">MasterAdmin</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="addError" class="alert alert-danger mt-3 d-none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary" id="addBtn">
+                        <span id="addBtnText"><i class="ri-add-line me-1"></i>Kullanıcı Ekle</span>
+                        <span id="addBtnSpinner" class="d-none"><span class="spinner-border spinner-border-sm me-1"></span>Ekleniyor...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Kullanıcı Düzenle Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-warning-subtle">
+                <h5 class="modal-title"><i class="ri-pencil-line me-2"></i>Kullanıcı Düzenle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editForm" autocomplete="off">
+                <div class="modal-body">
+                    <input type="hidden" id="edit-id" />
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Ad Soyad</label>
+                            <div class="position-relative"><input type="text" id="edit-fullName" class="form-control ps-5"><span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-user-line"></i></span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Kullanıcı Adı</label>
+                            <div class="position-relative"><input type="text" id="edit-userName" class="form-control ps-5"><span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-at-line"></i></span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">E-posta</label>
+                            <div class="position-relative"><input type="email" id="edit-email" class="form-control ps-5"><span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-mail-line"></i></span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Telefon</label>
+                            <div class="position-relative"><input type="tel" id="edit-phone" class="form-control ps-5"><span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-phone-line"></i></span></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Rol</label>
+                            <select id="edit-role" class="form-select">
+                                <option value="User">User</option>
+                                <option value="Admin">Admin</option>
+                                <option value="MasterAdmin">MasterAdmin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Yeni Şifre <span class="text-muted fw-normal">(opsiyonel)</span></label>
+                            <div class="position-relative"><input type="password" id="edit-password" class="form-control ps-5" placeholder="Değiştirmek için girin"><span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-lock-2-line"></i></span></div>
+                        </div>
+                    </div>
+                    <div id="editError" class="alert alert-danger mt-3 d-none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-warning" id="editBtn">
+                        <span id="editBtnText"><i class="ri-save-line me-1"></i>Güncelle</span>
+                        <span id="editBtnSpinner" class="d-none"><span class="spinner-border spinner-border-sm me-1"></span>Kaydediliyor...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<style>
+.user-row{transition:background .15s}.user-row:hover{background:rgba(64,81,137,.04)!important}
+.form-control.ps-5{padding-left:2.8rem!important}
+</style>
+<script>
+let allUsers=[];
+const roleColors={'MasterAdmin':'danger','Admin':'warning','User':'info'};
+const roleLabels={'MasterAdmin':'Master Admin','Admin':'Admin','Personel':'Personel','User':'Kullanıcı'};
+
+function fmtDate(d){if(!d)return'-';const dt=new Date(d);if(isNaN(dt))return'-';return dt.toLocaleDateString('tr-TR');}
+
+function updateStats(){
+    document.getElementById('stat-total').textContent=allUsers.length;
+    document.getElementById('stat-active').textContent=allUsers.filter(u=>u.isActive).length;
+    document.getElementById('stat-inactive').textContent=allUsers.filter(u=>!u.isActive).length;
+    document.getElementById('stat-admin').textContent=allUsers.filter(u=>u.role==='MasterAdmin'||u.role==='Admin').length;
+}
+
+function applyFilters(){
+    const q=(document.getElementById('searchInput')?.value||'').trim().toLowerCase();
+    const status=document.getElementById('filterStatus')?.value||'';
+    const role=document.getElementById('filterRole')?.value||'';
+
+    const filtered=allUsers.filter(u=>{
+        if(status==='active'&&!u.isActive)return false;
+        if(status==='inactive'&&u.isActive)return false;
+        if(role&&u.role!==role)return false;
+        if(q){const h=`${u.fullName} ${u.userName} ${u.email} ${u.phoneNumber}`.toLowerCase();if(!h.includes(q))return false;}
+        return true;
+    });
+    renderList(filtered);
+}
+
+function renderList(list){
+    updateStats();
+    const tbody=document.getElementById('userList');
+    const nr=document.getElementById('noresult');
+    const fc=document.getElementById('filteredCount');
+    if(fc)fc.textContent=list.length+' kullanıcı';
+    if(!list.length){tbody.innerHTML='';nr.classList.remove('d-none');return;}
+    nr.classList.add('d-none');
+
+    const colors=['primary','success','info','warning','danger','secondary'];
+    tbody.innerHTML='';
+
+    list.forEach((u,idx)=>{
+        const initials=((u.fullName||'')[0]||'?').toUpperCase();
+        const color=colors[idx%colors.length];
+        const rc=roleColors[u.role]||'info';
+        const rl=roleLabels[u.role]||u.role;
+
+        tbody.innerHTML+=`<tr class="user-row" data-id="${u.id}">
+            <td class="fw-medium">${idx+1}</td>
+            <td>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="avatar-sm"><span class="avatar-title bg-${color}-subtle text-${color} rounded-circle fs-14">${initials}</span></div>
+                    <div>
+                        <h6 class="mb-0 fs-13">${u.fullName||'—'}</h6>
+                        <small class="text-muted fs-11">${u.email}</small>
+                    </div>
+                </div>
+            </td>
+            <td><span class="text-muted">@@${u.userName}</span></td>
+            <td><span class="badge bg-${rc}-subtle text-${rc}">${rl}</span></td>
+            <td><span class="text-muted">${u.phoneNumber||'—'}</span></td>
+            <td>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" ${u.isActive?'checked':''} onchange="toggleStatus('${u.id}',this)">
+                    <label class="form-check-label fs-12 ${u.isActive?'text-success':'text-danger'}">${u.isActive?'Aktif':'Pasif'}</label>
+                </div>
+            </td>
+            <td><small class="text-muted">${fmtDate(u.createdDate)}</small></td>
+            <td>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-soft-warning" onclick="openEdit('${u.id}')" title="Düzenle"><i class="ri-pencil-line"></i></button>
+                    <button class="btn btn-sm btn-soft-danger" onclick="doDelete('${u.id}')" title="Sil"><i class="ri-delete-bin-line"></i></button>
+                </div>
+            </td>
+        </tr>`;
+    });
+}
+
+function clearFilters(){
+    document.getElementById('searchInput').value='';
+    document.getElementById('filterStatus').value='';
+    document.getElementById('filterRole').value='';
+    applyFilters();
+}
+
+async function toggleStatus(id,el){
+    try{
+        const res=await fetch(`/api/users/${id}/toggle-status`,{method:'POST'});
+        const data=await res.json();
+        if(res.ok){
+            const u=allUsers.find(x=>x.id===id);
+            if(u)u.isActive=data.isActive;
+            applyFilters();
+        }else{Swal.fire('Hata',data.message||'İşlem başarısız','error');el.checked=!el.checked;}
+    }catch{Swal.fire('Hata','Sunucuya ulaşılamadı','error');el.checked=!el.checked;}
+}
+
+function openEdit(id){
+    const u=allUsers.find(x=>x.id===id);if(!u)return;
+    document.getElementById('edit-id').value=u.id;
+    document.getElementById('edit-fullName').value=u.fullName||'';
+    document.getElementById('edit-userName').value=u.userName||'';
+    document.getElementById('edit-email').value=u.email||'';
+    document.getElementById('edit-phone').value=u.phoneNumber||'';
+    document.getElementById('edit-role').value=u.role||'User';
+    document.getElementById('edit-password').value='';
+    document.getElementById('editError').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+
+async function doDelete(id){
+    const r=await Swal.fire({title:'Emin misiniz?',text:'Bu kullanıcı kalıcı olarak silinecek.',icon:'warning',showCancelButton:true,confirmButtonText:'Evet, sil',cancelButtonText:'Vazgeç',confirmButtonColor:'#f06548'});
+    if(!r.isConfirmed)return;
+    try{
+        const res=await fetch(`/api/users/${id}`,{method:'DELETE'});
+        const data=await res.json();
+        if(res.ok){
+            allUsers=allUsers.filter(u=>u.id!==id);
+            applyFilters();
+            Swal.fire({icon:'success',title:'Silindi',timer:1500,showConfirmButton:false});
+        }else{Swal.fire('Hata',data.message||'Silme başarısız','error');}
+    }catch{Swal.fire('Hata','Sunucuya ulaşılamadı','error');}
+}
+
+function setBtn(id,loading){
+    const t=document.getElementById(id+'Text'),s=document.getElementById(id+'Spinner'),b=document.getElementById(id);
+    if(loading){t.classList.add('d-none');s.classList.remove('d-none');b.disabled=true;}
+    else{t.classList.remove('d-none');s.classList.add('d-none');b.disabled=false;}
+}
+
+// Init
+document.addEventListener('DOMContentLoaded',async()=>{
+    try{
+        const res=await fetch('/api/users/GetAll');
+        if(!res.ok)throw new Error();
+        allUsers=await res.json();
+    }catch{document.getElementById('userList').innerHTML='<tr><td colspan="8" class="text-center py-4 text-danger">Kullanıcılar yüklenemedi.</td></tr>';return;}
+
+    // Rolleri filtre dropdown'a ekle
+    const roles=[...new Set(allUsers.map(u=>u.role).filter(Boolean))];
+    const rs=document.getElementById('filterRole');
+    roles.forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=roleLabels[r]||r;rs.appendChild(o);});
+
+    applyFilters();
+    document.getElementById('searchInput')?.addEventListener('input',applyFilters);
+});
+
+// Ekleme
+document.getElementById('addForm')?.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const err=document.getElementById('addError');err.classList.add('d-none');
+    setBtn('addBtn',true);
+
+    const payload={
+        fullName:document.getElementById('add-fullName').value.trim(),
+        userName:document.getElementById('add-userName').value.trim(),
+        email:document.getElementById('add-email').value.trim(),
+        password:document.getElementById('add-password').value,
+        phoneNumber:document.getElementById('add-phone').value.trim(),
+        role:document.getElementById('add-role').value
+    };
+
+    try{
+        const res=await fetch('/api/users/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        if(res.ok){
+            const u=await res.json();
+            allUsers.push(u);
+            applyFilters();
+            document.getElementById('addForm').reset();
+            bootstrap.Modal.getInstance(document.getElementById('addModal'))?.hide();
+            Swal.fire({icon:'success',title:'Kullanıcı Eklendi',text:u.fullName||u.email,timer:2000,showConfirmButton:false});
+        }else{
+            const data=await res.json().catch(()=>({}));
+            err.textContent=data.message||'Ekleme başarısız.';err.classList.remove('d-none');
+        }
+    }catch{err.textContent='Sunucuya ulaşılamadı.';err.classList.remove('d-none');}
+    setBtn('addBtn',false);
+});
+
+// Düzenleme
+document.getElementById('editForm')?.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const err=document.getElementById('editError');err.classList.add('d-none');
+    setBtn('editBtn',true);
+    const id=document.getElementById('edit-id').value;
+
+    const payload={
+        fullName:document.getElementById('edit-fullName').value.trim(),
+        userName:document.getElementById('edit-userName').value.trim(),
+        email:document.getElementById('edit-email').value.trim(),
+        phoneNumber:document.getElementById('edit-phone').value.trim(),
+        role:document.getElementById('edit-role').value,
+        newPassword:document.getElementById('edit-password').value||null
+    };
+
+    try{
+        const res=await fetch(`/api/users/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        if(res.ok){
+            const idx=allUsers.findIndex(u=>u.id===id);
+            if(idx!==-1){Object.assign(allUsers[idx],payload);allUsers[idx].role=payload.role;}
+            applyFilters();
+            bootstrap.Modal.getInstance(document.getElementById('editModal'))?.hide();
+            Swal.fire({icon:'success',title:'Güncellendi',timer:1500,showConfirmButton:false});
+        }else{
+            const data=await res.json().catch(()=>({}));
+            err.textContent=data.message||'Güncelleme başarısız.';err.classList.remove('d-none');
+        }
+    }catch{err.textContent='Sunucuya ulaşılamadı.';err.classList.remove('d-none');}
+    setBtn('editBtn',false);
+});
+</script>
+}

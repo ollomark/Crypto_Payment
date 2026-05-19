@@ -1,0 +1,412 @@
+@{
+    ViewBag.Title = "Personel Yönetimi";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <h4 class="mb-sm-0"><i class="ri-team-line me-2 text-primary"></i>Personel Yönetimi</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="/">Ana Sayfa</a></li>
+                        <li class="breadcrumb-item"><a href="/finance/report">Finans</a></li>
+                        <li class="breadcrumb-item active">Personel</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-4 col-lg-5">
+            <div class="card">
+                <div class="card-header border-0 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <div>
+                        <h5 class="card-title mb-0"><i class="ri-user-star-line me-1"></i>Kayıtlı Personeller</h5>
+                        <p class="text-muted small mb-0">Personel ekleyin veya çıkarın; maaş tutarı ve ödeme günü bu ekrandan yönetilir. Ödemeler onaylı gider olarak kayda geçer.</p>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-primary" id="btn-open-add-personnel"><i class="ri-user-add-line me-1"></i>Personel ekle</button>
+                </div>
+                <div class="card-body">
+                    <div id="personnelList">
+                        <div class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm"></span> Yükleniyor...</div>
+                    </div>
+                    <div id="personnelEmpty" class="text-center py-4 text-muted d-none">
+                        <i class="ri-user-search-line fs-1"></i>
+                        <p class="mt-2 mb-0">Henüz personel yok. <strong>Personel ekle</strong> ile kullanıcı seçin veya önce <a href="/users">Kullanıcılar</a> üzerinden hesap oluşturun.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-8 col-lg-7">
+            <div class="card">
+                <div class="card-header border-0">
+                    <h5 class="card-title mb-0"><i class="ri-bank-card-2-line me-1"></i>Ödeme Geçmişi</h5>
+                    <p class="text-muted small mb-0" id="selectedPersonLabel">Listeden personel seçin</p>
+                </div>
+                <div class="card-body">
+                    <div id="paymentList" class="table-responsive">
+                        <p class="text-muted text-center py-4">Personel seçerek ödeme geçmişini görüntüleyin.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Personel ekle Modal -->
+<div class="modal fade" id="addPersonnelModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary-subtle">
+                <h5 class="modal-title"><i class="ri-user-add-line me-1"></i>Personel ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2"><label class="form-label">Kullanıcı *</label>
+                    <select id="add-personnel-user" class="form-select"><option value="">Yükleniyor...</option></select>
+                </div>
+                <div class="mb-2"><label class="form-label">Aylık maaş (opsiyonel)</label>
+                    <input type="number" step="0.01" id="add-personnel-salary" class="form-control" placeholder="Örn. 45000" />
+                </div>
+                <div class="mb-0"><label class="form-label">Maaş ödeme günü (1–31, opsiyonel)</label>
+                    <input type="number" min="1" max="31" id="add-personnel-day" class="form-control" placeholder="Örn. 5" />
+                </div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button><button type="button" class="btn btn-primary" id="add-personnel-submit">Kaydet</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Profil düzenle Modal -->
+<div class="modal fade" id="profileModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-info-subtle">
+                <h5 class="modal-title"><i class="ri-edit-line me-1"></i>Maaş bilgisi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="profile-user-id" />
+                <p class="text-muted small mb-2" id="profile-person-name"></p>
+                <div class="mb-2"><label class="form-label">Aylık maaş</label>
+                    <input type="number" step="0.01" id="profile-salary" class="form-control" />
+                </div>
+                <div class="mb-0"><label class="form-label">Maaş günü (1–31)</label>
+                    <input type="number" min="1" max="31" id="profile-day" class="form-control" />
+                </div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button><button type="button" class="btn btn-info" id="profile-submit">Kaydet</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Avans Ekle Modal -->
+<div class="modal fade" id="avansModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning-subtle">
+                <h5 class="modal-title"><i class="ri-money-dollar-circle-line me-1"></i>Avans Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="avans-user-id" />
+                <p class="text-muted small mb-2" id="avans-person-name"></p>
+                <div class="mb-2"><label class="form-label">Tutar *</label><input type="number" step="0.01" id="avans-amount" class="form-control" required /></div>
+                <div class="mb-2"><label class="form-label">Para Birimi</label><select id="avans-currency" class="form-select"><option value="EUR">€ EUR</option><option value="USD">$ USD</option><option value="TRY">₺ TRY</option></select></div>
+                <div class="mb-0"><label class="form-label">Açıklama</label><input type="text" id="avans-desc" class="form-control" placeholder="Avans açıklaması" value="Avans" /></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button><button type="button" class="btn btn-warning" id="avans-submit">Kaydet</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Maaş Ekle Modal -->
+<div class="modal fade" id="maasModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success-subtle">
+                <h5 class="modal-title"><i class="ri-bank-card-2-line me-1"></i>Maaş Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="maas-user-id" />
+                <p class="text-muted small mb-2" id="maas-person-name"></p>
+                <div class="row g-2">
+                    <div class="col-6"><label class="form-label">Yıl</label><input type="number" id="maas-year" class="form-control" min="2020" max="2100" required /></div>
+                    <div class="col-6"><label class="form-label">Ay</label><select id="maas-month" class="form-select"><option value="1">Ocak</option><option value="2">Şubat</option><option value="3">Mart</option><option value="4">Nisan</option><option value="5">Mayıs</option><option value="6">Haziran</option><option value="7">Temmuz</option><option value="8">Ağustos</option><option value="9">Eylül</option><option value="10">Ekim</option><option value="11">Kasım</option><option value="12">Aralık</option></select></div>
+                </div>
+                <div class="mb-2 mt-2"><label class="form-label">Tutar *</label><input type="number" step="0.01" id="maas-amount" class="form-control" required /></div>
+                <div class="mb-2"><label class="form-label">Para Birimi</label><select id="maas-currency" class="form-select"><option value="EUR">€ EUR</option><option value="USD">$ USD</option><option value="TRY">₺ TRY</option></select></div>
+                <div class="mb-0"><label class="form-label">Açıklama</label><input type="text" id="maas-desc" class="form-control" placeholder="Opsiyonel" /></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button><button type="button" class="btn btn-success" id="maas-submit">Kaydet</button></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let allPersonnel = [];
+let selectedUserId = null;
+
+const symMap = { EUR: '€', USD: '$', TRY: '₺' };
+function formatMoney(n) { return (Number(n) || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function esc(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
+
+function salaryLine(p) {
+    const parts = [];
+    if (p.monthlySalary != null && p.monthlySalary !== '') parts.push(`Maaş: ${formatMoney(p.monthlySalary)}`);
+    if (p.salaryDayOfMonth != null) parts.push(`Ödeme günü: ${p.salaryDayOfMonth}`);
+    return parts.length ? `<div class="small text-muted mt-1">${esc(parts.join(' · '))}</div>` : '';
+}
+
+async function loadPersonnel() {
+    const el = document.getElementById('personnelList');
+    const empty = document.getElementById('personnelEmpty');
+    try {
+        const res = await fetch('/api/personnel', { credentials: 'include' });
+        if (!res.ok) throw new Error();
+        allPersonnel = await res.json();
+        empty.classList.add('d-none');
+        if (!allPersonnel.length) {
+            el.innerHTML = '';
+            empty.classList.remove('d-none');
+            return;
+        }
+        el.innerHTML = allPersonnel.map(p => `
+            <div class="d-flex align-items-start justify-content-between p-2 rounded border mb-2 personnel-item" data-id="${esc(p.id)}" data-name="${esc(p.fullName || p.email || p.userName || '')}" style="cursor:pointer;">
+                <div class="me-2 flex-grow-1 min-w-0">
+                    <div class="fw-medium">${esc(p.fullName || p.email || p.userName)}</div>
+                    <small class="text-muted">${esc(p.email || '')}</small>
+                    ${salaryLine(p)}
+                </div>
+                <div class="d-flex flex-wrap gap-1 justify-content-end flex-shrink-0">
+                    <button type="button" class="btn btn-sm btn-soft-warning btn-avans" title="Avans Ekle"><i class="ri-money-dollar-circle-line"></i></button>
+                    <button type="button" class="btn btn-sm btn-soft-success btn-maas" title="Maaş Ekle"><i class="ri-bank-card-2-line"></i></button>
+                    <button type="button" class="btn btn-sm btn-soft-info btn-profile" title="Maaş bilgisi"><i class="ri-edit-line"></i></button>
+                    <button type="button" class="btn btn-sm btn-soft-danger btn-remove" title="Personelden çıkar"><i class="ri-user-unfollow-line"></i></button>
+                </div>
+            </div>
+        `).join('');
+        el.querySelectorAll('.personnel-item').forEach(row => {
+            row.addEventListener('click', function(e) {
+                if (e.target.closest('button')) return;
+                selectedUserId = this.dataset.id;
+                el.querySelectorAll('.personnel-item').forEach(r => r.classList.remove('border-primary'));
+                this.classList.add('border-primary');
+                loadPayments(selectedUserId);
+            });
+            row.querySelector('.btn-avans')?.addEventListener('click', (e) => { e.stopPropagation(); openAvansModal(row.dataset.id, row.dataset.name); });
+            row.querySelector('.btn-maas')?.addEventListener('click', (e) => { e.stopPropagation(); openMaasModal(row.dataset.id, row.dataset.name); });
+            row.querySelector('.btn-profile')?.addEventListener('click', (e) => { e.stopPropagation(); openProfileModal(row.dataset.id); });
+            row.querySelector('.btn-remove')?.addEventListener('click', (e) => { e.stopPropagation(); removePersonnel(row.dataset.id, row.dataset.name); });
+        });
+    } catch (err) {
+        el.innerHTML = '<p class="text-danger">Yüklenemedi.</p>';
+    }
+}
+
+async function loadCandidatesForModal() {
+    const sel = document.getElementById('add-personnel-user');
+    sel.innerHTML = '<option value="">Yükleniyor...</option>';
+    try {
+        const res = await fetch('/api/personnel/candidates', { credentials: 'include' });
+        if (!res.ok) throw new Error();
+        const list = await res.json();
+        if (!list.length) {
+            sel.innerHTML = '<option value="">Uygun kullanıcı yok</option>';
+            return;
+        }
+        sel.innerHTML = '<option value="">Seçin…</option>' + list.map(c => `<option value="${esc(c.id)}">${esc(c.fullName || c.email || c.userName)} (${esc(c.email || '')})</option>`).join('');
+    } catch {
+        sel.innerHTML = '<option value="">Liste alınamadı</option>';
+    }
+}
+
+document.getElementById('btn-open-add-personnel')?.addEventListener('click', async () => {
+    document.getElementById('add-personnel-salary').value = '';
+    document.getElementById('add-personnel-day').value = '';
+    await loadCandidatesForModal();
+    new bootstrap.Modal(document.getElementById('addPersonnelModal')).show();
+});
+
+document.getElementById('add-personnel-submit')?.addEventListener('click', async () => {
+    const userId = document.getElementById('add-personnel-user').value;
+    if (!userId) { Swal.fire('Uyarı', 'Kullanıcı seçin.', 'warning'); return; }
+    const sal = document.getElementById('add-personnel-salary').value;
+    const day = document.getElementById('add-personnel-day').value;
+    const body = { userId };
+    if (sal !== '') body.monthlySalary = parseFloat(sal);
+    if (day !== '') body.salaryDayOfMonth = parseInt(day, 10);
+    try {
+        const res = await fetch('/api/personnel/assign', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const d = await res.json().catch(() => ({}));
+        if (res.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('addPersonnelModal'))?.hide();
+            await loadPersonnel();
+            Swal.fire({ icon: 'success', title: d.message || 'Eklendi.', timer: 1500, showConfirmButton: false });
+        } else Swal.fire('Hata', d.title || 'İşlem başarısız.', 'error');
+    } catch { Swal.fire('Hata', 'Sunucuya ulaşılamadı.', 'error'); }
+});
+
+function openProfileModal(userId) {
+    const p = allPersonnel.find(x => x.id === userId);
+    document.getElementById('profile-user-id').value = userId;
+    document.getElementById('profile-person-name').textContent = p ? (p.fullName || p.email || '') : '';
+    document.getElementById('profile-salary').value = p?.monthlySalary != null ? p.monthlySalary : '';
+    document.getElementById('profile-day').value = p?.salaryDayOfMonth != null ? p.salaryDayOfMonth : '';
+    new bootstrap.Modal(document.getElementById('profileModal')).show();
+}
+
+document.getElementById('profile-submit')?.addEventListener('click', async () => {
+    const userId = document.getElementById('profile-user-id').value;
+    const sal = document.getElementById('profile-salary').value;
+    const day = document.getElementById('profile-day').value;
+    const body = {
+        monthlySalary: sal === '' ? null : parseFloat(sal),
+        salaryDayOfMonth: day === '' ? null : parseInt(day, 10)
+    };
+    if (body.salaryDayOfMonth != null && (body.salaryDayOfMonth < 1 || body.salaryDayOfMonth > 31)) {
+        Swal.fire('Hata', 'Maaş günü 1–31 olmalı.', 'warning'); return;
+    }
+    try {
+        const res = await fetch(`/api/personnel/${encodeURIComponent(userId)}/profile`, {
+            method: 'PUT', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const d = await res.json().catch(() => ({}));
+        if (res.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('profileModal'))?.hide();
+            await loadPersonnel();
+            Swal.fire({ icon: 'success', title: d.message || 'Güncellendi.', timer: 1500, showConfirmButton: false });
+        } else Swal.fire('Hata', d.title || 'İşlem başarısız.', 'error');
+    } catch { Swal.fire('Hata', 'Sunucuya ulaşılamadı.', 'error'); }
+});
+
+async function removePersonnel(userId, name) {
+    const r = await Swal.fire({
+        title: 'Personelden çıkar?',
+        text: name ? `${name} için Personel rolü kaldırılacak.` : 'Personel rolü kaldırılacak.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Evet, çıkar',
+        cancelButtonText: 'İptal'
+    });
+    if (!r.isConfirmed) return;
+    try {
+        const res = await fetch(`/api/personnel/${encodeURIComponent(userId)}`, { method: 'DELETE', credentials: 'include' });
+        const d = await res.json().catch(() => ({}));
+        if (res.ok) {
+            if (selectedUserId === userId) { selectedUserId = null; document.getElementById('paymentList').innerHTML = '<p class="text-muted text-center py-4">Personel seçerek ödeme geçmişini görüntüleyin.</p>'; document.getElementById('selectedPersonLabel').textContent = 'Listeden personel seçin'; }
+            await loadPersonnel();
+            Swal.fire({ icon: 'success', title: d.message || 'Kaldırıldı.', timer: 1500, showConfirmButton: false });
+        } else Swal.fire('Hata', d.title || 'İşlem başarısız.', 'error');
+    } catch { Swal.fire('Hata', 'Sunucuya ulaşılamadı.', 'error'); }
+}
+
+async function loadPayments(userId) {
+    const el = document.getElementById('paymentList');
+    const label = document.getElementById('selectedPersonLabel');
+    const p = allPersonnel.find(x => x.id === userId);
+    label.textContent = p ? (p.fullName || p.email) + ' - Ödeme geçmişi' : 'Ödeme geçmişi';
+    if (!userId) return;
+    try {
+        const res = await fetch(`/api/personnel/${encodeURIComponent(userId)}/payments`, { credentials: 'include' });
+        if (!res.ok) throw new Error();
+        const list = await res.json();
+        if (!list.length) {
+            el.innerHTML = '<p class="text-muted text-center py-4">Ödeme kaydı yok.</p>';
+            return;
+        }
+        const typeLabel = { 1: 'Avans', 2: 'Maaş' };
+        el.innerHTML = `
+            <table class="table table-sm table-hover mb-0">
+                <thead class="table-light"><tr><th>Tarih</th><th>Tür</th><th>Dönem</th><th>Açıklama</th><th class="text-end">Tutar</th></tr></thead>
+                <tbody>
+                    ${list.map(x => {
+                        const d = new Date(x.createdDate).toLocaleDateString('tr-TR');
+                        const period = (x.periodYear && x.periodMonth) ? `${x.periodYear}/${String(x.periodMonth).padStart(2,'0')}` : '—';
+                        const cur = (x.currency || 'EUR').toUpperCase();
+                        const sym = symMap[cur] || cur;
+                        const gider = x.expenseId ? '<span class="badge bg-secondary-subtle text-secondary ms-1" title="Gider kaydı">Gider</span>' : '';
+                        return `<tr><td class="small">${d}</td><td><span class="badge bg-${x.type===2?'success':'warning'}-subtle text-${x.type===2?'success':'warning'}">${typeLabel[x.type]||'?'}</span>${gider}</td><td class="small">${period}</td><td class="small">${(x.description||'—').substring(0,40)}</td><td class="text-end fw-medium">${formatMoney(x.amount)} ${sym}</td></tr>`;
+                    }).join('')}
+                </tbody>
+            </table>`;
+    } catch (err) {
+        el.innerHTML = '<p class="text-danger">Yüklenemedi.</p>';
+    }
+}
+
+function openAvansModal(userId, name) {
+    document.getElementById('avans-user-id').value = userId;
+    document.getElementById('avans-person-name').textContent = name;
+    document.getElementById('avans-amount').value = '';
+    document.getElementById('avans-desc').value = 'Avans';
+    new bootstrap.Modal(document.getElementById('avansModal')).show();
+}
+
+function openMaasModal(userId, name) {
+    const now = new Date();
+    const p = allPersonnel.find(x => x.id === userId);
+    document.getElementById('maas-user-id').value = userId;
+    document.getElementById('maas-person-name').textContent = name;
+    document.getElementById('maas-year').value = now.getFullYear();
+    document.getElementById('maas-month').value = now.getMonth() + 1;
+    document.getElementById('maas-amount').value = (p && p.monthlySalary != null) ? p.monthlySalary : '';
+    document.getElementById('maas-desc').value = '';
+    new bootstrap.Modal(document.getElementById('maasModal')).show();
+}
+
+document.getElementById('avans-submit')?.addEventListener('click', async () => {
+    const userId = document.getElementById('avans-user-id').value;
+    const amt = parseFloat(document.getElementById('avans-amount').value);
+    if (!userId || !amt || amt <= 0) { Swal.fire('Hata', 'Tutar girin.', 'warning'); return; }
+    try {
+        const res = await fetch(`/api/personnel/${encodeURIComponent(userId)}/avans`, {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: amt, currency: document.getElementById('avans-currency').value, description: document.getElementById('avans-desc').value })
+        });
+        const d = await res.json().catch(() => ({}));
+        if (res.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('avansModal'))?.hide();
+            if (selectedUserId === userId) loadPayments(userId);
+            Swal.fire({ icon: 'success', title: 'Avans eklendi.', timer: 1500, showConfirmButton: false });
+        } else Swal.fire('Hata', d.title || 'İşlem başarısız.', 'error');
+    } catch { Swal.fire('Hata', 'Sunucuya ulaşılamadı.', 'error'); }
+});
+
+document.getElementById('maas-submit')?.addEventListener('click', async () => {
+    const userId = document.getElementById('maas-user-id').value;
+    const amt = parseFloat(document.getElementById('maas-amount').value);
+    const year = parseInt(document.getElementById('maas-year').value);
+    const month = parseInt(document.getElementById('maas-month').value);
+    if (!userId || !amt || amt <= 0) { Swal.fire('Hata', 'Tutar girin.', 'warning'); return; }
+    if (!year || year < 2020 || month < 1 || month > 12) { Swal.fire('Hata', 'Geçerli ay/yıl girin.', 'warning'); return; }
+    try {
+        const res = await fetch(`/api/personnel/${encodeURIComponent(userId)}/maas`, {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: amt, currency: document.getElementById('maas-currency').value, year, month, description: document.getElementById('maas-desc').value })
+        });
+        const d = await res.json().catch(() => ({}));
+        if (res.ok) {
+            bootstrap.Modal.getInstance(document.getElementById('maasModal'))?.hide();
+            if (selectedUserId === userId) loadPayments(userId);
+            Swal.fire({ icon: 'success', title: 'Maaş eklendi.', timer: 1500, showConfirmButton: false });
+        } else Swal.fire('Hata', d.title || 'İşlem başarısız.', 'error');
+    } catch { Swal.fire('Hata', 'Sunucuya ulaşılamadı.', 'error'); }
+});
+
+document.addEventListener('DOMContentLoaded', () => loadPersonnel());
+</script>
+}

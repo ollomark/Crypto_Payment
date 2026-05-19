@@ -1,0 +1,788 @@
+@inject IConfiguration Config
+<!DOCTYPE html>
+<html lang="tr" data-layout="vertical" data-topbar="light" data-sidebar="dark" data-sidebar-size="lg" data-sidebar-image="none" data-preloader="disable" data-layout-mode="light" data-bs-theme="light">
+<head>
+    <meta charset="utf-8"/>
+    <title>@ViewData["Title"] - Crypto_Payment</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1e1e2d" media="(prefers-color-scheme: dark)">
+    <meta content="Crypto Payment System" name="description" />
+    <meta content="CryptoPayment" name="author" />
+    <!-- App favicon -->
+    <link rel="shortcut icon" href="~/admin/velzon-dist/assets/images/favicon.ico">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link href="~/admin/velzon-dist/assets/libs/swiper/swiper-bundle.min.css" rel="stylesheet" />
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Layout config Js -->
+    <script src="~/admin/velzon-dist/assets/js/layout.js"></script>
+    <!-- Bootstrap Css -->
+    <link href="~/admin/velzon-dist/assets/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <!-- Icons Css -->
+    <link href="~/admin/velzon-dist/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+    <!-- App Css-->
+    <link href="~/admin/velzon-dist/assets/css/app.min.css" rel="stylesheet" type="text/css" />
+    <!-- custom Css-->
+    <link href="~/admin/velzon-dist/assets/css/custom.min.css" rel="stylesheet" type="text/css" />
+    <!-- print Css-->
+    <link href="~/admin/my-css/print.css" rel="stylesheet" type="text/css" />
+    <!-- Mobile Css-->
+    <link href="~/admin/my-css/mobile.css" rel="stylesheet" type="text/css" />
+    
+    <style>
+        /* Font Override */
+        :root {
+            --vz-font-family-primary: 'Inter', sans-serif;
+            --vz-font-family-secondary: 'Inter', sans-serif;
+            --vz-body-font-family: 'Inter', sans-serif;
+            --vz-headings-font-family: 'Inter', sans-serif;
+            --vz-vertical-menu-item-font-family: 'Inter', sans-serif;
+            --vz-vertical-menu-sub-item-font-family: 'Inter', sans-serif;
+        }
+        body { font-family: 'Inter', sans-serif !important; letter-spacing: -0.01em; }
+        h1,h2,h3,h4,h5,h6,.h1,.h2,.h3,.h4,.h5,.h6 { font-family: 'Inter', sans-serif !important; font-weight: 600; }
+        .navbar-menu, .app-menu, .sidebar, .topbar { font-family: 'Inter', sans-serif !important; }
+        .btn { font-family: 'Inter', sans-serif !important; font-weight: 500; }
+        .badge { font-family: 'Inter', sans-serif !important; font-weight: 500; letter-spacing: 0.02em; }
+        .form-control, .form-select { font-family: 'Inter', sans-serif !important; }
+        .table { font-family: 'Inter', sans-serif !important; }
+        .card-title { font-weight: 600; }
+        .ff-secondary { font-family: 'Inter', sans-serif !important; }
+        .fs-22 { font-weight: 700; }
+
+        /* Currency Switcher */
+        .currency-switcher .currency-btn {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,.15);
+            color: #878a99;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            transition: all .2s;
+            letter-spacing: .3px;
+        }
+        .currency-switcher .currency-btn:hover {
+            background: rgba(var(--vz-primary-rgb), .1);
+            color: var(--vz-primary);
+            border-color: var(--vz-primary);
+        }
+        .currency-switcher .currency-btn.active {
+            background: var(--vz-primary);
+            color: #fff;
+            border-color: var(--vz-primary);
+            box-shadow: 0 2px 6px rgba(var(--vz-primary-rgb), .35);
+        }
+
+        .hamburger-icon { cursor: pointer; }
+        .hamburger-icon span {
+            display: block; width: 22px; height: 2px;
+            background-color: #495057; margin: 6px 0; transition: .3s;
+        }
+
+        /* ── Skeleton Loading ── */
+        @@keyframes skeleton-wave {
+            0% { background-position: -200px 0; }
+            100% { background-position: calc(200px + 100%) 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 37%, #f0f0f0 63%);
+            background-size: 200px 100%;
+            animation: skeleton-wave 1.4s ease infinite;
+            border-radius: 4px;
+            display: inline-block;
+            line-height: 1;
+            vertical-align: middle;
+        }
+        .skeleton-text {
+            height: 14px;
+            width: 80%;
+            margin: 4px 0;
+        }
+        .skeleton-text-sm {
+            height: 12px;
+            width: 60%;
+            margin: 3px 0;
+        }
+        .skeleton-text-xs {
+            height: 10px;
+            width: 40%;
+            margin: 2px 0;
+        }
+        .skeleton-badge {
+            height: 20px;
+            width: 70px;
+            border-radius: 10px;
+        }
+        .skeleton-btn {
+            height: 30px;
+            width: 60px;
+            border-radius: 4px;
+        }
+        .skeleton-circle {
+            border-radius: 50%;
+        }
+        .skeleton-card-value {
+            height: 28px;
+            width: 50px;
+            margin-top: 4px;
+        }
+        .skeleton-card-label {
+            height: 12px;
+            width: 90px;
+        }
+        .skeleton-row td {
+            padding: 12px 8px !important;
+        }
+        .skeleton-card {
+            height: 140px;
+            border-radius: 8px;
+        }
+        .skeleton-chart {
+            height: 320px;
+            border-radius: 8px;
+        }
+        .skeleton-title {
+            height: 22px;
+            width: 180px;
+        }
+        .skeleton-breadcrumb {
+            height: 14px;
+            width: 120px;
+        }
+        .skeleton-filter {
+            height: 36px;
+            width: 140px;
+            border-radius: 6px;
+        }
+        .skeleton-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+        }
+        .skeleton-img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+        }
+        .skeleton-page {
+            transition: opacity 0.3s ease;
+        }
+        .skeleton-page.loaded {
+            opacity: 0;
+            pointer-events: none;
+            position: absolute;
+        }
+        .push-banner {
+            background: linear-gradient(135deg, rgba(10,179,156,.15), rgba(10,179,156,.05));
+            border-bottom: 1px solid rgba(10,179,156,.2);
+            padding: 10px 20px;
+            font-size: 14px;
+            z-index: 1000;
+            overflow-wrap: break-word;
+        }
+    </style>
+    <link href="~/admin/my-css/layout-fixes.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+    <!-- Begin page -->
+    <div id="layout-wrapper">
+
+        <header id="page-topbar">
+            <div class="layout-width">
+                <div class="navbar-header">
+                    <div class="d-flex">
+                        <div class="navbar-brand-box horizontal-logo">
+                            <a href="/" class="logo logo-dark">
+                                <span class="logo-sm"><img src="~/admin/velzon-dist/assets/images/wanda-logo-sm.svg" alt="W" height="24"></span>
+                                <span class="logo-lg"><img src="~/admin/velzon-dist/assets/images/wanda-logo-dark.svg" alt="wandaplay" height="22"></span>
+                            </a>
+                            <a href="/" class="logo logo-light">
+                                <span class="logo-sm"><img src="~/admin/velzon-dist/assets/images/wanda-logo-sm.svg" alt="W" height="24"></span>
+                                <span class="logo-lg"><img src="~/admin/velzon-dist/assets/images/wanda-logo-light.svg" alt="wandaplay" height="22"></span>
+                            </a>
+                        </div>
+
+                        <button type="button" class="btn btn-sm px-3 fs-16 header-item vertical-menu-btn topnav-hamburger" id="topnav-hamburger-icon">
+                            <span class="hamburger-icon">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </span>
+                        </button>
+
+                        <!-- App Search-->
+                        <form class="app-search d-none d-md-block">
+                            <div class="position-relative">
+                                <input type="text" class="form-control" placeholder="Ara..." autocomplete="off" id="search-options" value="">
+                                <span class="mdi mdi-magnify search-widget-icon"></span>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <!-- Currency Switcher (desktop) -->
+                        <div class="ms-1 header-item d-none d-lg-flex align-items-center">
+                            <div class="btn-group btn-group-sm currency-switcher" role="group" aria-label="Para Birimi">
+                                <button type="button" class="btn currency-btn active" data-currency="EUR" title="Euro">€ EUR</button>
+                                <button type="button" class="btn currency-btn" data-currency="USD" title="Dolar">$ USD</button>
+                                <button type="button" class="btn currency-btn" data-currency="TRY" title="Türk Lirası">₺ TRY</button>
+                            </div>
+                        </div>
+
+                        <!-- Mobil: Daha Fazla menüsü (Currency + Tema) -->
+                        <div class="dropdown d-lg-none ms-1 header-item mobile-more-dropdown" id="mobileMoreDropdown">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle" data-bs-toggle="dropdown" title="Daha fazla">
+                                <i class="ri-more-2-fill fs-22"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end p-2">
+                                <h6 class="dropdown-header py-2">Para Birimi</h6>
+                                <div class="d-flex gap-1 mb-2 px-2">
+                                    <button type="button" class="btn btn-sm currency-btn flex-grow-1 active" data-currency="EUR" title="Euro">€</button>
+                                    <button type="button" class="btn btn-sm currency-btn flex-grow-1" data-currency="USD" title="Dolar">$</button>
+                                    <button type="button" class="btn btn-sm currency-btn flex-grow-1" data-currency="TRY" title="TL">₺</button>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <button type="button" class="dropdown-item d-flex align-items-center" id="mobile-light-dark-mode-btn">
+                                    <i class="bx bx-moon fs-18 me-2" id="mobile-light-dark-icon"></i> Gündüz/Gece Modu
+                                </button>
+                                <button type="button" class="dropdown-item d-flex align-items-center" id="mobile-enable-push-btn" style="display:none;">
+                                    <i class="ri-notification-3-line fs-18 me-2"></i> Bildirimleri Aç
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="ms-1 header-item d-none d-lg-flex">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle" id="light-dark-mode-btn" title="Gündüz/Gece Modu">
+                                <i class='bx bx-moon fs-22' id="light-dark-icon"></i>
+                            </button>
+                        </div>
+
+                        <!-- Chat Butonu -->
+                        <div class="ms-1 header-item">
+                            <a href="/chat" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle position-relative" title="Mesajlar">
+                                <i class='bx bx-message-dots fs-22'></i>
+                                <span class="position-absolute topbar-badge fs-10 translate-middle badge rounded-pill bg-success" id="chat-badge" style="display:none;">0</span>
+                            </a>
+                        </div>
+
+                        <!-- Bildirim Çanı: Bekleyen Onaylar -->
+                        <div class="dropdown topbar-head-dropdown ms-1 header-item" id="notificationDropdown">
+                            <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class='bx bx-bell fs-22'></i>
+                                <span class="position-absolute topbar-badge fs-10 translate-middle badge rounded-pill bg-danger" id="approval-badge" style="display:none;">0</span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0" style="min-width:320px;">
+                                <div class="dropdown-head bg-primary bg-pattern rounded-top">
+                                    <div class="p-3">
+                                        <div class="row align-items-center">
+                                            <div class="col">
+                                                <h6 class="m-0 fs-16 fw-semibold text-white">Bildirimler</h6>
+                                            </div>
+                                            <div class="col-auto dropdown-tabs">
+                                                <span class="badge bg-light-subtle text-body fs-13" id="approval-badge-text">0 Bekleyen</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="py-2 ps-2" id="notificationList" style="max-height:300px;overflow-y:auto;">
+                                    <p class="text-muted text-center py-3 mb-0" id="noNotification">Bekleyen işlem yok.</p>
+                                </div>
+                                <div class="my-1 text-center border-top">
+                                    <a href="/approvals" class="btn btn-link text-primary fw-semibold">
+                                        Tümünü Gör <i class="ri-arrow-right-line align-middle"></i>
+                                    </a>
+                                </div>
+                                <div class="p-2 border-top" id="pushEnableArea" style="display:none;">
+                                    <button type="button" class="btn btn-sm btn-success w-100" id="btnEnablePush" title="Bildirim izni için tıklayın">
+                                        <i class="ri-notification-3-line me-1"></i> Push Bildirimlerini Aç
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dropdown ms-sm-3 header-item topbar-user">
+                            <button type="button" class="btn" id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="d-flex align-items-center">
+                                    <img class="rounded-circle header-profile-user" src="~/admin/velzon-dist/assets/images/users/avatar-1.jpg" alt="Header Avatar">
+                                    <span class="text-start ms-xl-2">
+                                        <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">@User.Identity?.Name</span>
+                                        <span class="d-none d-xl-block ms-1 fs-12 user-name-sub-text">
+                                            @if (User.IsInRole("MasterAdmin")) { <text>Master Admin</text> }
+                                            else { <text>Admin</text> }
+                                        </span>
+                                    </span>
+                                </span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <h6 class="dropdown-header">Hoş Geldiniz!</h6>
+                                <form method="post" action="/api/auth/logout" id="logoutForm">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="dropdown-item"><i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Çıkış Yap</span></button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ========== App Menu ========== -->
+        <div class="app-menu navbar-menu">
+            <div class="navbar-brand-box">
+                <a href="/" class="logo logo-dark">
+                    <span class="logo-sm"><img src="~/admin/velzon-dist/assets/images/wanda-logo-sm.svg" alt="W" height="24"></span>
+                    <span class="logo-lg"><img src="~/admin/velzon-dist/assets/images/wanda-logo-dark.svg" alt="wandaplay" height="22"></span>
+                </a>
+                <a href="/" class="logo logo-light">
+                    <span class="logo-sm"><img src="~/admin/velzon-dist/assets/images/wanda-logo-sm.svg" alt="W" height="24"></span>
+                    <span class="logo-lg"><img src="~/admin/velzon-dist/assets/images/wanda-logo-light.svg" alt="wandaplay" height="22"></span>
+                </a>
+                <button type="button" class="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover" id="vertical-hover">
+                    <i class="ri-record-circle-line"></i>
+                </button>
+            </div>
+
+            <div id="scrollbar">
+                <div class="container-fluid" style="padding:0;">
+                    <ul class="navbar-nav" id="navbar-nav">
+
+                        <li class="menu-title"><span>Genel</span></li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/" data-page="/">
+                                <i class="ri-home-5-line"></i> <span>Kontrol Paneli</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/customers" data-page="/customers">
+                                <i class="ri-group-line"></i> <span>Müşteriler</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/invoices" data-page="/invoices">
+                                <i class="ri-file-list-3-line"></i> <span>Faturalar</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/invoices/invoice-add" data-page="/invoices/invoice-add">
+                                <i class="ri-add-line"></i> <span>Yeni Fatura</span>
+                            </a>
+                        </li>
+
+                        <li class="menu-title"><span>İletişim</span></li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/chat" data-page="/chat">
+                                <i class="ri-chat-3-line"></i> <span>Mesajlar</span>
+                                <span class="badge bg-danger sidebar-menu-badge" id="sidebar-chat-badge" style="display:none;">0</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/my-requests" data-page="/my-requests">
+                                <i class="ri-inbox-line"></i> <span>Taleplerim</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/withdrawal-requests" data-page="/withdrawal-requests">
+                                <i class="ri-coin-line"></i> <span>Çekim Talepleri</span>
+                            </a>
+                        </li>
+                        @if (User.IsInRole("MasterAdmin") || User.IsInRole("Admin"))
+                        {
+                        <li class="nav-item">
+                            <a class="nav-link" href="/mailing" data-page="/mailing">
+                                <i class="ri-mail-send-line"></i> <span>Toplu E-posta</span>
+                            </a>
+                        </li>
+                        }
+
+                        @if (User.IsInRole("MasterAdmin"))
+                        {
+                        <li class="menu-title"><span>Finans</span></li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/expenses" data-page="/expenses">
+                                <i class="ri-exchange-dollar-line"></i> <span>Giderler</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/personnel" data-page="/personnel">
+                                <i class="ri-team-fill"></i> <span>Personel</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/approvals" data-page="/approvals">
+                                <i class="ri-time-line"></i> <span>Onaylar</span>
+                                <span class="badge bg-danger sidebar-menu-badge" id="sidebar-approval-badge" style="display:none;">0</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/finance/report" data-page="/finance/report">
+                                <i class="ri-line-chart-line"></i> <span>Rapor</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/finance/performance" data-page="/finance/performance">
+                                <i class="ri-user-star-line"></i> <span>Performans</span>
+                            </a>
+                        </li>
+                        }
+
+                        <li class="menu-title"><span>Ayarlar</span></li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/payment-methods" data-page="/payment-methods">
+                                <i class="ri-bank-card-line"></i> <span>Ödeme Yöntemleri</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/users" data-page="/users">
+                                <i class="ri-user-line"></i> <span>Kullanıcılar</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/roles" data-page="/roles">
+                                <i class="ri-shield-user-line"></i> <span>Roller</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/permissions" data-page="/permissions">
+                                <i class="ri-lock-line"></i> <span>Yetkiler</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="sidebar-background"></div>
+        </div>
+        <!-- Left Sidebar End -->
+        
+        <!-- Vertical Overlay-->
+        <div class="vertical-overlay"></div>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="mobile-bottom-nav" aria-label="Mobil menü">
+            <a class="mobile-bottom-nav__item" href="/" data-page="/">
+                <span class="mobile-bottom-nav__item-wrap">
+                    <i class="ri-home-5-line"></i>
+                    <span>Ana Sayfa</span>
+                </span>
+            </a>
+            <a class="mobile-bottom-nav__item" href="/invoices" data-page="/invoices">
+                <span class="mobile-bottom-nav__item-wrap">
+                    <i class="ri-file-list-3-line"></i>
+                    <span>Faturalar</span>
+                </span>
+            </a>
+            <a class="mobile-bottom-nav__item" href="/invoices/invoice-add" data-page="/invoices/invoice-add">
+                <span class="mobile-bottom-nav__item-wrap">
+                    <i class="ri-add-circle-line" style="font-size:28px;"></i>
+                    <span>Yeni Fatura</span>
+                </span>
+            </a>
+            <a class="mobile-bottom-nav__item" href="/customers" data-page="/customers">
+                <span class="mobile-bottom-nav__item-wrap">
+                    <i class="ri-group-line"></i>
+                    <span>Müşteriler</span>
+                </span>
+            </a>
+            <a class="mobile-bottom-nav__item" href="#" id="mobile-nav-menu-btn">
+                <span class="mobile-bottom-nav__item-wrap">
+                    <i class="ri-menu-line"></i>
+                    <span>Menü</span>
+                </span>
+            </a>
+        </nav>
+
+        <!-- Push bildirim banner - her zaman görünür -->
+        <div id="pushBanner" class="push-banner" style="display:none;">
+            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap" style="max-width:100%;">
+                <span class="d-flex align-items-center gap-2">
+                    <i class="ri-notification-3-line fs-20 text-success"></i>
+                    <span>Onay, fatura ve taleplerden anında haberdar olun.</span>
+                </span>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-success" id="pushBannerBtn">
+                        <i class="ri-bell-line me-1"></i> Bildirimleri Aç
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="pushBannerDismiss" title="Kapat">×</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="page-content">
+                @RenderBody()
+            </div>
+
+            <footer class="footer">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <script>document.write(new Date().getFullYear())</script> © CryptoPayment
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="text-sm-end d-none d-sm-block">
+                                Crypto Payment System
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+
+    </div>
+    <!-- END layout-wrapper -->
+
+    <!-- JAVASCRIPT -->
+    <script src="~/admin/velzon-dist/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="~/admin/velzon-dist/assets/libs/simplebar/simplebar.min.js"></script>
+    <script src="~/admin/velzon-dist/assets/libs/node-waves/waves.min.js"></script>
+    <script src="~/admin/velzon-dist/assets/libs/feather-icons/feather.min.js"></script>
+    <script src="~/admin/velzon-dist/assets/js/pages/plugins/lord-icon-2.1.0.js"></script>
+    <script src="~/admin/velzon-dist/assets/js/plugins.js"></script>
+
+    <!-- App js -->
+    <script src="~/admin/velzon-dist/assets/js/app.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    
+    <!-- Bildirim Çanı Script -->
+    <script>
+    (function() {
+        async function loadNotifications() {
+            try {
+                const res = await fetch('/api/my-approvals/pending-count');
+                if (!res.ok) return;
+                const data = await res.json();
+                const count = data.count || 0;
+                const badge = document.getElementById('approval-badge');
+                const badgeText = document.getElementById('approval-badge-text');
+                const sidebarBadge = document.getElementById('sidebar-approval-badge');
+                if (badge) { badge.textContent = count; badge.style.display = count > 0 ? '' : 'none'; }
+                if (badgeText) badgeText.textContent = count + ' Bekleyen';
+                if (sidebarBadge) { sidebarBadge.textContent = count; sidebarBadge.style.display = count > 0 ? '' : 'none'; }
+
+                if (count > 0) {
+                    const res2 = await fetch('/api/my-approvals/pending-list');
+                    if (!res2.ok) return;
+                    const list = await res2.json();
+                    const container = document.getElementById('notificationList');
+                    const noNote = document.getElementById('noNotification');
+                    if (!container) return;
+                    if (noNote) noNote.style.display = 'none';
+                    container.innerHTML = '';
+                    list.slice(0, 5).forEach(item => {
+                        const d = new Date(item.createdDate).toLocaleDateString('tr-TR');
+                        container.innerHTML += `
+                        <div class="text-reset notification-item d-block dropdown-item position-relative">
+                            <div class="d-flex">
+                                <div class="avatar-xs me-3 flex-shrink-0">
+                                    <span class="avatar-title bg-warning-subtle text-warning rounded-circle fs-16">
+                                        <i class="ri-time-line"></i>
+                                    </span>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <a href="/approvals" class="stretched-link">
+                                        <h6 class="mt-0 mb-1 fs-13 fw-semibold">${item.requestedByName || 'Kullanıcı'}</h6>
+                                    </a>
+                                    <div class="fs-13 text-muted">
+                                        <p class="mb-1">${item.description || item.requestType}</p>
+                                    </div>
+                                    <p class="mb-0 fs-11 fw-medium text-uppercase text-muted"><span><i class="ri-time-line"></i> ${d}</span></p>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                }
+            } catch(e) {}
+        }
+        document.addEventListener('DOMContentLoaded', loadNotifications);
+        setInterval(loadNotifications, 30000);
+    })();
+    </script>
+
+    <!-- Chat Badge Script -->
+    <script>
+    (function() {
+        async function loadChatBadge() {
+            try {
+                const res = await fetch('/api/chat/unread-count');
+                if (!res.ok) return;
+                const data = await res.json();
+                const count = data.count || 0;
+                const badge = document.getElementById('chat-badge');
+                const sidebarBadge = document.getElementById('sidebar-chat-badge');
+                if (badge) { badge.textContent = count; badge.style.display = count > 0 ? '' : 'none'; }
+                if (sidebarBadge) { sidebarBadge.textContent = count; sidebarBadge.style.display = count > 0 ? '' : 'none'; }
+            } catch(e) {}
+        }
+        document.addEventListener('DOMContentLoaded', loadChatBadge);
+        setInterval(loadChatBadge, 15000);
+    })();
+    </script>
+
+    <!-- Menü Toggle Script -->
+    <script>
+    (function() {
+        'use strict';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Aktif menü öğesini bul ve işaretle
+            var path = window.location.pathname.replace(/\/+$/, '') || '/';
+            var navLinks = document.querySelectorAll('#navbar-nav .nav-link[data-page]');
+            var matched = null;
+            navLinks.forEach(function(link) {
+                var page = link.getAttribute('data-page');
+                if (page === path) { matched = link; }
+                else if (page !== '/' && path.startsWith(page) && (!matched || page.length > matched.getAttribute('data-page').length)) {
+                    matched = link;
+                }
+            });
+            if (matched) matched.classList.add('active');
+
+            // Mobil bottom nav aktif öğe
+            document.querySelectorAll('.mobile-bottom-nav__item[data-page]').forEach(function(link) {
+                var page = link.getAttribute('data-page');
+                if (page === path || (page !== '/' && path.startsWith(page))) {
+                    link.classList.add('active');
+                }
+            });
+
+            var hamburgerBtn = document.getElementById('topnav-hamburger-icon');
+            var mobileNavMenuBtn = document.getElementById('mobile-nav-menu-btn');
+            var verticalOverlay = document.querySelector('.vertical-overlay');
+            var html = document.documentElement;
+
+            function doToggleSidebar() {
+                if (window.innerWidth >= 992) {
+                    var currentSize = html.getAttribute('data-sidebar-size');
+                    html.setAttribute('data-sidebar-size', currentSize === 'sm' ? 'lg' : 'sm');
+                } else {
+                    document.body.classList.toggle('vertical-sidebar-enable');
+                }
+            }
+            
+            if (hamburgerBtn) hamburgerBtn.addEventListener('click', function(e) { e.preventDefault(); doToggleSidebar(); });
+            if (mobileNavMenuBtn) mobileNavMenuBtn.addEventListener('click', function(e) { e.preventDefault(); doToggleSidebar(); });
+            
+            // Overlay click - menüyü kapat
+            if (verticalOverlay) {
+                verticalOverlay.addEventListener('click', function() {
+                    document.body.classList.remove('vertical-sidebar-enable');
+                });
+            }
+            
+            // Sayfa yüklendiğinde sidebar durumunu ayarla
+            if (window.innerWidth < 992) {
+                html.setAttribute('data-sidebar-size', 'lg');
+            }
+            
+            // Pencere boyutu değiştiğinde
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 992) {
+                    document.body.classList.remove('vertical-sidebar-enable');
+                }
+            });
+        });
+    })();
+    </script>
+    
+    <!-- Dark/Light Mode Toggle -->
+    <script>
+    (function() {
+        'use strict';
+        var html = document.documentElement;
+        var savedMode = localStorage.getItem('theme-mode');
+
+        function applyMode(mode) {
+            html.setAttribute('data-layout-mode', mode);
+            html.setAttribute('data-bs-theme', mode);
+            html.setAttribute('data-topbar', mode === 'dark' ? 'dark' : 'light');
+            html.setAttribute('data-sidebar', 'dark');
+            var icon = document.getElementById('light-dark-icon');
+            var mobileIcon = document.getElementById('mobile-light-dark-icon');
+            var iconClass = mode === 'dark' ? 'bx bx-sun fs-22' : 'bx bx-moon fs-22';
+            var mobileIconClass = mode === 'dark' ? 'bx bx-sun fs-18 me-2' : 'bx bx-moon fs-18 me-2';
+            if (icon) icon.className = iconClass;
+            if (mobileIcon) mobileIcon.className = mobileIconClass;
+            localStorage.setItem('theme-mode', mode);
+        }
+
+        if (savedMode) applyMode(savedMode);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (savedMode) applyMode(savedMode);
+            function toggleTheme() {
+                var current = html.getAttribute('data-layout-mode') || 'light';
+                applyMode(current === 'dark' ? 'light' : 'dark');
+            }
+            var btn = document.getElementById('light-dark-mode-btn');
+            var mobileBtn = document.getElementById('mobile-light-dark-mode-btn');
+            if (btn) btn.addEventListener('click', toggleTheme);
+            if (mobileBtn) mobileBtn.addEventListener('click', toggleTheme);
+        });
+    })();
+    </script>
+
+    <!-- Currency Converter -->
+    <script src="~/js/currency-converter.js"></script>
+
+    <!-- PWA & Push Notifications -->
+    <script src="~/js/pwa-push.js"></script>
+    <script>
+    (function() {
+        var banner = document.getElementById('pushBanner');
+        var bannerBtn = document.getElementById('pushBannerBtn');
+        var bannerDismiss = document.getElementById('pushBannerDismiss');
+        var area = document.getElementById('pushEnableArea');
+        var btn = document.getElementById('btnEnablePush');
+        var mobileBtn = document.getElementById('mobile-enable-push-btn');
+        var dismissedKey = 'pushBannerDismissed';
+        function showBanner() {
+            if (localStorage.getItem(dismissedKey)) return false;
+            if (!('Notification' in window)) return false;
+            if (localStorage.getItem('notifyLocalEnabled') === '1') return false;
+            if (Notification.permission === 'granted') return false;
+            return true;
+        }
+        function updateUI() {
+            var show = showBanner();
+            if (banner) banner.style.display = show ? 'block' : 'none';
+            var showDropdown = typeof window.isPushEnabled === 'function' && !window.isPushEnabled() && 'Notification' in window && Notification.permission === 'default';
+            if (area) area.style.display = showDropdown ? '' : 'none';
+            if (mobileBtn) mobileBtn.style.display = showDropdown ? '' : 'none';
+        }
+        function onEnableClick() {
+            if (typeof window.enablePushNotifications === 'function') {
+                window.enablePushNotifications().then(function(ok) {
+                    updateUI();
+                });
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            updateUI();
+            if (bannerBtn) bannerBtn.addEventListener('click', onEnableClick);
+            if (bannerDismiss) bannerDismiss.addEventListener('click', function() {
+                localStorage.setItem(dismissedKey, '1');
+                if (banner) banner.style.display = 'none';
+            });
+            if (btn) btn.addEventListener('click', onEnableClick);
+            if (mobileBtn) mobileBtn.addEventListener('click', onEnableClick);
+        });
+        document.addEventListener('pwaReady', updateUI);
+        document.addEventListener('pushEnabled', updateUI);
+    })();
+    </script>
+    
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,180 @@
+@{
+    ViewData["Title"] = "Personel Performans";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <h4 class="mb-sm-0"><i class="ri-team-line me-2 text-primary"></i>Personel Performans</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="/">Ana Sayfa</a></li>
+                        <li class="breadcrumb-item">Finans</li>
+                        <li class="breadcrumb-item active">Personel Performans</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Özet -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <h5 class="card-title mb-0 flex-grow-1">Admin Aktivite Özeti</h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadData()">
+                        <i class="ri-refresh-line me-1"></i>Yenile
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Kullanıcı</th>
+                                    <th>Oluşturulan Fatura</th>
+                                    <th>Silinen Fatura</th>
+                                    <th>Onay Talepleri</th>
+                                    <th>Aktivite Skoru</th>
+                                </tr>
+                            </thead>
+                            <tbody id="perfBody">
+                                @for (int i = 0; i < 4; i++)
+                                {
+                                <tr class="skeleton-row">
+                                    <td><div class="skeleton skeleton-text" style="width:100px;"></div></td>
+                                    <td><div class="skeleton skeleton-text" style="width:40px;"></div></td>
+                                    <td><div class="skeleton skeleton-text" style="width:40px;"></div></td>
+                                    <td><div class="skeleton skeleton-text" style="width:40px;"></div></td>
+                                    <td><div class="skeleton skeleton-badge" style="width:60px;"></div></td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onay Talepleri Özeti -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Onay Talepleri Özeti (Tüm Zamanlar)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Kullanıcı</th>
+                                    <th>Toplam Talep</th>
+                                    <th>Onaylanan</th>
+                                    <th>Reddedilen</th>
+                                    <th>Bekleyen</th>
+                                    <th>Onay Oranı</th>
+                                </tr>
+                            </thead>
+                            <tbody id="approvalBody">
+                                @for (int i = 0; i < 4; i++)
+                                {
+                                <tr class="skeleton-row">
+                                    <td><div class="skeleton skeleton-text" style="width:100px;"></div></td>
+                                    <td><div class="skeleton skeleton-text" style="width:40px;"></div></td>
+                                    <td><div class="skeleton skeleton-text" style="width:40px;"></div></td>
+                                    <td><div class="skeleton skeleton-text" style="width:40px;"></div></td>
+                                    <td><div class="skeleton skeleton-text" style="width:40px;"></div></td>
+                                    <td><div class="skeleton skeleton-badge" style="width:60px;"></div></td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+async function loadData() {
+    try {
+        const [perfRes, approvalRes] = await Promise.all([
+            fetch('/finance/api/performance-data'),
+            fetch('/api/approvals?page=1')
+        ]);
+
+        if (perfRes.ok) {
+            const data = await perfRes.json();
+            const tbody = document.getElementById('perfBody');
+            if (!data.logs || !data.logs.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">Henüz aktivite kaydı yok.</td></tr>';
+            } else {
+                tbody.innerHTML = data.logs.map(l => {
+                    const score = (l.created * 2) - l.deleted;
+                    const scoreClass = score > 10 ? 'success' : score > 3 ? 'warning' : 'danger';
+                    return `<tr>
+                        <td><span class="fw-medium">${l.userName || l.userId || '—'}</span></td>
+                        <td><span class="badge bg-success-subtle text-success">${l.created}</span></td>
+                        <td><span class="badge bg-danger-subtle text-danger">${l.deleted}</span></td>
+                        <td>—</td>
+                        <td><span class="badge bg-${scoreClass}-subtle text-${scoreClass}">${score} puan</span></td>
+                    </tr>`;
+                }).join('');
+            }
+        }
+
+        if (approvalRes.ok) {
+            const approvals = await approvalRes.json();
+            const tbody = document.getElementById('approvalBody');
+
+            // Kullanıcı bazında grupla
+            const byUser = {};
+            approvals.forEach(a => {
+                const key = a.requestedByName || a.requestedBy || 'Bilinmiyor';
+                if (!byUser[key]) byUser[key] = { total: 0, approved: 0, rejected: 0, pending: 0 };
+                byUser[key].total++;
+                if (a.status === 'Approved') byUser[key].approved++;
+                else if (a.status === 'Rejected') byUser[key].rejected++;
+                else byUser[key].pending++;
+            });
+
+            const entries = Object.entries(byUser);
+            if (!entries.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Onay talebi bulunamadı.</td></tr>';
+            } else {
+                tbody.innerHTML = entries.map(([name, s]) => {
+                    const rate = s.total > 0 ? Math.round((s.approved / s.total) * 100) : 0;
+                    const rateClass = rate >= 70 ? 'success' : rate >= 40 ? 'warning' : 'danger';
+                    return `<tr>
+                        <td><span class="fw-medium">${name}</span></td>
+                        <td>${s.total}</td>
+                        <td><span class="text-success fw-medium">${s.approved}</span></td>
+                        <td><span class="text-danger fw-medium">${s.rejected}</span></td>
+                        <td><span class="text-warning fw-medium">${s.pending}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height:6px;">
+                                    <div class="progress-bar bg-${rateClass}" style="width:${rate}%"></div>
+                                </div>
+                                <span class="text-${rateClass} fw-medium">${rate}%</span>
+                            </div>
+                        </td>
+                    </tr>`;
+                }).join('');
+            }
+        }
+    } catch(e) {
+        console.error('Performans verisi yüklenemedi:', e);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadData);
+</script>
+}

@@ -1,0 +1,725 @@
+/* Mesajlar sayfası — Tailwind paleti ile uyumlu materyal yüzeyler (MD3 tarzı elevation).
+   Dinamik innerHTML satırları twc-* ile çizilir; statik kabukta Tailwind CDN + shadow-material-* kullanılabilir. */
+#tw-chat-root.twc-root {
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    --twc-md-elev-1: 0 1px 2px 0 rgb(15 23 42 / 0.06), 0 1px 3px 0 rgb(15 23 42 / 0.08);
+    --twc-md-elev-2: 0 4px 6px -1px rgb(15 23 42 / 0.09), 0 2px 4px -2px rgb(15 23 42 / 0.06);
+    --twc-md-elev-3: 0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -4px rgb(15 23 42 / 0.05);
+    --twc-md-surface: rgb(255 255 255);
+    --twc-md-surface-dim: rgb(248 250 252);
+    --twc-md-outline: rgb(226 232 240);
+    --twc-md-primary: rgb(79 70 229);
+}
+#tw-chat-root .twc-shell {
+    display: flex;
+    gap: 0;
+    height: calc(100vh - 180px);
+    margin: -20px -24px;
+    border-radius: 1rem;
+    overflow: hidden;
+    background: linear-gradient(165deg, rgb(241 245 249) 0%, rgb(248 250 252) 45%, rgb(238 242 255 / 0.35) 100%);
+    box-shadow: var(--twc-md-elev-3);
+    border: 1px solid var(--twc-md-outline);
+}
+#tw-chat-root .twc-sidebar {
+    width: 320px;
+    min-width: 280px;
+    border-right: 1px solid var(--twc-md-outline);
+    display: flex;
+    flex-direction: column;
+    background: rgb(255 255 255 / 0.92);
+    backdrop-filter: blur(8px);
+}
+/* Liste / rehber sekmesi: veri kartı içinde */
+#tw-chat-root .twc-material-inset {
+    margin: 0.4rem 0.55rem 0.55rem;
+    border-radius: 1rem;
+    background: var(--twc-md-surface);
+    border: 1px solid rgb(226 232 240 / 0.95);
+    box-shadow: var(--twc-md-elev-1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+#tw-chat-root .twc-sidebar-head {
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid rgb(241 245 249);
+}
+#tw-chat-root .twc-sidebar-head h5 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: rgb(15 23 42);
+}
+#tw-chat-root .twc-search {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid rgb(241 245 249);
+}
+#tw-chat-root .twc-search input {
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    border: 1px solid rgb(226 232 240);
+    background: rgb(248 250 252);
+}
+#tw-chat-root .twc-contact-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.35rem;
+}
+#tw-chat-root .twc-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: rgb(248 250 252);
+}
+
+/* Yardımcı araçlar: linkler + mini datagrid + modal büyütme */
+#tw-chat-root .twc-assist-bar {
+    flex-shrink: 0;
+    background: var(--twc-md-surface);
+    border-bottom: 1px solid var(--twc-md-outline);
+    box-shadow: var(--twc-md-elev-1);
+    z-index: 2;
+}
+#tw-chat-root .twc-assist-panel-inner {
+    border-bottom: 1px solid var(--twc-md-outline);
+    background: var(--twc-md-surface-dim);
+}
+#tw-chat-root .twc-material-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.45rem 0.65rem;
+    background: linear-gradient(180deg, rgb(255 255 255), rgb(248 250 252));
+    border-bottom: 1px solid var(--twc-md-outline);
+}
+#tw-chat-root .twc-material-toolbar .twc-toolbar-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgb(71 85 105);
+}
+#tw-chat-root .twc-assist-table-wrap {
+    max-height: 220px;
+    overflow: auto;
+}
+/* Datagrid: JS ile doldurulan tablolar Bootstrap/Tailwind CDN’e bağlı kalmaz */
+#tw-chat-root .twc-dg-wrap {
+    border: 1px solid var(--twc-md-outline);
+    border-radius: 0.75rem;
+    background: var(--twc-md-surface);
+    overflow: auto;
+    box-shadow: var(--twc-md-elev-1);
+}
+#tw-chat-root .twc-dg-wrap.twc-material-embedded {
+    margin: 0.5rem 0.65rem 0.65rem;
+}
+#tw-chat-root .twc-assist-table-wrap.twc-dg-wrap {
+    max-height: 220px;
+}
+#tw-chat-root .twc-dg-wrap.twc-dg-modal {
+    max-height: min(70vh, 560px);
+}
+#tw-chat-root table.twc-dg-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    margin: 0;
+}
+#tw-chat-root table.twc-dg-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: rgb(241 245 249);
+    color: rgb(51 65 85);
+    font-weight: 600;
+    text-align: left;
+    padding: 0.5rem 0.65rem;
+    border-bottom: 2px solid rgb(226 232 240);
+    white-space: nowrap;
+}
+#tw-chat-root table.twc-dg-table tbody td {
+    padding: 0.45rem 0.65rem;
+    border-bottom: 1px solid rgb(241 245 249);
+    vertical-align: middle;
+    color: rgb(30 41 59);
+}
+#tw-chat-root table.twc-dg-table tbody tr:nth-child(even) {
+    background: rgb(248 250 252);
+}
+#tw-chat-root table.twc-dg-table tbody tr:hover {
+    background: rgb(238 242 255 / 0.55);
+}
+#tw-chat-root .twc-assist-bar .btn-sm {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.45rem;
+}
+#tw-chat-root .twc-main-head {
+    padding: 0.65rem 1.1rem;
+    margin: 0.5rem 0.55rem 0;
+    border-radius: 1rem;
+    border: 1px solid rgb(226 232 240 / 0.9);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--twc-md-surface);
+    box-shadow: var(--twc-md-elev-1);
+    min-height: 64px;
+}
+#tw-chat-root .twc-messages {
+    flex: 1;
+    overflow-y: auto;
+    margin: 0 0.55rem 0.5rem;
+    padding: 1rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+    border-radius: 1rem;
+    background: var(--twc-md-surface);
+    border: 1px solid rgb(226 232 240 / 0.9);
+    box-shadow: var(--twc-md-elev-1);
+    min-height: 120px;
+}
+#tw-chat-root .twc-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: rgb(100 116 139);
+}
+#tw-chat-root .twc-input-row {
+    padding: 0.65rem 0.85rem;
+    margin: 0 0.55rem 0.55rem;
+    border-radius: 9999px;
+    border: 1px solid rgb(226 232 240 / 0.95);
+    background: var(--twc-md-surface);
+    box-shadow: var(--twc-md-elev-2);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+#tw-chat-root .twc-input-row input[type="text"] {
+    flex: 1;
+    border-radius: 9999px;
+    border: 1px solid rgb(226 232 240);
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    outline: none;
+    background: rgb(248 250 252);
+}
+#tw-chat-root .twc-input-row input[type="text"]:focus {
+    border-color: rgb(99 102 241);
+    box-shadow: 0 0 0 3px rgb(99 102 241 / 0.15);
+}
+#tw-chat-root .twc-tabs-bar {
+    display: none;
+    background: #fff;
+    border-bottom: 1px solid rgb(226 232 240);
+    padding: 0 0.5rem;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+#tw-chat-root .twc-tabs-bar.twc-show { display: flex; align-items: stretch; min-height: 38px; }
+#tw-chat-root .twc-tabs-bar::-webkit-scrollbar { display: none; }
+#tw-chat-root .twc-tabs-bar { scrollbar-width: none; }
+#tw-chat-root .visitor-panel {
+    width: 300px;
+    min-width: 260px;
+    border-left: 1px solid var(--twc-md-outline);
+    background: linear-gradient(180deg, rgb(255 255 255), rgb(248 250 252 / 0.6));
+    display: none;
+    flex-direction: column;
+    overflow-y: auto;
+    box-shadow: inset 1px 0 0 rgb(255 255 255 / 0.5);
+}
+#tw-chat-root .visitor-panel.show { display: flex; }
+#tw-chat-root .visitor-panel-header {
+    padding: 12px 14px;
+    margin: 10px 10px 6px;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(226 232 240 / 0.95);
+    background: var(--twc-md-surface);
+    box-shadow: var(--twc-md-elev-1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#tw-chat-root .visitor-panel-header h6 { margin: 0; font-size: 0.9rem; font-weight: 600; }
+#tw-chat-root .visitor-panel-header i { color: rgb(99 102 241); font-size: 1.1rem; }
+#tw-chat-root .visitor-info-block {
+    padding: 10px 14px;
+    margin: 0 10px 8px;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(226 232 240 / 0.9);
+    background: var(--twc-md-surface);
+    box-shadow: var(--twc-md-elev-1);
+}
+#tw-chat-root .visitor-info-block .vi-label {
+    font-size: 0.68rem;
+    color: rgb(100 116 139);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+#tw-chat-root .visitor-info-block .vi-value {
+    font-size: 0.82rem;
+    font-weight: 500;
+    word-break: break-all;
+    color: rgb(15 23 42);
+}
+#tw-chat-root .visitor-info-block .vi-value.mono { font-family: ui-monospace, monospace; font-size: 0.78rem; }
+#tw-chat-root .live-preview-block {
+    padding: 10px 14px;
+    margin: 10px 10px 8px;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(199 210 254 / 0.65);
+    background: linear-gradient(135deg, rgb(238 242 255 / 0.9), rgb(255 255 255));
+    box-shadow: var(--twc-md-elev-1);
+}
+#tw-chat-root .live-preview-block .vi-label {
+    font-size: 0.68rem;
+    color: rgb(79 70 229);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+#tw-chat-root .live-preview-text {
+    font-size: 0.82rem;
+    color: rgb(51 65 85);
+    min-height: 20px;
+    font-style: italic;
+    word-break: break-word;
+}
+#tw-chat-root .live-preview-text:empty::after { content: '—'; color: rgb(100 116 139); }
+#tw-chat-root .support-avatar .pulse-dot {
+    animation: twc-spulse 1.5s infinite;
+}
+@keyframes twc-spulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+#tw-chat-root .support-header-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    background: rgb(238 242 255);
+    color: rgb(79 70 229);
+    margin-left: 8px;
+}
+#tw-chat-root .chat-tab.has-new { animation: twc-tabFlash 1s infinite; }
+@keyframes twc-tabFlash {
+    0%, 100% { background: rgb(238 242 255 / 0.4); }
+    50% { background: rgb(199 210 254 / 0.5); }
+}
+#tw-chat-root .twc-drop {
+    position: absolute;
+    inset: 0;
+    background: rgb(99 102 241 / 0.08);
+    border: 3px dashed rgb(99 102 241);
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    pointer-events: none;
+}
+#tw-chat-root .twc-drop span {
+    background: rgb(79 70 229);
+    color: #fff;
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+#tw-chat-root .twc-typing {
+    font-size: 0.75rem;
+    color: rgb(100 116 139);
+    font-style: italic;
+    padding: 0 0.55rem 0.35rem;
+    margin: 0 0.55rem;
+    min-height: 18px;
+}
+#tw-chat-root .twc-guide-panel {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.65rem;
+    background: transparent;
+}
+/* Öneriler: statik HTML — Tailwind sınıfları + yerel tamamlayıcı */
+#tw-chat-root .twc-material-tips summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+}
+#tw-chat-root .twc-material-tips summary::-webkit-details-marker {
+    display: none;
+}
+#tw-chat-root .twc-material-tips[open] summary {
+    border-bottom: 1px solid rgb(241 245 249);
+}
+
+/* Saasko AI — prompt önerileri (chat içi details) */
+#tw-chat-root .twc-saasko-ai-prompts .twc-saasko-pre {
+    font-size: 0.7rem;
+    line-height: 1.45;
+    color: rgb(51 65 85);
+    background: rgb(255 255 255);
+    border: 1px solid rgb(226 232 240);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.65rem;
+    margin: 0 0 0.35rem 0;
+    max-height: 140px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+#tw-chat-root .twc-saasko-ai-prompts .twc-saasko-prompt-item {
+    padding-bottom: 0.65rem;
+    margin-bottom: 0.65rem;
+    border-bottom: 1px dashed rgb(226 232 240 / 0.95);
+}
+#tw-chat-root .twc-saasko-ai-prompts .twc-saasko-prompt-item--last {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+#tw-chat-root .twc-tabs-row {
+    display: flex;
+    border-bottom: 1px solid rgb(241 245 249);
+    background: #fff;
+}
+#tw-chat-root .twc-tab-panel {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+}
+#tw-chat-root .twc-tab-panel.twc-show {
+    display: flex;
+}
+@media (max-width: 768px) {
+    #tw-chat-root .twc-sidebar {
+        width: 100%;
+        position: absolute;
+        z-index: 5;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transition: transform 0.25s ease;
+    }
+    #tw-chat-root .twc-sidebar.twc-hidden { transform: translateX(-100%); }
+    #tw-chat-root .twc-shell { position: relative; }
+    #tw-chat-root .visitor-panel,
+    #tw-chat-root .twc-visitor-panel { display: none !important; }
+}
+
+/* Mesajlar sayfası — dinamik JS ile üretilen satırlar */
+#tw-chat-root .twc-contact.twc-material-tile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.85rem;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease, background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    border-radius: 0.85rem;
+    margin-bottom: 0.4rem;
+    border: 1px solid rgb(226 232 240 / 0.95);
+    background: var(--twc-md-surface);
+    box-shadow: var(--twc-md-elev-1);
+    position: relative;
+}
+#tw-chat-root .twc-contact.twc-material-tile:hover {
+    background: rgb(248 250 252);
+    box-shadow: var(--twc-md-elev-2);
+    border-color: rgb(199 210 254 / 0.5);
+}
+#tw-chat-root .twc-contact.twc-material-tile:active {
+    transform: scale(0.992);
+}
+/* İletişim listesi metin gövdesi (Tailwind CDN dinamik sınıfları üretmez — sabit bileşen) */
+#tw-chat-root .twc-contact-body {
+    flex: 1;
+    min-width: 0;
+}
+#tw-chat-root .twc-contact-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin: 0 0 0.12rem 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: rgb(15 23 42);
+    line-height: 1.25;
+}
+#tw-chat-root .twc-contact-preview {
+    margin: 0;
+    font-size: 0.78rem;
+    color: rgb(100 116 139);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+#tw-chat-root .twc-contact-meta {
+    flex-shrink: 0;
+    text-align: right;
+    min-width: 3rem;
+}
+#tw-chat-root .twc-contact-time {
+    display: block;
+    font-size: 0.7rem;
+    color: rgb(100 116 139);
+    line-height: 1.2;
+}
+#tw-chat-root .twc-contact-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: rgb(100 116 139);
+    font-size: 0.875rem;
+}
+#tw-chat-root .twc-contact.twc-material-tile.twc-active {
+    background: linear-gradient(135deg, rgb(238 242 255 / 0.98), rgb(255 255 255));
+    border-color: rgb(165 180 252 / 0.85);
+    box-shadow: var(--twc-md-elev-2), 0 0 0 1px rgb(99 102 241 / 0.18);
+}
+#tw-chat-root .twc-avatar-ring { position: relative; flex-shrink: 0; }
+#tw-chat-root .twc-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: #fff;
+    font-size: 0.8rem;
+}
+#tw-chat-root .twc-dot {
+    position: absolute;
+    bottom: 1px;
+    right: 1px;
+    width: 10px;
+    height: 10px;
+    border-radius: 9999px;
+    border: 2px solid #fff;
+}
+#tw-chat-root .twc-dot-online { background: rgb(16 185 129); }
+#tw-chat-root .twc-dot-offline { background: rgb(148 163 184); }
+#tw-chat-root .twc-msg-row { display: flex; gap: 0.5rem; max-width: 78%; }
+#tw-chat-root .twc-msg-row-sent { align-self: flex-end; flex-direction: row-reverse; }
+#tw-chat-root .twc-msg-row-recv { align-self: flex-start; }
+#tw-chat-root .twc-bubble {
+    padding: 0.65rem 1rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    word-break: break-word;
+}
+#tw-chat-root .twc-msg-row-sent .twc-bubble {
+    background: linear-gradient(135deg, rgb(79 70 229), rgb(99 102 241));
+    color: #fff;
+    border-bottom-right-radius: 0.25rem;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.08);
+}
+#tw-chat-root .twc-msg-row-recv .twc-bubble {
+    background: #fff;
+    border: 1px solid rgb(226 232 240);
+    color: rgb(15 23 42);
+    border-bottom-left-radius: 0.25rem;
+}
+#tw-chat-root .twc-msg-time { font-size: 0.65rem; color: rgb(100 116 139); margin-top: 0.2rem; }
+#tw-chat-root .twc-msg-row-sent .twc-msg-time { text-align: right; }
+#tw-chat-root .msg-file-attachment {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+}
+#tw-chat-root .twc-msg-row-sent .msg-file-attachment { background: rgb(255 255 255 / 0.15); color: #fff; }
+#tw-chat-root .twc-msg-row-recv .msg-file-attachment { background: rgb(241 245 249); color: rgb(15 23 42); }
+#tw-chat-root .msg-img-preview { max-width: 240px; border-radius: 8px; cursor: pointer; }
+#tw-chat-root .msg-file-name { font-size: 0.82rem; font-weight: 500; }
+#tw-chat-root .msg-file-size { font-size: 0.7rem; opacity: 0.85; }
+#tw-chat-root .twc-date-pill {
+    text-align: center;
+    margin: 0.75rem 0;
+}
+#tw-chat-root .twc-unread-badge {
+    font-size: 0.65rem;
+    min-width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: rgb(79 70 229);
+    color: #fff;
+    font-weight: 600;
+}
+#tw-chat-root .twc-date-pill span {
+    background: rgb(241 245 249);
+    padding: 0.2rem 0.85rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    color: rgb(100 116 139);
+}
+#tw-chat-root .twc-support-item.twc-material-tile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.85rem;
+    cursor: pointer;
+    border-radius: 0.85rem;
+    margin-bottom: 0.4rem;
+    border: 1px solid rgb(226 232 240 / 0.95);
+    background: var(--twc-md-surface);
+    box-shadow: var(--twc-md-elev-1);
+    transition: box-shadow 0.2s ease, background 0.15s ease, border-color 0.15s ease;
+}
+#tw-chat-root .twc-support-item.twc-material-tile:hover {
+    background: rgb(248 250 252);
+    box-shadow: var(--twc-md-elev-2);
+    border-color: rgb(199 210 254 / 0.45);
+}
+#tw-chat-root .twc-support-item.twc-material-tile.twc-active {
+    background: linear-gradient(135deg, rgb(238 242 255 / 0.95), rgb(255 255 255));
+    border-color: rgb(165 180 252 / 0.8);
+    box-shadow: var(--twc-md-elev-2), 0 0 0 1px rgb(99 102 241 / 0.15);
+}
+#tw-chat-root .support-info { flex: 1; min-width: 0; }
+#tw-chat-root .support-name { font-weight: 600; font-size: 0.88rem; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#tw-chat-root .support-detail { font-size: 0.75rem; color: rgb(100 116 139); margin: 0; display: flex; align-items: center; gap: 6px; }
+#tw-chat-root .support-time { font-size: 0.7rem; color: rgb(100 116 139); flex-shrink: 0; }
+#tw-chat-root .support-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: #fff;
+    font-size: 1rem;
+    background: linear-gradient(135deg, rgb(102 126 234), rgb(118 75 162));
+    flex-shrink: 0;
+    position: relative;
+}
+#tw-chat-root .support-avatar .pulse-dot {
+    position: absolute;
+    bottom: 1px;
+    right: 1px;
+    width: 10px;
+    height: 10px;
+    border-radius: 9999px;
+    border: 2px solid #fff;
+    background: rgb(16 185 129);
+}
+#tw-chat-root .twc-tab {
+    flex: 1;
+    padding: 0.65rem 0.5rem;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    color: rgb(100 116 139);
+    transition: color 0.15s, border-color 0.15s;
+}
+#tw-chat-root .twc-tab:hover { color: rgb(51 65 85); }
+#tw-chat-root .twc-tab.twc-tab-active {
+    color: rgb(79 70 229);
+    border-bottom-color: rgb(79 70 229);
+}
+#tw-chat-root .twc-tab { position: relative; }
+#tw-chat-root .twc-tab .tab-badge {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    min-width: 16px;
+    height: 16px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgb(239 68 68);
+    color: #fff;
+    font-size: 0.6rem;
+    font-weight: 700;
+}
+#tw-chat-root .support-empty {
+    text-align: center;
+    padding: 2.5rem 1.25rem;
+    color: rgb(100 116 139);
+}
+#tw-chat-root .support-empty i { font-size: 2.5rem; display: block; margin-bottom: 0.5rem; opacity: 0.35; }
+#tw-chat-root .twc-chat-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-right: 1px solid rgb(226 232 240);
+    color: rgb(100 116 139);
+    max-width: 200px;
+    flex-shrink: 0;
+}
+#tw-chat-root .twc-chat-tab:first-child { border-left: 1px solid rgb(226 232 240); }
+#tw-chat-root .twc-chat-tab.twc-chat-tab-active {
+    background: rgb(248 250 252);
+    color: rgb(15 23 42);
+    font-weight: 600;
+    border-bottom: 2px solid rgb(79 70 229);
+}
+#tw-chat-root .twc-chat-tab .ct-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 120px;
+}
+#tw-chat-root .twc-chat-tab .ct-dot { width: 7px; height: 7px; border-radius: 9999px; flex-shrink: 0; }
+#tw-chat-root .twc-chat-tab .ct-dot.online { background: rgb(16 185 129); }
+#tw-chat-root .twc-chat-tab .ct-close {
+    font-size: 14px;
+    opacity: 0.5;
+    cursor: pointer;
+    margin-left: 4px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+#tw-chat-root .twc-chat-tab .ct-close:hover { opacity: 1; color: rgb(239 68 68); }
+
+/* Mesajlar sayfası — üst bilgi (sayfa gövdesinde, #tw-chat-root dışında) */
+details.twc-page-prompt summary {
+    list-style: none;
+    cursor: pointer;
+    border-radius: 0.35rem;
+}
+details.twc-page-prompt summary::-webkit-details-marker {
+    display: none;
+}
+details.twc-page-prompt summary:hover {
+    color: rgb(79 70 229) !important;
+}
+details.twc-page-prompt[open] summary {
+    margin-bottom: 0.15rem;
+}

@@ -1,0 +1,306 @@
+@* Support Chat Widget - injected via @Html.Raw(supportWidgetHtml) or inline *@
+<style>
+.sc-fab{
+    position:fixed;bottom:24px;right:24px;z-index:99999;
+    width:56px;height:56px;border-radius:50%;
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    color:#fff;border:none;cursor:pointer;
+    box-shadow:0 4px 20px rgba(102,126,234,.45);
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .2s,box-shadow .2s;
+    font-size:24px;
+}
+.sc-fab:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(102,126,234,.55);}
+.sc-fab .sc-badge{
+    position:absolute;top:-4px;right:-4px;
+    background:#ef4444;color:#fff;font-size:11px;font-weight:700;
+    min-width:20px;height:20px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    border:2px solid #1a1a2e;display:none;
+}
+.sc-panel{
+    position:fixed;bottom:92px;right:24px;z-index:99999;
+    width:360px;max-height:500px;
+    background:#fff;border-radius:16px;
+    box-shadow:0 12px 48px rgba(0,0,0,.25);
+    display:none;flex-direction:column;overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    animation:sc-slideUp .25s ease-out;
+}
+@@keyframes sc-slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.sc-header{
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    color:#fff;padding:16px 18px;
+    display:flex;align-items:center;justify-content:space-between;
+}
+.sc-header-left{display:flex;align-items:center;gap:10px;}
+.sc-header-left i{font-size:22px;}
+.sc-header-left h4{margin:0;font-size:15px;font-weight:600;}
+.sc-header-left small{display:block;font-size:11px;opacity:.8;margin-top:1px;}
+.sc-close{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;opacity:.8;padding:4px;}
+.sc-close:hover{opacity:1;}
+.sc-body{flex:1;overflow-y:auto;padding:16px;min-height:260px;max-height:320px;background:#f7f8fc;}
+.sc-body::-webkit-scrollbar{width:4px;}
+.sc-body::-webkit-scrollbar-thumb{background:#ccc;border-radius:4px;}
+.sc-msg{
+    display:flex;flex-direction:column;margin-bottom:10px;
+    max-width:82%;animation:sc-slideUp .2s ease-out;
+}
+.sc-msg.customer{align-self:flex-end;margin-left:auto;}
+.sc-msg.admin{align-self:flex-start;}
+.sc-msg .sc-bubble{
+    padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.45;
+    word-break:break-word;
+}
+.sc-msg.customer .sc-bubble{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-bottom-right-radius:4px;}
+.sc-msg.admin .sc-bubble{background:#fff;color:#333;border:1px solid #e8e8e8;border-bottom-left-radius:4px;}
+.sc-msg .sc-time{font-size:10px;color:#999;margin-top:3px;padding:0 4px;}
+.sc-msg.customer .sc-time{text-align:right;}
+.sc-typing{
+    display:none;align-items:center;gap:6px;padding:6px 14px;
+    background:#fff;border-radius:14px;border:1px solid #e8e8e8;
+    max-width:80px;margin-bottom:10px;
+}
+.sc-typing span{width:6px;height:6px;border-radius:50%;background:#999;display:block;animation:sc-dot 1.2s infinite;}
+.sc-typing span:nth-child(2){animation-delay:.2s;}
+.sc-typing span:nth-child(3){animation-delay:.4s;}
+@@keyframes sc-dot{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1.1)}}
+.sc-welcome{text-align:center;padding:32px 16px;color:#888;font-size:13px;}
+.sc-welcome i{font-size:40px;color:#667eea;display:block;margin-bottom:12px;}
+.sc-footer{padding:10px 12px;border-top:1px solid #eee;background:#fff;display:flex;gap:8px;align-items:center;}
+.sc-input{
+    flex:1;border:1px solid #ddd;border-radius:20px;padding:8px 14px;
+    font-size:13px;outline:none;resize:none;max-height:60px;
+    font-family:inherit;
+}
+.sc-input:focus{border-color:#667eea;}
+.sc-send{
+    width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
+    background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:16px;
+    transition:transform .15s;
+}
+.sc-send:hover{transform:scale(1.1);}
+.sc-send:disabled{opacity:.5;cursor:default;transform:none;}
+.sc-status{
+    text-align:center;padding:6px;font-size:11px;
+    background:#f0fdf4;color:#22c55e;font-weight:500;
+    display:none;
+}
+.sc-status.waiting{background:#fffbeb;color:#d97706;}
+@@media(max-width:420px){.sc-panel{width:calc(100vw - 24px);right:12px;bottom:84px;}.sc-fab{bottom:16px;right:16px;width:50px;height:50px;font-size:20px;}}
+</style>
+
+<button class="sc-fab" id="scFab" title="Destek Chat">
+    <i class="ri-customer-service-2-fill"></i>
+    <span class="sc-badge" id="scBadge">0</span>
+</button>
+
+<div class="sc-panel" id="scPanel">
+    <div class="sc-header">
+        <div class="sc-header-left">
+            <i class="ri-customer-service-2-fill"></i>
+            <div>
+                <h4>Canlı Destek</h4>
+                <small id="scHeaderSub">Size yardımcı olmamız için yazın</small>
+            </div>
+        </div>
+        <button class="sc-close" id="scClose"><i class="ri-close-line"></i></button>
+    </div>
+    <div class="sc-status waiting" id="scStatus">Destek temsilcisi bekleniyor…</div>
+    <div class="sc-body" id="scBody">
+        <div class="sc-welcome" id="scWelcome">
+            <i class="ri-chat-smile-3-line"></i>
+            Merhaba! 👋<br>Size nasıl yardımcı olabiliriz?<br>
+            <small style="color:#aaa;margin-top:8px;display:block;">Bir mesaj göndererek sohbeti başlatın.</small>
+        </div>
+        <div class="sc-typing" id="scTyping"><span></span><span></span><span></span></div>
+    </div>
+    <div class="sc-footer">
+        <input type="text" class="sc-input" id="scInput" placeholder="Mesajınızı yazın…" autocomplete="off" maxlength="500">
+        <button class="sc-send" id="scSend" disabled><i class="ri-send-plane-2-fill"></i></button>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script>
+(function(){
+    const _scData = document.getElementById('supportChatData');
+    const INVOICE_ID = parseInt(_scData?.dataset.invoiceId || '0');
+    const CUSTOMER_NAME = _scData?.dataset.customerName || '';
+    const ORDER_NAME = _scData?.dataset.orderName || '';
+
+    const fab = document.getElementById('scFab');
+    const panel = document.getElementById('scPanel');
+    const closeBtn = document.getElementById('scClose');
+    const body = document.getElementById('scBody');
+    const input = document.getElementById('scInput');
+    const sendBtn = document.getElementById('scSend');
+    const badge = document.getElementById('scBadge');
+    const typing = document.getElementById('scTyping');
+    const welcome = document.getElementById('scWelcome');
+    const status = document.getElementById('scStatus');
+    const headerSub = document.getElementById('scHeaderSub');
+
+    let open = false;
+    let sessionId = null;
+    let connected = false;
+    let adminJoined = false;
+    let unread = 0;
+    let typingTimeout = null;
+
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl('/supportChatHub')
+        .withAutomaticReconnect([0,1000,3000,5000,10000])
+        .build();
+
+    fab.addEventListener('click', () => {
+        open = !open;
+        panel.style.display = open ? 'flex' : 'none';
+        if (open) {
+            unread = 0;
+            badge.style.display = 'none';
+            input.focus();
+            body.scrollTop = body.scrollHeight;
+            if (!connected) startConnection();
+        }
+    });
+
+    closeBtn.addEventListener('click', () => {
+        open = false;
+        panel.style.display = 'none';
+    });
+
+    let liveTypingDebounce = null;
+    input.addEventListener('input', () => {
+        sendBtn.disabled = !input.value.trim();
+        if (sessionId && connected) {
+            connection.invoke('CustomerTyping', sessionId).catch(() => {});
+            clearTimeout(liveTypingDebounce);
+            liveTypingDebounce = setTimeout(() => {
+                connection.invoke('LiveTypingPreview', sessionId, input.value || '').catch(() => {});
+            }, 150);
+        }
+    });
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            doSend();
+        }
+    });
+
+    sendBtn.addEventListener('click', doSend);
+
+    function doSend() {
+        const text = input.value.trim();
+        if (!text || !sessionId || !connected) return;
+        connection.invoke('SendSupportMessage', sessionId, text).catch(err => {
+            console.error('Send error:', err);
+        });
+        input.value = '';
+        sendBtn.disabled = true;
+    }
+
+    function addMessage(sender, content, time) {
+        welcome.style.display = 'none';
+        const wrap = document.createElement('div');
+        wrap.className = 'sc-msg ' + (sender === 'customer' ? 'customer' : 'admin');
+        const bubble = document.createElement('div');
+        bubble.className = 'sc-bubble';
+        bubble.textContent = content;
+        wrap.appendChild(bubble);
+        const ts = document.createElement('div');
+        ts.className = 'sc-time';
+        const d = time ? new Date(time) : new Date();
+        ts.textContent = d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        wrap.appendChild(ts);
+        body.insertBefore(wrap, typing);
+        body.scrollTop = body.scrollHeight;
+    }
+
+    connection.on('SessionCreated', (sid) => {
+        sessionId = sid;
+        status.style.display = 'block';
+        status.className = 'sc-status waiting';
+        status.textContent = 'Destek temsilcisi bekleniyor…';
+    });
+
+    connection.on('AdminJoined', (adminName) => {
+        adminJoined = true;
+        status.style.display = 'block';
+        status.className = 'sc-status';
+        status.style.background = '#f0fdf4';
+        status.style.color = '#22c55e';
+        status.textContent = adminName + ' sohbete katıldı';
+        headerSub.textContent = adminName + ' ile görüşüyorsunuz';
+        setTimeout(() => { status.style.display = 'none'; }, 3000);
+    });
+
+    connection.on('AdminLeft', () => {
+        adminJoined = false;
+        status.style.display = 'block';
+        status.className = 'sc-status waiting';
+        status.textContent = 'Destek temsilcisi ayrıldı. Yeni temsilci bekleniyor…';
+        headerSub.textContent = 'Size yardımcı olmamız için yazın';
+    });
+
+    connection.on('SupportMessage', (msg) => {
+        addMessage(msg.sender, msg.content, msg.createdDate);
+        if (!open) {
+            unread++;
+            badge.textContent = unread;
+            badge.style.display = 'flex';
+        }
+    });
+
+    connection.on('SupportMessageSent', (msg) => {
+        addMessage(msg.sender, msg.content, msg.createdDate);
+    });
+
+    connection.on('SupportTyping', (_sid, who) => {
+        if (who === 'admin') {
+            typing.style.display = 'flex';
+            body.scrollTop = body.scrollHeight;
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => { typing.style.display = 'none'; }, 2500);
+        }
+    });
+
+    connection.onreconnected(() => {
+        connected = true;
+        if (INVOICE_ID > 0) {
+            connection.invoke('JoinSupport', INVOICE_ID, CUSTOMER_NAME, ORDER_NAME).catch(() => {});
+        }
+    });
+
+    connection.onclose(() => { connected = false; });
+
+    async function sendVisitorInfo() {
+        if (!sessionId || !connected) return;
+        try {
+            await connection.invoke('SendVisitorInfo', sessionId, window.location.href, navigator.userAgent);
+            const r = await fetch('https://ipapi.co/json/');
+            if (r.ok) {
+                const geo = await r.json();
+                await connection.invoke('UpdateVisitorGeo', sessionId,
+                    geo.country_name || '', geo.city || '', geo.org || '');
+            }
+        } catch(e) {}
+    }
+
+    async function startConnection() {
+        try {
+            await connection.start();
+            connected = true;
+            if (INVOICE_ID > 0) {
+                await connection.invoke('JoinSupport', INVOICE_ID, CUSTOMER_NAME, ORDER_NAME);
+                setTimeout(sendVisitorInfo, 500);
+            }
+        } catch (err) {
+            console.error('Support SignalR error:', err);
+            setTimeout(startConnection, 5000);
+        }
+    }
+})();
+</script>

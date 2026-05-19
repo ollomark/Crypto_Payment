@@ -1,0 +1,21 @@
+@media print {
+    body * {
+        visibility: hidden !important;
+    }
+
+    #invoice-area, #invoice-area * {
+        visibility: visible !important;
+    }
+
+    #invoice-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+
+    /* butonlar yazdırmada görünmesin */
+    .no-print {
+        display: none !important;
+    }
+}

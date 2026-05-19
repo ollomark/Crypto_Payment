@@ -1,0 +1,1271 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Mesajlar";
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+    var currentUserName = User.Identity?.Name ?? "";
+    var openGuide = ViewBag.OpenGuideTab as bool? ?? false;
+}
+
+<link rel="stylesheet" href="~/css/chat-tw-components.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/office-onboarding.css" asp-append-version="true" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+        corePlugins: { preflight: false },
+        important: '#tw-chat-root',
+        theme: {
+            extend: {
+                boxShadow: {
+                    'material-1': '0 1px 2px 0 rgb(15 23 42 / 0.06), 0 1px 3px 0 rgb(15 23 42 / 0.08)',
+                    'material-2': '0 4px 6px -1px rgb(15 23 42 / 0.09), 0 2px 4px -2px rgb(15 23 42 / 0.06)',
+                    'material-3': '0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -4px rgb(15 23 42 / 0.05)',
+                },
+            },
+        },
+    };
+</script>
+<details class="twc-page-prompt mb-2">
+    <summary class="text-muted small d-inline-flex align-items-center gap-1 py-1 user-select-none">
+        <i class="ri-information-line fs-14"></i>
+        <span>Arayüz notu</span>
+        <span class="text-muted opacity-75">— tıklayarak göster / gizle</span>
+    </summary>
+    <div class="text-muted small mt-2 mb-0 ps-2 border-start border-2 border-secondary border-opacity-25">
+        <strong>Tailwind</strong> ile statik materyal yüzeyler (gölge / kenar); <strong>üye listesi, destek satırları ve tablolar</strong> <code>twc-material-*</code> bileşenleriyle kart içinde gösterilir — CDN dinamik sınıf üretmediği için veri satırları <code>chat-tw-components.css</code> üzerindedir.
+    </div>
+</details>
+<div id="tw-chat-root" class="twc-root rounded-2xl ring-1 ring-slate-200/80 bg-slate-50/50 p-1 mb-3">
+<div class="twc-shell" id="chatWrapper">
+    <!-- Sidebar -->
+    <div class="twc-sidebar" id="chatSidebar">
+        <div class="twc-tabs-row">
+            <div class="twc-tab twc-tab-active" id="tabMessages" onclick="switchTab('messages')">
+                <i class="ri-message-3-line me-1"></i>Mesajlar
+            </div>
+            <div class="twc-tab" id="tabSupport" onclick="switchTab('support')">
+                <i class="ri-customer-service-2-line me-1"></i>Destek
+                <span class="tab-badge" id="supportBadge">0</span>
+            </div>
+            <div class="twc-tab" id="tabGuide" onclick="switchTab('guide')">
+                <i class="ri-compasses-2-line me-1"></i>Rehber
+            </div>
+        </div>
+
+        <!-- Messages Tab -->
+        <div class="twc-tab-panel twc-show" id="tabContentMessages">
+            <div class="twc-material-inset">
+                <div class="twc-search">
+                    <input type="text" class="form-control form-control-sm" placeholder="Kullanıcı ara..." id="contactSearch" oninput="filterContacts()">
+                </div>
+                <div class="twc-contact-list" id="contactList" role="list" aria-label="Sohbet kullanıcıları">
+                    <div class="twc-contact-empty"><span class="spinner-border spinner-border-sm me-2"></span>Yükleniyor...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Support Tab -->
+        <div class="twc-tab-panel" id="tabContentSupport">
+            <div class="twc-material-inset">
+                <div class="twc-contact-list" id="supportList">
+                    <div class="support-empty" id="supportEmpty">
+                        <i class="ri-customer-service-2-line"></i>
+                        <p>Bekleyen destek talebi yok</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Büro onboarding (chat içi) -->
+        <div class="twc-tab-panel" id="tabContentGuide">
+            <div class="twc-material-inset">
+                <div class="twc-guide-panel">
+                    @await Html.PartialAsync("_OfficeOnboardingWizard")
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="twc-main" id="chatMain">
+        <div class="twc-tabs-bar" id="chatTabsBar"></div>
+
+        <details class="twc-material-tips twc-saasko-ai-prompts mx-2 mt-2 mb-0 rounded-xl border border-slate-200/80 bg-white shadow-material-1 overflow-hidden open:shadow-material-2 transition-shadow">
+            <summary class="flex items-center gap-2 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+                <i class="ri-magic-line text-violet-600 text-lg"></i>
+                Saasko AI — prompt önerileri
+                <span class="ms-auto text-xs font-normal text-slate-400">tıklayarak aç / kapat</span>
+            </summary>
+            <div class="px-3 pb-3 pt-2 border-t border-slate-100 bg-slate-50/60">
+                <p class="text-xs text-slate-500 mb-3 leading-relaxed">Bu metinleri Saasko AI veya kullandığınız asistana yapıştırın; köşeli parantezli yerleri kendi verinizle doldurun. <strong>Varsayılan kapalı</strong> — başlığa tıklayarak açın.</p>
+
+                <div class="twc-saasko-prompt-item">
+                    <div class="text-xs font-semibold text-slate-700 mb-1"><i class="ri-user-line text-indigo-500 me-1"></i>Müşteri / cari özeti</div>
+                    <pre id="saasko-prompt-1" class="twc-saasko-pre">Sen bir büro muhasebe asistanısın. Aşağıdaki müşteri bilgilerini ve son mesaj özetini oku. Türkçe olarak (1) kısa durum özeti 3-5 madde, (2) önerilen sonraki adımlar 2-4 madde yaz.
+
+Müşteri: [Ad Soyad / firma]
+E-posta: [...]
+Son mesajlar / notlar:
+[Buraya yapıştırın]</pre>
+                    <button type="button" class="btn btn-sm btn-soft-primary py-0 px-2" onclick="copySaaskoAiPrompt('saasko-prompt-1')"><i class="ri-file-copy-line me-1"></i>Kopyala</button>
+                </div>
+
+                <div class="twc-saasko-prompt-item">
+                    <div class="text-xs font-semibold text-slate-700 mb-1"><i class="ri-customer-service-2-line text-indigo-500 me-1"></i>Canlı destek yanıt taslağı</div>
+                    <pre id="saasko-prompt-2" class="twc-saasko-pre">Profesyonel ve samimi bir tonda, Türkçe kısa bir canlı destek mesajı yaz (max 4-5 cümle). Konu: [müşteri sorunu]. Müşteri adı: [ad]. Çözüm veya net bilgi isteği belirt.</pre>
+                    <button type="button" class="btn btn-sm btn-soft-primary py-0 px-2" onclick="copySaaskoAiPrompt('saasko-prompt-2')"><i class="ri-file-copy-line me-1"></i>Kopyala</button>
+                </div>
+
+                <div class="twc-saasko-prompt-item">
+                    <div class="text-xs font-semibold text-slate-700 mb-1"><i class="ri-file-list-3-line text-indigo-500 me-1"></i>Fatura / tahsilat takibi</div>
+                    <pre id="saasko-prompt-3" class="twc-saasko-pre">Aşağıdaki fatura listesini analiz et. Türkçe tablo veya madde listesi ile: bekleyenler, gecikenler, bu hafta hatırlatılacaklar. Veri:
+[Buraya tablo veya liste yapıştırın]</pre>
+                    <button type="button" class="btn btn-sm btn-soft-primary py-0 px-2" onclick="copySaaskoAiPrompt('saasko-prompt-3')"><i class="ri-file-copy-line me-1"></i>Kopyala</button>
+                </div>
+
+                <div class="twc-saasko-prompt-item twc-saasko-prompt-item--last">
+                    <div class="text-xs font-semibold text-slate-700 mb-1"><i class="ri-calendar-check-line text-indigo-500 me-1"></i>Toplantı / sohbet özeti</div>
+                    <pre id="saasko-prompt-4" class="twc-saasko-pre">Şu metinden yapılabilir aksiyonları, sorumlu kişi önerisini ve tarihleri çıkar. Türkçe madde madde yaz.
+
+---
+[Buraya sohbet veya notları yapıştırın]
+---</pre>
+                    <button type="button" class="btn btn-sm btn-soft-primary py-0 px-2" onclick="copySaaskoAiPrompt('saasko-prompt-4')"><i class="ri-file-copy-line me-1"></i>Kopyala</button>
+                </div>
+
+                <div class="pt-2 mt-3 border-top border-slate-200/90">
+                    <div class="text-xs font-semibold text-slate-600 mb-2">Arayüz ipuçları</div>
+                    <ul class="list-none m-0 space-y-1.5 text-xs text-slate-600 leading-relaxed">
+                        <li class="flex gap-2"><i class="ri-table-line text-indigo-500 shrink-0 mt-0.5"></i><span><strong>Tablolar:</strong> Faturalar / Müşteriler / Giderler → <strong>Büyüt</strong> ile geniş görünüm.</span></li>
+                        <li class="flex gap-2"><i class="ri-user-search-line text-indigo-500 shrink-0 mt-0.5"></i><span><strong>Üyeler:</strong> Sol sekme, kart listesi + arama.</span></li>
+                        <li class="flex gap-2"><i class="ri-customer-service-2-line text-indigo-500 shrink-0 mt-0.5"></i><span><strong>Destek:</strong> <strong>Al</strong> ile oturum; sağ panel IP / cihaz.</span></li>
+                    </ul>
+                </div>
+            </div>
+        </details>
+
+        <!-- Yardımcılar: hızlı linkler + mini tablolar; büyüt → modal -->
+        <div class="twc-assist-bar" id="twcAssistBar">
+            <div class="d-flex flex-wrap align-items-center gap-1 py-1 px-2">
+                <span class="text-muted small me-1 d-none d-lg-inline">Hızlı</span>
+                <a href="/" class="btn btn-sm btn-soft-primary">Panel</a>
+                <a href="/customers" class="btn btn-sm btn-light border">Müşteri</a>
+                <a href="/expenses" class="btn btn-sm btn-light border">Gider</a>
+                <a href="/approvals" class="btn btn-sm btn-light border">Onay</a>
+                <a href="/finance/report" class="btn btn-sm btn-light border">Finans</a>
+                <a href="/personnel" class="btn btn-sm btn-light border d-none d-md-inline-block" id="twcLinkPersonnel">Personel</a>
+                <div class="vr mx-1 d-none d-sm-block align-self-stretch my-1"></div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="showAssistWidget('invoices')" title="Son faturalar tablosu"><i class="ri-file-list-3-line"></i><span class="d-none d-sm-inline"> Faturalar</span></button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="showAssistWidget('customers')" title="Müşteri listesi"><i class="ri-team-line"></i><span class="d-none d-sm-inline"> Müşteriler</span></button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="showAssistWidget('expenses')" title="Son gider kayıtları"><i class="ri-wallet-3-line"></i><span class="d-none d-sm-inline"> Giderler</span></button>
+                <button type="button" class="btn btn-sm btn-soft-dark ms-auto" onclick="openAssistModal()" title="Seçili tabloyu büyük pencerede aç"><i class="ri-fullscreen-line"></i></button>
+                <button type="button" class="btn btn-sm btn-link text-secondary p-1" id="btnAssistCollapse" onclick="toggleAssistPanelCollapse()" title="Tablo panelini aç/kapat"><i class="ri-layout-bottom-line" id="btnAssistCollapseIcon"></i></button>
+            </div>
+            <div class="twc-assist-panel-inner d-none" id="twcAssistPanelInner">
+                <div class="twc-material-toolbar">
+                    <span class="twc-toolbar-title" id="twcAssistTitle">—</span>
+                    <div class="d-flex gap-1 align-items-center">
+                        <button type="button" class="btn btn-sm btn-soft-primary py-0 px-2" onclick="openAssistModal()"><i class="ri-fullscreen-line me-1"></i>Büyüt</button>
+                        <button type="button" class="btn btn-sm btn-link text-muted py-0" onclick="hideAssistPanel()" title="Kapat">×</button>
+                    </div>
+                </div>
+                <div class="twc-assist-table-wrap twc-dg-wrap twc-material-embedded" id="twcAssistTableWrap">
+                    <div class="text-muted small p-3" id="twcAssistPlaceholder">Yukarıdan bir tablo seçin veya hızlı link kullanın.</div>
+                    <table class="twc-dg-table d-none" id="twcAssistTable" role="grid" aria-label="Yardımcı veri tablosu">
+                        <thead><tr id="twcAssistThead"></tr></thead>
+                        <tbody id="twcAssistTbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="twc-empty mx-2 my-2 rounded-2xl border border-slate-200/70 bg-white/90 shadow-material-1 px-4" id="chatEmpty">
+            <i class="ri-message-3-line fs-1 text-slate-300 mb-2"></i>
+            <h6 class="text-slate-600 font-semibold">Mesajlaşmaya başlayın</h6>
+            <p class="text-muted fs-13 mb-0 text-center">Sol panelden kullanıcı seçin veya <strong>Rehber</strong> ile panele alışın.</p>
+        </div>
+        <div class="twc-main-head d-none" id="chatHeader">
+            <button class="btn btn-sm btn-ghost-secondary d-md-none me-1" onclick="showSidebar()"><i class="ri-arrow-left-s-line fs-18"></i></button>
+            <div class="twc-avatar-ring">
+                <div class="twc-avatar" id="chatHeaderAvatar" style="background:#4f46e5;">?</div>
+                <span class="twc-dot twc-dot-offline" id="chatHeaderDot"></span>
+            </div>
+            <div>
+                <p class="name mb-0" id="chatHeaderName">-</p>
+                <span class="status-text text-muted" id="chatHeaderStatus">Çevrimdışı</span>
+            </div>
+        </div>
+        <div class="twc-messages d-none" id="chatMessages"></div>
+        <div class="twc-typing d-none" id="typingIndicator"></div>
+        <div class="twc-input-row d-none" id="chatInputArea" style="position:relative;">
+            <input type="file" id="fileInput" style="display:none" onchange="handleFileSelect(this)">
+            <button type="button" id="btnChatAttach" class="btn btn-link text-slate-500 p-1" title="Dosya gönder" onclick="document.getElementById('fileInput').click()"><i class="ri-attachment-2 fs-5"></i></button>
+            <input type="text" id="messageInput" placeholder="Mesajınızı yazın..." autocomplete="off">
+            <button type="button" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center" style="width:38px;height:38px;" onclick="sendMessage()" title="Gönder"><i class="ri-send-plane-fill"></i></button>
+        </div>
+    </div>
+
+    <!-- Visitor Info Panel (right side, support chat only) -->
+    <div class="visitor-panel" id="visitorPanel">
+        <div class="visitor-panel-header">
+            <i class="ri-user-search-line"></i>
+            <h6>Ziyaretçi Bilgileri</h6>
+        </div>
+
+        <div class="live-preview-block" id="livePreviewBlock" style="display:none;">
+            <div class="vi-label"><i class="ri-eye-line"></i>Canlı Yazı Önizleme</div>
+            <div class="live-preview-text" id="livePreviewText"></div>
+        </div>
+
+        <div class="visitor-info-block">
+            <div class="vi-label"><i class="ri-timer-line"></i>Chatte Geçen Süre</div>
+            <div class="vi-value session-timer" id="viSessionTime">0dk 0sn</div>
+        </div>
+
+        <div class="visitor-info-block">
+            <div class="vi-label"><i class="ri-global-line"></i>IP Adresi</div>
+            <div class="vi-value mono" id="viIp">—</div>
+        </div>
+
+        <div class="visitor-info-block">
+            <div class="vi-label"><i class="ri-map-pin-2-line"></i>Konum</div>
+            <div class="vi-value" id="viLocation">—</div>
+        </div>
+
+        <div class="visitor-info-block">
+            <div class="vi-label"><i class="ri-building-line"></i>ISP</div>
+            <div class="vi-value" id="viIsp">—</div>
+        </div>
+
+        <div class="visitor-info-block">
+            <div class="vi-label"><i class="ri-links-line"></i>Geldiği Sayfa</div>
+            <div class="vi-value" id="viPage" style="font-size:.75rem;">—</div>
+        </div>
+
+        <div class="visitor-info-block">
+            <div class="vi-label"><i class="ri-device-line"></i>Cihaz / Tarayıcı</div>
+            <div class="vi-value" id="viDevice" style="font-size:.75rem;">—</div>
+        </div>
+
+        <div class="visitor-info-block">
+            <div class="vi-label"><i class="ri-file-text-line"></i>Fatura Bilgisi</div>
+            <div class="vi-value" id="viInvoice">—</div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="assistModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable modal-fullscreen-lg-down">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title fs-6" id="assistModalTitle">Yardımcı tablo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body p-0" id="assistModalBody">
+                    <div class="p-4 text-center text-muted"><span class="spinner-border spinner-border-sm"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<script>
+function copySaaskoAiPrompt(elementId) {
+    var el = document.getElementById(elementId);
+    if (!el || !navigator.clipboard) return;
+    var t = (el.textContent || '').trim();
+    navigator.clipboard.writeText(t).then(function () {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Prompt panoya kopyalandı', showConfirmButton: false, timer: 1400 });
+        }
+    }).catch(function () {});
+}
+const CURRENT_USER_ID = '@currentUserId';
+const CURRENT_USER_NAME = '@currentUserName';
+const avatarColors = ['#405189','#0ab39c','#f06548','#f7b84b','#299cdb','#6559cc','#e83e8c','#2b8a3e'];
+function getColor(id) { let h=0; for(let i=0;i<id.length;i++)h=id.charCodeAt(i)+((h<<5)-h); return avatarColors[Math.abs(h)%avatarColors.length]; }
+function getInitials(name) { return (name||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase(); }
+function formatTime(d) { const dt=new Date(d); return dt.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'}); }
+function formatDate(d) { return new Date(d).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}); }
+function formatFileSize(b) { if(!b)return''; if(b<1024)return b+'B'; if(b<1048576)return(b/1024).toFixed(1)+'KB'; return(b/1048576).toFixed(1)+'MB'; }
+function isImage(name) { return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(name||''); }
+
+let contacts = [];
+let activeContactId = null;
+let connection = null;
+let typingTimer = null;
+
+// SignalR connection
+connection = new signalR.HubConnectionBuilder()
+    .withUrl('/chatHub')
+    .withAutomaticReconnect()
+    .build();
+
+connection.on('ReceiveMessage', msg => {
+    if (msg.senderId === activeContactId) {
+        appendMessage(msg, false);
+        scrollToBottom();
+        connection.invoke('MarkAsRead', msg.senderId).catch(()=>{});
+    }
+    playMessageSound();
+    refreshContactList();
+});
+
+connection.on('MessageSent', msg => {
+    appendMessage(msg, true);
+    scrollToBottom();
+    refreshContactList();
+});
+
+connection.on('OnlineUsers', ids => {
+    ids.forEach(id => setContactOnline(id, true));
+});
+
+connection.on('UserOnline', id => setContactOnline(id, true));
+connection.on('UserOffline', id => setContactOnline(id, false));
+
+connection.on('MessagesRead', userId => {
+    document.querySelectorAll('.twc-msg-row-sent .msg-read-status').forEach(el => {
+        el.innerHTML = '<i class="ri-check-double-line text-info"></i>';
+    });
+});
+
+connection.on('UserTyping', senderId => {
+    if (senderId === activeContactId) {
+        const el = document.getElementById('typingIndicator');
+        const contact = contacts.find(c => c.id === senderId);
+        el.textContent = (contact?.name || 'Kullanıcı') + ' yazıyor...';
+        el.classList.remove('d-none');
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => el.classList.add('d-none'), 2500);
+    }
+});
+
+connection.start().then(() => {
+    loadContacts();
+}).catch(err => {
+    console.error('SignalR bağlantı hatası:', err);
+    loadContacts();
+});
+
+async function loadContacts() {
+    try {
+        const r = await fetch('/api/chat/contacts');
+        if (!r.ok) return;
+        contacts = await r.json();
+        renderContacts();
+    } catch(e) { console.error(e); }
+}
+
+async function refreshContactList() {
+    try {
+        const r = await fetch('/api/chat/contacts');
+        if (!r.ok) return;
+        contacts = await r.json();
+        renderContacts();
+    } catch(e) {}
+}
+
+function renderContacts() {
+    const list = document.getElementById('contactList');
+    const q = (document.getElementById('contactSearch')?.value || '').toLowerCase();
+    const filtered = q ? contacts.filter(c => c.name.toLowerCase().includes(q) || (c.email||'').toLowerCase().includes(q)) : contacts;
+
+    if (!filtered.length) {
+        list.innerHTML = '<div class="twc-contact-empty">Kullanıcı bulunamadı</div>';
+        return;
+    }
+
+    list.innerHTML = filtered.map(c => {
+        const color = getColor(c.id);
+        const initials = getInitials(c.name);
+        const isActive = c.id === activeContactId;
+        const preview = c.lastMessage ? (c.lastMessage.length > 30 ? c.lastMessage.substring(0,30)+'...' : c.lastMessage) : 'Henüz mesaj yok';
+        const timeStr = c.lastDate ? formatTime(c.lastDate) : '';
+        const unread = c.unreadCount > 0 ? `<span class="twc-unread-badge">${c.unreadCount}</span>` : '';
+        return `<div class="twc-contact twc-material-tile${isActive ? ' twc-active' : ''}" role="listitem" onclick="selectContact('${c.id}')">
+            <div class="twc-avatar-ring">
+                <div class="twc-avatar" style="background:${color}">${initials}</div>
+                <span class="twc-dot ${c.isOnline ? 'twc-dot-online' : 'twc-dot-offline'}" data-user-dot="${c.id}"></span>
+            </div>
+            <div class="twc-contact-body">
+                <p class="twc-contact-name">${escHtml(c.name)}</p>
+                <p class="twc-contact-preview">${escHtml(preview)}</p>
+            </div>
+            <div class="twc-contact-meta">
+                <span class="twc-contact-time">${timeStr}</span>
+                ${unread}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function filterContacts() { renderContacts(); }
+
+function setContactOnline(userId, online) {
+    const c = contacts.find(x => x.id === userId);
+    if (c) c.isOnline = online;
+    const dot = document.querySelector(`[data-user-dot="${userId}"]`);
+    if (dot) { dot.className = 'twc-dot ' + (online ? 'twc-dot-online' : 'twc-dot-offline'); }
+    if (userId === activeContactId) {
+        const hDot = document.getElementById('chatHeaderDot');
+        const hStatus = document.getElementById('chatHeaderStatus');
+        if (hDot) hDot.className = 'twc-dot ' + (online ? 'twc-dot-online' : 'twc-dot-offline');
+        if (hStatus) { hStatus.textContent = online ? 'Çevrimiçi' : 'Çevrimdışı'; hStatus.className = 'status-text ' + (online ? 'text-success' : 'text-muted'); }
+    }
+}
+
+async function selectContact(userId) {
+    switchTab('messages');
+    activeContactId = userId;
+    const contact = contacts.find(c => c.id === userId);
+    if (!contact) return;
+
+    document.getElementById('chatEmpty').classList.add('d-none');
+    document.getElementById('chatHeader').classList.remove('d-none');
+    document.getElementById('chatMessages').classList.remove('d-none');
+    document.getElementById('chatInputArea').classList.remove('d-none');
+    document.getElementById('typingIndicator').classList.remove('d-none');
+    document.getElementById('typingIndicator').textContent = '';
+
+    const color = getColor(contact.id);
+    document.getElementById('chatHeaderAvatar').style.background = color;
+    document.getElementById('chatHeaderAvatar').textContent = getInitials(contact.name);
+    document.getElementById('chatHeaderName').textContent = contact.name;
+    document.getElementById('chatHeaderDot').className = 'twc-dot ' + (contact.isOnline ? 'twc-dot-online' : 'twc-dot-offline');
+    document.getElementById('chatHeaderStatus').textContent = contact.isOnline ? 'Çevrimiçi' : 'Çevrimdışı';
+    document.getElementById('chatHeaderStatus').className = 'status-text ' + (contact.isOnline ? 'text-success' : 'text-muted');
+
+    renderContacts();
+
+    // Load history
+    const msgs = document.getElementById('chatMessages');
+    msgs.innerHTML = '<div class="text-center py-3"><span class="spinner-border spinner-border-sm"></span></div>';
+
+    try {
+        const r = await fetch('/api/chat/history/' + userId);
+        if (!r.ok) { msgs.innerHTML = '<p class="text-muted text-center">Yüklenemedi</p>'; return; }
+        const history = await r.json();
+        msgs.innerHTML = '';
+        let lastDate = '';
+        history.forEach(m => {
+            const d = formatDate(m.createdDate);
+            if (d !== lastDate) {
+                lastDate = d;
+                msgs.innerHTML += `<div class="twc-date-pill"><span>${d}</span></div>`;
+            }
+            appendMessage(m, m.senderId === CURRENT_USER_ID);
+        });
+        scrollToBottom();
+        connection.invoke('MarkAsRead', userId).catch(()=>{});
+        contact.unreadCount = 0;
+        renderContacts();
+    } catch(e) { msgs.innerHTML = '<p class="text-muted text-center">Hata oluştu</p>'; }
+
+    // Mobile: hide sidebar
+    document.getElementById('chatSidebar').classList.add('twc-hidden');
+    document.getElementById('messageInput').focus();
+}
+
+function appendMessage(msg, isSent) {
+    const msgs = document.getElementById('chatMessages');
+    const rowCls = isSent ? 'twc-msg-row twc-msg-row-sent' : 'twc-msg-row twc-msg-row-recv';
+    let content = '';
+
+    if (msg.fileUrl) {
+        if (isImage(msg.fileName)) {
+            content = `<img src="${msg.fileUrl}" alt="${msg.fileName||'image'}" class="msg-img-preview" onclick="window.open('${msg.fileUrl}','_blank')">`;
+        } else {
+            content = `<a href="${msg.fileUrl}" target="_blank" class="msg-file-attachment">
+                <i class="ri-file-line"></i>
+                <div><div class="msg-file-name">${msg.fileName||'Dosya'}</div><div class="msg-file-size">${formatFileSize(msg.fileSize)}</div></div>
+            </a>`;
+        }
+        if (msg.content) content += `<div class="mt-1">${escHtml(msg.content)}</div>`;
+    } else {
+        content = escHtml(msg.content || '');
+    }
+
+    msgs.innerHTML += `<div class="${rowCls}">
+        <div>
+            <div class="twc-bubble">${content}</div>
+            <div class="twc-msg-time">${formatTime(msg.createdDate)} ${isSent ? '<span class="msg-read-status ms-1"><i class="ri-check-line"></i></span>' : ''}</div>
+        </div>
+    </div>`;
+}
+
+function escHtml(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+// ───── Sohbet yardımcıları: hızlı linkler + mini datagrid + modal büyütme ─────
+let currentAssistKind = null;
+
+function formatAssistMoney(n) {
+    if (n == null || n === '') return '—';
+    const x = Number(n);
+    if (Number.isNaN(x)) return escHtml(String(n));
+    return x.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatAssistDate(d) {
+    try { return new Date(d).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+    catch { return '—'; }
+}
+
+function renderAssistTable(headers, rows) {
+    const ph = document.getElementById('twcAssistPlaceholder');
+    const tbl = document.getElementById('twcAssistTable');
+    const thead = document.getElementById('twcAssistThead');
+    const tbody = document.getElementById('twcAssistTbody');
+    if (!thead || !tbody) return;
+    thead.innerHTML = headers.map(h => '<th scope="col">' + escHtml(h) + '</th>').join('');
+    tbody.innerHTML = rows.map(cells => '<tr>' + cells.map(c => '<td>' + c + '</td>').join('') + '</tr>').join('');
+    ph.classList.add('d-none');
+    tbl.classList.remove('d-none');
+    tbl.classList.add('twc-dg-table');
+}
+
+function showAssistError(msg) {
+    const ph = document.getElementById('twcAssistPlaceholder');
+    const tbl = document.getElementById('twcAssistTable');
+    ph.textContent = msg;
+    ph.classList.remove('d-none');
+    tbl.classList.add('d-none');
+}
+
+function showAssistWidget(kind) {
+    currentAssistKind = kind;
+    const inner = document.getElementById('twcAssistPanelInner');
+    inner.classList.remove('d-none');
+    updateAssistCollapseIcon();
+    const title = document.getElementById('twcAssistTitle');
+    const ph = document.getElementById('twcAssistPlaceholder');
+    document.getElementById('twcAssistTable').classList.add('d-none');
+    ph.classList.remove('d-none');
+    ph.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Yükleniyor...';
+
+    if (kind === 'invoices') {
+        title.textContent = 'Son faturalar';
+        fetch('/api/invoices/GetAll', { credentials: 'include' })
+            .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+            .then(list => {
+                const arr = Array.isArray(list) ? list : [];
+                arr.sort((a, b) => new Date(b.createdDate || 0) - new Date(a.createdDate || 0));
+                const slice = arr.slice(0, 40);
+                renderAssistTable(
+                    ['Sipariş', 'Tutar', 'PB', 'Durum', 'Tarih'],
+                    slice.map(inv => [
+                        escHtml((inv.orderName || '—').substring(0, 38)),
+                        formatAssistMoney(inv.sourceAmount),
+                        escHtml(inv.sourceCurrency || ''),
+                        escHtml(inv.status || ''),
+                        inv.createdDate ? formatAssistDate(inv.createdDate) : '—'
+                    ])
+                );
+            })
+            .catch(() => showAssistError('Faturalar yüklenemedi veya yetkiniz yok.'));
+    } else if (kind === 'customers') {
+        title.textContent = 'Müşteriler';
+        fetch('/api/customers/GetAll', { credentials: 'include' })
+            .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+            .then(list => {
+                const arr = Array.isArray(list) ? list : [];
+                const slice = arr.slice(0, 40);
+                renderAssistTable(
+                    ['Firma / Ad', 'E-posta', 'Telefon'],
+                    slice.map(c => {
+                        const name = c.companyName || [c.firstName, c.lastName].filter(Boolean).join(' ') || '—';
+                        return [
+                            escHtml((name || '').substring(0, 36)),
+                            escHtml((c.email || '—').substring(0, 30)),
+                            escHtml((c.phone || '—').toString().substring(0, 18))
+                        ];
+                    })
+                );
+            })
+            .catch(() => showAssistError('Müşteriler yüklenemedi veya yetkiniz yok.'));
+    } else if (kind === 'expenses') {
+        title.textContent = 'Gider kayıtları';
+        fetch('/api/expenses', { credentials: 'include' })
+            .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+            .then(list => {
+                const arr = Array.isArray(list) ? list : [];
+                arr.sort((a, b) => new Date(b.createdDate || 0) - new Date(a.createdDate || 0));
+                const slice = arr.slice(0, 40);
+                renderAssistTable(
+                    ['Açıklama', 'Tutar', 'Durum', 'Tarih'],
+                    slice.map(e => [
+                        escHtml((e.description || '—').substring(0, 34)),
+                        formatAssistMoney(e.amount) + ' ' + escHtml(e.currency || ''),
+                        escHtml(e.status || ''),
+                        e.createdDate ? formatAssistDate(e.createdDate) : '—'
+                    ])
+                );
+            })
+            .catch(() => showAssistError('Giderler yüklenemedi veya yetkiniz yok.'));
+    }
+}
+
+function hideAssistPanel() {
+    document.getElementById('twcAssistPanelInner').classList.add('d-none');
+    updateAssistCollapseIcon();
+}
+
+function toggleAssistPanelCollapse() {
+    document.getElementById('twcAssistPanelInner').classList.toggle('d-none');
+    updateAssistCollapseIcon();
+}
+
+function updateAssistCollapseIcon() {
+    const inner = document.getElementById('twcAssistPanelInner');
+    const icon = document.getElementById('btnAssistCollapseIcon');
+    if (!icon || !inner) return;
+    icon.className = inner.classList.contains('d-none') ? 'ri-layout-bottom-line' : 'ri-layout-top-line';
+}
+
+function buildAssistTableHtml(headers, rows) {
+    const h = '<thead><tr>' + headers.map(x => '<th scope="col">' + escHtml(x) + '</th>').join('') + '</tr></thead>';
+    const b = '<tbody>' + rows.map(cells => '<tr>' + cells.map(c => '<td>' + c + '</td>').join('') + '</tr>').join('') + '</tbody>';
+    return '<div class="twc-dg-wrap twc-dg-modal"><table class="twc-dg-table" role="grid">' + h + b + '</table></div>';
+}
+
+function openAssistModal() {
+    if (!currentAssistKind) {
+        if (typeof Swal !== 'undefined') Swal.fire({ icon: 'info', title: 'Önce tablo seçin', text: 'Faturalar, Müşteriler veya Giderler düğmesine tıklayın.' });
+        else alert('Önce bir tablo seçin.');
+        return;
+    }
+    document.getElementById('assistModalTitle').textContent = document.getElementById('twcAssistTitle').textContent + ' — geniş görünüm';
+    const body = document.getElementById('assistModalBody');
+    body.innerHTML = '<div class="p-4 text-center"><span class="spinner-border"></span></div>';
+    const m = bootstrap.Modal.getOrCreateInstance(document.getElementById('assistModal'));
+    m.show();
+    loadAssistModalBody(currentAssistKind);
+}
+
+async function loadAssistModalBody(kind) {
+    const body = document.getElementById('assistModalBody');
+    const limit = 200;
+    try {
+        if (kind === 'invoices') {
+            const r = await fetch('/api/invoices/GetAll', { credentials: 'include' });
+            if (!r.ok) throw new Error();
+            const list = await r.json();
+            const arr = (Array.isArray(list) ? list : []).sort((a, b) => new Date(b.createdDate || 0) - new Date(a.createdDate || 0)).slice(0, limit);
+            const rows = arr.map(inv => [
+                escHtml(inv.orderName || '—'),
+                formatAssistMoney(inv.sourceAmount),
+                escHtml(inv.sourceCurrency || ''),
+                escHtml(inv.status || ''),
+                inv.createdDate ? formatAssistDate(inv.createdDate) : '—',
+                escHtml(inv.id != null ? String(inv.id) : '—')
+            ]);
+            body.innerHTML = buildAssistTableHtml(['Sipariş', 'Tutar', 'PB', 'Durum', 'Tarih', 'No'], rows);
+        } else if (kind === 'customers') {
+            const r = await fetch('/api/customers/GetAll', { credentials: 'include' });
+            if (!r.ok) throw new Error();
+            const list = await r.json();
+            const arr = (Array.isArray(list) ? list : []).slice(0, limit);
+            const rows = arr.map(c => {
+                const name = c.companyName || [c.firstName, c.lastName].filter(Boolean).join(' ') || '—';
+                return [
+                    escHtml(name),
+                    escHtml(c.email || '—'),
+                    escHtml((c.phone || '—').toString()),
+                    escHtml(c.id != null ? String(c.id) : '—')
+                ];
+            });
+            body.innerHTML = buildAssistTableHtml(['Firma / Ad', 'E-posta', 'Telefon', 'No'], rows);
+        } else if (kind === 'expenses') {
+            const r = await fetch('/api/expenses', { credentials: 'include' });
+            if (!r.ok) throw new Error();
+            const list = await r.json();
+            const arr = (Array.isArray(list) ? list : []).sort((a, b) => new Date(b.createdDate || 0) - new Date(a.createdDate || 0)).slice(0, limit);
+            const rows = arr.map(e => [
+                escHtml(e.description || '—'),
+                formatAssistMoney(e.amount) + ' ' + escHtml(e.currency || ''),
+                escHtml(e.category || ''),
+                escHtml(e.status || ''),
+                e.createdDate ? formatAssistDate(e.createdDate) : '—'
+            ]);
+            body.innerHTML = buildAssistTableHtml(['Açıklama', 'Tutar', 'Kategori', 'Durum', 'Tarih'], rows);
+        }
+    } catch {
+        body.innerHTML = '<p class="p-3 text-danger mb-0">Veri yüklenemedi.</p>';
+    }
+}
+
+function scrollToBottom() {
+    const el = document.getElementById('chatMessages');
+    requestAnimationFrame(() => el.scrollTop = el.scrollHeight);
+}
+
+async function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const text = input.value.trim();
+    if (!text || !activeContactId) return;
+    input.value = '';
+    try {
+        await connection.invoke('SendMessage', activeContactId, text);
+    } catch(e) { console.error('Mesaj gönderilemedi:', e); }
+}
+
+document.getElementById('messageInput')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+    if (activeContactId) {
+        connection.invoke('Typing', activeContactId).catch(()=>{});
+    }
+});
+
+async function handleFileSelect(input) {
+    const file = input.files[0];
+    if (!file || !activeContactId) return;
+    input.value = '';
+
+    if (file.size > 10 * 1024 * 1024) {
+        alert('Dosya 10MB\'dan büyük olamaz');
+        return;
+    }
+
+    const fd = new FormData();
+    fd.append('file', file);
+
+    const msgs = document.getElementById('chatMessages');
+    const placeholder = document.createElement('div');
+    placeholder.className = 'twc-msg-row twc-msg-row-sent';
+    placeholder.innerHTML = `<div><div class="twc-bubble"><span class="spinner-border spinner-border-sm me-2"></span>Dosya yükleniyor...</div></div>`;
+    msgs.appendChild(placeholder);
+    scrollToBottom();
+
+    try {
+        const r = await fetch('/api/chat/upload', { method:'POST', body:fd });
+        if (!r.ok) { placeholder.remove(); alert('Dosya yüklenemedi'); return; }
+        const data = await r.json();
+        placeholder.remove();
+        await connection.invoke('SendFileMessage', activeContactId, data.url, data.fileName, data.fileSize);
+    } catch(e) { placeholder.remove(); alert('Dosya gönderim hatası'); }
+}
+
+function showSidebar() {
+    document.getElementById('chatSidebar').classList.remove('twc-hidden');
+}
+
+// Drag & drop
+const chatMain = document.getElementById('chatMain');
+let dropOverlay = null;
+
+chatMain.addEventListener('dragover', e => {
+    e.preventDefault();
+    if (!activeContactId) return;
+    if (!dropOverlay) {
+        dropOverlay = document.createElement('div');
+        dropOverlay.className = 'twc-drop';
+        dropOverlay.innerHTML = '<span><i class="ri-upload-cloud-2-line me-2"></i>Dosyayı bırakın</span>';
+        chatMain.style.position = 'relative';
+        chatMain.appendChild(dropOverlay);
+    }
+});
+
+chatMain.addEventListener('dragleave', e => {
+    if (e.relatedTarget && chatMain.contains(e.relatedTarget)) return;
+    dropOverlay?.remove();
+    dropOverlay = null;
+});
+
+chatMain.addEventListener('drop', e => {
+    e.preventDefault();
+    dropOverlay?.remove();
+    dropOverlay = null;
+    if (!activeContactId) return;
+    const file = e.dataTransfer.files[0];
+    if (file) {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        document.getElementById('fileInput').files = dt.files;
+        handleFileSelect(document.getElementById('fileInput'));
+    }
+});
+
+// Periodic unread count refresh (for badge in layout)
+setInterval(async () => {
+    try {
+        const r = await fetch('/api/chat/unread-count');
+        if (!r.ok) return;
+        const d = await r.json();
+        const b = document.getElementById('chat-badge');
+        if (b) { b.textContent = d.count; b.style.display = d.count > 0 ? '' : 'none'; }
+    } catch(e) {}
+}, 15000);
+
+// ───── SOUND SYSTEM ─────
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playRingTone() {
+    const now = audioCtx.currentTime;
+    for (let i = 0; i < 6; i++) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = (i % 2 === 0) ? 880 : 698;
+        gain.gain.setValueAtTime(0.18, now + i * 0.35);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.35 + 0.3);
+        osc.start(now + i * 0.35);
+        osc.stop(now + i * 0.35 + 0.3);
+    }
+}
+
+function playMessageSound() {
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587, now);
+    osc.frequency.setValueAtTime(784, now + 0.08);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.start(now);
+    osc.stop(now + 0.2);
+}
+
+document.addEventListener('click', () => { if (audioCtx.state === 'suspended') audioCtx.resume(); }, { once: true });
+
+// ───── SUPPORT CHAT (Multi-Tab) ─────
+let supportConnection = null;
+let supportSessions = [];
+let activeSupportSession = null;
+let currentTab = 'messages';
+let visitorInfoCache = {};
+let sessionTimerInterval = null;
+let activeSessionStartTime = null;
+
+// Each open chat tab: { sessionId, messages: [{sender,content,time}], hasNewMsg: false }
+let openTabs = [];
+
+function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('tabMessages').classList.toggle('twc-tab-active', tab === 'messages');
+    document.getElementById('tabSupport').classList.toggle('twc-tab-active', tab === 'support');
+    document.getElementById('tabGuide').classList.toggle('twc-tab-active', tab === 'guide');
+    document.getElementById('tabContentMessages').classList.toggle('twc-show', tab === 'messages');
+    document.getElementById('tabContentSupport').classList.toggle('twc-show', tab === 'support');
+    document.getElementById('tabContentGuide').classList.toggle('twc-show', tab === 'guide');
+}
+
+function renderChatTabs() {
+    const bar = document.getElementById('chatTabsBar');
+    if (!openTabs.length) { bar.classList.remove('twc-show'); return; }
+    bar.classList.add('twc-show');
+    bar.innerHTML = openTabs.map(t => {
+        const s = supportSessions.find(x => x.sessionId === t.sessionId);
+        const name = s?.customerName || 'Müşteri';
+        const isActive = activeSupportSession === t.sessionId;
+        const flashCls = (!isActive && t.hasNewMsg) ? ' has-new' : '';
+        return `<div class="twc-chat-tab${isActive ? ' twc-chat-tab-active' : ''}${flashCls}" onclick="switchToTab('${t.sessionId}')" title="${escHtml(name)}">
+            <span class="ct-dot online"></span>
+            <span class="ct-name">${escHtml(name)}</span>
+            <span class="ct-close" onclick="event.stopPropagation();closeTab('${t.sessionId}')">&times;</span>
+        </div>`;
+    }).join('');
+}
+
+function getOrCreateTab(sessionId) {
+    let tab = openTabs.find(t => t.sessionId === sessionId);
+    if (!tab) {
+        tab = { sessionId, messages: [], hasNewMsg: false };
+        openTabs.push(tab);
+    }
+    return tab;
+}
+
+function switchToTab(sessionId) {
+    const tab = openTabs.find(t => t.sessionId === sessionId);
+    if (!tab) return;
+    tab.hasNewMsg = false;
+
+    const session = supportSessions.find(s => s.sessionId === sessionId);
+    if (!session) return;
+
+    activeContactId = null;
+    activeSupportSession = sessionId;
+
+    document.getElementById('chatEmpty').classList.add('d-none');
+    document.getElementById('chatHeader').classList.remove('d-none');
+    document.getElementById('chatMessages').classList.remove('d-none');
+    document.getElementById('chatInputArea').classList.remove('d-none');
+    document.getElementById('typingIndicator').classList.remove('d-none');
+    document.getElementById('typingIndicator').textContent = '';
+    document.getElementById('btnChatAttach')?.classList.add('d-none');
+
+    document.getElementById('chatHeaderAvatar').style.background = 'linear-gradient(135deg,#667eea,#764ba2)';
+    document.getElementById('chatHeaderAvatar').textContent = (session.customerName || '?')[0].toUpperCase();
+    document.getElementById('chatHeaderName').innerHTML = escHtml(session.customerName || 'Müşteri') +
+        `<span class="support-header-badge"><i class="ri-file-text-line me-1"></i>#${session.invoiceId} – ${escHtml(session.orderName || '')}</span>`;
+    document.getElementById('chatHeaderDot').className = 'twc-dot twc-dot-online';
+    document.getElementById('chatHeaderStatus').textContent = 'Canlı Destek';
+    document.getElementById('chatHeaderStatus').className = 'status-text text-success';
+
+    const msgs = document.getElementById('chatMessages');
+    msgs.innerHTML = '';
+    tab.messages.forEach(m => appendSupportMessage(m.sender, m.content, m.time));
+    scrollToBottom();
+
+    const vp = document.getElementById('visitorPanel');
+    vp.classList.add('show');
+    activeSessionStartTime = new Date(session.createdDate);
+    clearInterval(sessionTimerInterval);
+    updateSessionTimer();
+    sessionTimerInterval = setInterval(updateSessionTimer, 1000);
+
+    const cached = visitorInfoCache[sessionId] || session;
+    updateVisitorPanel(cached);
+    document.getElementById('viInvoice').innerHTML = `<strong>#${session.invoiceId}</strong> – ${escHtml(session.orderName || '')}`;
+    document.getElementById('livePreviewText').textContent = '';
+    document.getElementById('livePreviewBlock').style.display = '';
+
+    renderChatTabs();
+    renderSupportList();
+
+    document.getElementById('chatSidebar').classList.add('twc-hidden');
+    document.getElementById('messageInput').focus();
+}
+
+function closeTab(sessionId) {
+    openTabs = openTabs.filter(t => t.sessionId !== sessionId);
+    if (activeSupportSession === sessionId) {
+        activeSupportSession = null;
+        clearInterval(sessionTimerInterval);
+        document.getElementById('visitorPanel').classList.remove('show');
+        if (openTabs.length > 0) {
+            switchToTab(openTabs[openTabs.length - 1].sessionId);
+        } else {
+            document.getElementById('chatHeader').classList.add('d-none');
+            document.getElementById('chatMessages').classList.add('d-none');
+            document.getElementById('chatInputArea').classList.add('d-none');
+            document.getElementById('typingIndicator').classList.add('d-none');
+            document.getElementById('chatEmpty').classList.remove('d-none');
+        }
+    }
+    renderChatTabs();
+}
+
+function initSupportHub() {
+    supportConnection = new signalR.HubConnectionBuilder()
+        .withUrl('/supportChatHub')
+        .withAutomaticReconnect()
+        .build();
+
+    supportConnection.on('ActiveSessions', sessions => {
+        supportSessions = Array.isArray(sessions) ? sessions : [];
+        renderSupportList();
+    });
+
+    supportConnection.on('NewSupportSession', session => {
+        supportSessions = supportSessions.filter(s => s.sessionId !== session.sessionId);
+        supportSessions.unshift(session);
+        renderSupportList();
+        showSupportNotification(session.customerName);
+        playRingTone();
+    });
+
+    supportConnection.on('SessionTaken', data => {
+        const s = supportSessions.find(x => x.sessionId === data.sessionId);
+        if (s) { s.hasAdmin = true; s.adminUserId = data.adminUserId; }
+        renderSupportList();
+    });
+
+    supportConnection.on('SessionEnded', sessionId => {
+        supportSessions = supportSessions.filter(s => s.sessionId !== sessionId);
+        renderSupportList();
+        const tab = openTabs.find(t => t.sessionId === sessionId);
+        if (tab) {
+            tab.messages.push({ sender: 'system', content: 'Müşteri sohbetten ayrıldı.', time: new Date().toISOString() });
+            if (activeSupportSession === sessionId) {
+                addSupportChatSystemMsg('Müşteri sohbetten ayrıldı.');
+            } else {
+                tab.hasNewMsg = true;
+            }
+            renderChatTabs();
+        }
+    });
+
+    supportConnection.on('SessionUpdated', data => {
+        const s = supportSessions.find(x => x.sessionId === data.sessionId);
+        if (s) s.hasAdmin = data.hasAdmin;
+        renderSupportList();
+    });
+
+    supportConnection.on('SessionHistory', (sessionId, history) => {
+        const tab = getOrCreateTab(sessionId);
+        if (history && history.length) {
+            history.forEach(m => tab.messages.push({ sender: m.sender, content: m.content, time: m.createdDate }));
+        }
+        if (activeSupportSession === sessionId) {
+            const msgs = document.getElementById('chatMessages');
+            msgs.innerHTML = '';
+            tab.messages.forEach(m => {
+                if (m.sender === 'system') addSupportChatSystemMsg(m.content);
+                else appendSupportMessage(m.sender, m.content, m.time);
+            });
+            scrollToBottom();
+        }
+        renderChatTabs();
+    });
+
+    supportConnection.on('SupportMessage', msg => {
+        const tab = getOrCreateTab(msg.sessionId);
+        tab.messages.push({ sender: msg.sender, content: msg.content, time: msg.createdDate });
+
+        if (msg.sessionId === activeSupportSession) {
+            appendSupportMessage(msg.sender, msg.content, msg.createdDate);
+            scrollToBottom();
+            if (msg.sender === 'customer') {
+                document.getElementById('livePreviewText').textContent = '';
+            }
+        } else {
+            tab.hasNewMsg = true;
+        }
+        renderChatTabs();
+        playMessageSound();
+    });
+
+    supportConnection.on('SupportMessageSent', msg => {
+        const tab = getOrCreateTab(msg.sessionId);
+        tab.messages.push({ sender: msg.sender, content: msg.content, time: msg.createdDate });
+        if (msg.sessionId === activeSupportSession) {
+            appendSupportMessage(msg.sender, msg.content, msg.createdDate);
+            scrollToBottom();
+        }
+        renderChatTabs();
+    });
+
+    supportConnection.on('VisitorInfoUpdated', data => {
+        visitorInfoCache[data.sessionId] = data;
+        const s = supportSessions.find(x => x.sessionId === data.sessionId);
+        if (s) { s.ipAddress = data.ipAddress; s.userAgent = data.userAgent; s.pageUrl = data.pageUrl; s.country = data.country; s.city = data.city; s.isp = data.isp; }
+        if (data.sessionId === activeSupportSession) updateVisitorPanel(data);
+    });
+
+    supportConnection.on('LiveTypingPreview', (sessionId, text) => {
+        if (sessionId === activeSupportSession) {
+            const el = document.getElementById('livePreviewText');
+            const block = document.getElementById('livePreviewBlock');
+            if (el && block) { el.textContent = text || ''; block.style.display = ''; }
+        }
+    });
+
+    supportConnection.on('SupportTyping', (sessionId, who) => {
+        if (sessionId === activeSupportSession && who === 'customer') {
+            const el = document.getElementById('typingIndicator');
+            el.textContent = 'Müşteri yazıyor...';
+            el.classList.remove('d-none');
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(() => el.classList.add('d-none'), 2500);
+        }
+    });
+
+    supportConnection.on('CustomerLeft', sessionId => {
+        if (sessionId === activeSupportSession) {
+            addSupportChatSystemMsg('Müşteri sohbetten ayrıldı.');
+        }
+    });
+
+    supportConnection.start().then(() => {
+        supportConnection.invoke('JoinAsAdmin').catch(e => console.error('JoinAsAdmin error:', e));
+    }).catch(err => console.error('Support SignalR error:', err));
+
+    supportConnection.onreconnected(() => {
+        supportConnection.invoke('JoinAsAdmin').catch(() => {});
+    });
+}
+
+function renderSupportList() {
+    const list = document.getElementById('supportList');
+    const empty = document.getElementById('supportEmpty');
+    const badge = document.getElementById('supportBadge');
+
+    const pending = supportSessions.filter(s => !s.hasAdmin);
+    badge.textContent = pending.length;
+    badge.style.display = pending.length > 0 ? 'inline-flex' : 'none';
+
+    if (!supportSessions.length) {
+        list.innerHTML = '';
+        list.appendChild(empty);
+        empty.style.display = '';
+        return;
+    }
+    empty.style.display = 'none';
+
+    list.innerHTML = supportSessions.map(s => {
+        const isActive = activeSupportSession === s.sessionId;
+        const isMine = s.adminUserId === CURRENT_USER_ID;
+        const isPending = !s.hasAdmin;
+        const ago = timeSince(s.createdDate);
+        const initial = (s.customerName || '?')[0].toUpperCase();
+        const isOpen = openTabs.some(t => t.sessionId === s.sessionId);
+
+        let action = '';
+        if (isPending) {
+            action = `<button class="btn btn-sm btn-soft-success support-take-btn" onclick="event.stopPropagation();takeSupport('${s.sessionId}')"><i class="ri-check-line me-1"></i>Al</button>`;
+        } else if (isMine) {
+            action = '<span class="badge bg-success-subtle text-success" style="font-size:.65rem;">Sizde</span>';
+        } else {
+            action = '<span class="badge bg-info-subtle text-info" style="font-size:.65rem;">Atandı</span>';
+        }
+
+        return `<div class="twc-support-item twc-material-tile${isActive ? ' twc-active' : ''}" onclick="openSupportChat('${s.sessionId}')">
+            <div class="support-avatar">${initial}<span class="pulse-dot"></span></div>
+            <div class="support-info">
+                <p class="support-name">${escHtml(s.customerName || 'Müşteri')}${isOpen ? ' <i class="ri-window-line" style="font-size:.7rem;opacity:.5;" title="Sekmede açık"></i>' : ''}</p>
+                <p class="support-detail">
+                    <i class="ri-file-text-line"></i>${escHtml(s.orderName || '')}
+                    <span style="color:var(--vz-text-muted)">•</span>
+                    <span>#${s.invoiceId}</span>
+                </p>
+            </div>
+            <div class="d-flex flex-column align-items-end gap-1">
+                <span class="support-time">${ago}</span>
+                ${action}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function timeSince(dateStr) {
+    const d = new Date(dateStr);
+    const sec = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (sec < 60) return 'Şimdi';
+    if (sec < 3600) return Math.floor(sec / 60) + 'dk';
+    if (sec < 86400) return Math.floor(sec / 3600) + 'sa';
+    return Math.floor(sec / 86400) + 'g';
+}
+
+function showSupportNotification(name) {
+    if (Notification.permission === 'granted') {
+        new Notification('Yeni Destek Talebi', { body: name + ' destek bekliyor', icon: '/admin/velzon-dist/assets/images/favicon.ico' });
+    }
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: 'Yeni destek: ' + name, showConfirmButton: false, timer: 4000 });
+    }
+}
+
+async function takeSupport(sessionId) {
+    if (!supportConnection) return;
+    try {
+        await supportConnection.invoke('TakeSupport', sessionId);
+        openSupportChat(sessionId);
+    } catch(e) { console.error('TakeSupport error:', e); }
+}
+
+function openSupportChat(sessionId) {
+    const session = supportSessions.find(s => s.sessionId === sessionId);
+    if (!session) return;
+
+    switchTab('support');
+    getOrCreateTab(sessionId);
+
+    if (session.hasAdmin && session.adminUserId === CURRENT_USER_ID) {
+        supportConnection.invoke('TakeSupport', sessionId).catch(() => {});
+    }
+
+    switchToTab(sessionId);
+}
+
+function updateVisitorPanel(data) {
+    if (!data) return;
+    document.getElementById('viIp').textContent = data.ipAddress || '—';
+    const loc = [data.city, data.country].filter(Boolean).join(', ');
+    document.getElementById('viLocation').textContent = loc || '—';
+    document.getElementById('viIsp').textContent = data.isp || '—';
+    document.getElementById('viPage').textContent = data.pageUrl || '—';
+    document.getElementById('viDevice').textContent = parseUA(data.userAgent) || '—';
+}
+
+function parseUA(ua) {
+    if (!ua) return '';
+    let browser = '', os = '';
+    if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
+    else if (ua.includes('Firefox')) browser = 'Firefox';
+    else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+    else if (ua.includes('Edg')) browser = 'Edge';
+    else browser = 'Diğer';
+    if (ua.includes('Windows')) os = 'Windows';
+    else if (ua.includes('Mac OS')) os = 'macOS';
+    else if (ua.includes('Android')) os = 'Android';
+    else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+    else if (ua.includes('Linux')) os = 'Linux';
+    else os = 'Bilinmeyen';
+    const mobile = /Mobile|Android|iPhone|iPad/i.test(ua) ? ' (Mobil)' : ' (Masaüstü)';
+    return browser + ' / ' + os + mobile;
+}
+
+function updateSessionTimer() {
+    if (!activeSessionStartTime) return;
+    const diff = Math.floor((Date.now() - activeSessionStartTime.getTime()) / 1000);
+    const m = Math.floor(diff / 60);
+    const s = diff % 60;
+    const el = document.getElementById('viSessionTime');
+    if (el) el.textContent = m + 'dk ' + s + 'sn';
+}
+
+function appendSupportMessage(sender, content, time) {
+    const msgs = document.getElementById('chatMessages');
+    const rowCls = sender === 'admin' ? 'twc-msg-row twc-msg-row-sent' : 'twc-msg-row twc-msg-row-recv';
+    msgs.innerHTML += `<div class="${rowCls}"><div><div class="twc-bubble">${escHtml(content || '')}</div><div class="twc-msg-time">${formatTime(time || new Date())}</div></div></div>`;
+}
+
+function addSupportChatSystemMsg(text) {
+    const msgs = document.getElementById('chatMessages');
+    msgs.innerHTML += `<div class="twc-date-pill"><span>${escHtml(text)}</span></div>`;
+    scrollToBottom();
+}
+
+// Override sendMessage for support
+const _originalSendMessage = sendMessage;
+sendMessage = async function() {
+    if (activeSupportSession) {
+        const input = document.getElementById('messageInput');
+        const text = input.value.trim();
+        if (!text) return;
+        input.value = '';
+        try {
+            await supportConnection.invoke('SendSupportMessage', activeSupportSession, text);
+        } catch(e) { console.error('Support send error:', e); }
+        return;
+    }
+    return _originalSendMessage();
+};
+
+const msgInput = document.getElementById('messageInput');
+if (msgInput) {
+    msgInput.addEventListener('keydown', e => {
+        if (activeSupportSession && supportConnection) {
+            supportConnection.invoke('AdminTyping', activeSupportSession).catch(() => {});
+        }
+    });
+}
+
+// Restore state when switching to regular chat
+const _originalSelectContact = selectContact;
+selectContact = async function(userId) {
+    activeSupportSession = null;
+    document.getElementById('btnChatAttach')?.classList.remove('d-none');
+    document.getElementById('visitorPanel').classList.remove('show');
+    clearInterval(sessionTimerInterval);
+    document.getElementById('livePreviewText').textContent = '';
+    // Deactivate all chat tabs visually (keep them open)
+    renderChatTabs();
+    return _originalSelectContact(userId);
+};
+
+if (Notification.permission === 'default') Notification.requestPermission();
+
+initSupportHub();
+setInterval(() => renderSupportList(), 30000);
+@if (openGuide) { <text>switchTab('guide');</text> }
+</script>

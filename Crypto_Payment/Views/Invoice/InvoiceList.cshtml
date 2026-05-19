@@ -1,0 +1,633 @@
+@{
+    ViewBag.Title = "Fatura Listesi";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+            <h4 class="mb-sm-0">Faturalar</h4>
+            <div class="page-title-right">
+                <ol class="breadcrumb m-0">
+                    <li class="breadcrumb-item"><a href="/">Ana Sayfa</a></li>
+                    <li class="breadcrumb-item active">Faturalar</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Özet Kartları -->
+<div class="row">
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Toplam Fatura</p></div>
+                    <div class="flex-shrink-0"><span class="badge bg-primary-subtle text-primary" id="stat-sent-count">0</span></div>
+                </div>
+                <div class="d-flex align-items-end justify-content-between mt-3">
+                    <div>
+                        <h4 class="fs-22 fw-semibold ff-secondary mb-1"><span id="stat-sent-amount">0</span></h4>
+                        <div class="d-flex align-items-center gap-2">
+                            <small class="text-muted" id="stat-collection-rate"></small>
+                            <div class="progress flex-grow-1" style="height:4px;width:60px;"><div class="progress-bar bg-primary" id="stat-collection-bar" style="width:0%"></div></div>
+                        </div>
+                    </div>
+                    <div class="avatar-sm"><span class="avatar-title bg-primary-subtle rounded fs-3"><i class="ri-file-list-3-line text-primary"></i></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Tahsil Edilen</p></div>
+                    <div class="flex-shrink-0"><span class="badge bg-success-subtle text-success" id="stat-paid-count">0</span></div>
+                </div>
+                <div class="d-flex align-items-end justify-content-between mt-3">
+                    <h4 class="fs-22 fw-semibold ff-secondary mb-0 text-success"><span id="stat-paid-amount">0</span></h4>
+                    <div class="avatar-sm"><span class="avatar-title bg-success-subtle rounded fs-3"><i class="ri-checkbox-circle-line text-success"></i></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Bekleyen</p></div>
+                    <div class="flex-shrink-0"><span class="badge bg-warning-subtle text-warning" id="stat-unpaid-count">0</span></div>
+                </div>
+                <div class="d-flex align-items-end justify-content-between mt-3">
+                    <h4 class="fs-22 fw-semibold ff-secondary mb-0 text-warning"><span id="stat-unpaid-amount">0</span></h4>
+                    <div class="avatar-sm"><span class="avatar-title bg-warning-subtle rounded fs-3"><i class="ri-time-line text-warning"></i></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Gecikmiş</p></div>
+                    <div class="flex-shrink-0"><span class="badge bg-danger-subtle text-danger" id="stat-overdue-count">0</span></div>
+                </div>
+                <div class="d-flex align-items-end justify-content-between mt-3">
+                    <h4 class="fs-22 fw-semibold ff-secondary mb-0 text-danger"><span id="stat-overdue-amount">0</span></h4>
+                    <div class="avatar-sm"><span class="avatar-title bg-danger-subtle rounded fs-3"><i class="ri-error-warning-line text-danger"></i></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ana Kart -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card" id="invoiceList">
+            <div class="card-header border-0">
+                <div class="d-flex align-items-center flex-wrap gap-2 table-card-toolbar">
+                    <h5 class="card-title mb-0 flex-grow-1">
+                        <i class="ri-file-list-3-line me-1"></i>Fatura Listesi
+                        <span class="badge bg-soft-secondary text-secondary ms-1 fs-12" id="filteredCount"></span>
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-soft-danger btn-sm d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line me-1"></i>Seçilenleri Sil</button>
+                        <a href="/invoices/invoice-add" class="btn btn-primary btn-sm"><i class="ri-add-line me-1"></i>Fatura Oluştur</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtreler -->
+            <div class="card-body border-top border-bottom border-dashed py-3">
+                <div class="row g-3 align-items-end">
+                    <div class="col-xxl-3 col-lg-4 col-md-6">
+                        <div class="search-box">
+                            <input type="text" class="form-control search bg-light border-light" id="searchInput" placeholder="Fatura adı, numara, müşteri, email ara...">
+                            <i class="ri-search-line search-icon"></i>
+                        </div>
+                    </div>
+                    <div class="col-xxl-2 col-lg-2 col-md-3 col-6">
+                        <select class="form-select bg-light border-light" id="filter-period" onchange="onPeriodChange()">
+                            <option value="">Tüm Zamanlar</option>
+                            <option value="today">Bugün</option>
+                            <option value="week">Bu Hafta</option>
+                            <option value="month" selected>Bu Ay</option>
+                            <option value="year">Bu Yıl</option>
+                        </select>
+                    </div>
+                    <div class="col-xxl-2 col-lg-2 col-md-3 col-6">
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-light border-light" id="datepicker-range" placeholder="Tarih Aralığı" readonly>
+                            <button class="btn btn-light border-light" type="button" id="clear-date-btn" title="Temizle"><i class="ri-close-line"></i></button>
+                        </div>
+                    </div>
+                    <div class="col-xxl-2 col-lg-2 col-md-3 col-6">
+                        <select class="form-select bg-light border-light" id="idStatus" onchange="applyAllFilters()">
+                            <option value="all" selected>Tüm Durumlar</option>
+                            <option value="Unpaid">Bekleyen</option>
+                            <option value="Paid">Ödenen</option>
+                            <option value="Overdue">Gecikmiş</option>
+                            <option value="Cancel">İptal</option>
+                        </select>
+                    </div>
+                    <div class="col-xxl-1 col-lg-2 col-md-3 col-6">
+                        <select class="form-select bg-light border-light" id="filter-type" onchange="applyAllFilters()">
+                            <option value="">Tüm Türler</option>
+                            <option value="onetime">Tek Seferlik</option>
+                            <option value="recurring">Yinelenen</option>
+                        </select>
+                    </div>
+                    <div class="col-xxl-2 col-lg-3 col-md-6">
+                        <div class="d-flex gap-1">
+                            <button type="button" class="btn btn-primary flex-grow-1" onclick="applyAllFilters()"><i class="ri-equalizer-fill me-1"></i>Filtrele</button>
+                            <button type="button" class="btn btn-light" onclick="clearAllFilters()" title="Filtreleri Temizle"><i class="ri-refresh-line"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hızlı Durum Filtreleri -->
+                <div class="d-flex flex-wrap gap-2 mt-3" id="quickFilters">
+                    <button class="btn btn-sm btn-soft-primary active" data-filter="all" onclick="quickFilter('all')">Tümü</button>
+                    <button class="btn btn-sm btn-soft-success" data-filter="Paid" onclick="quickFilter('Paid')"><i class="ri-checkbox-circle-fill me-1"></i>Ödenen</button>
+                    <button class="btn btn-sm btn-soft-warning" data-filter="Unpaid" onclick="quickFilter('Unpaid')"><i class="ri-time-line me-1"></i>Bekleyen</button>
+                    <button class="btn btn-sm btn-soft-danger" data-filter="Overdue" onclick="quickFilter('Overdue')"><i class="ri-error-warning-fill me-1"></i>Gecikmiş</button>
+                    <button class="btn btn-sm btn-soft-secondary" data-filter="Cancel" onclick="quickFilter('Cancel')"><i class="ri-close-circle-line me-1"></i>İptal</button>
+                    <span class="vr mx-1"></span>
+                    <button class="btn btn-sm btn-soft-info" data-filter="recurring" onclick="quickFilter('recurring')"><i class="ri-repeat-line me-1"></i>Yinelenen</button>
+                    <button class="btn btn-sm btn-soft-light" data-filter="onetime" onclick="quickFilter('onetime')">Tek Seferlik</button>
+                </div>
+            </div>
+
+            <!-- Tablo -->
+            <div class="card-body">
+                <div class="table-responsive table-card">
+                    <table class="table align-middle table-hover table-nowrap mb-0" id="invoiceTable">
+                        <thead class="table-light text-muted">
+                            <tr>
+                                <th style="width:40px;"><div class="form-check"><input class="form-check-input" type="checkbox" id="checkAll"></div></th>
+                                <th class="sort" data-sort="invoice_id" style="width:60px;">ID</th>
+                                <th class="sort" data-sort="company_name">Müşteri</th>
+                                <th class="sort" data-sort="order_name">Fatura</th>
+                                <th class="sort" data-sort="source_amount" style="width:120px;">Tutar</th>
+                                <th class="sort" data-sort="status" style="width:140px;">Durum</th>
+                                <th class="sort" data-sort="date" style="width:110px;">Tarih</th>
+                                <th style="width:110px;">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody class="list" id="invoicesList">
+                            @for (int i = 0; i < 6; i++)
+                            {
+                            <tr class="skeleton-row">
+                                <td><div class="skeleton skeleton-text" style="width:18px;"></div></td>
+                                <td><div class="skeleton skeleton-text" style="width:30px;"></div></td>
+                                <td><div class="skeleton skeleton-text" style="width:120px;"></div></td>
+                                <td><div class="skeleton skeleton-text" style="width:140px;"></div></td>
+                                <td><div class="skeleton skeleton-text" style="width:70px;"></div></td>
+                                <td><div class="skeleton skeleton-badge"></div></td>
+                                <td><div class="skeleton skeleton-text-sm" style="width:70px;"></div></td>
+                                <td><div class="skeleton skeleton-btn"></div></td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <div class="noresult d-none" id="noresult">
+                        <div class="text-center py-5">
+                            <i class="ri-search-line" style="font-size:48px;color:#878a99;"></i>
+                            <h5 class="mt-3">Sonuç Bulunamadı</h5>
+                            <p class="text-muted mb-0">Filtreleri değiştirerek tekrar deneyin.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sayfalama -->
+                <div class="d-flex justify-content-between align-items-center mt-3" id="paginationArea">
+                    <small class="text-muted" id="paginationInfo"></small>
+                    <div class="d-flex gap-1" id="paginationBtns"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Durum Değiştir Modal -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-info-subtle">
+                <h5 class="modal-title"><i class="ri-exchange-line me-1"></i>Fatura Durumunu Değiştir</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="sm-invoice-id" />
+                <p class="mb-2">Fatura: <strong id="sm-invoice-name"></strong></p>
+                <p class="mb-3 text-muted">Mevcut Durum: <span id="sm-current-status" class="badge bg-secondary"></span></p>
+                <div class="mb-3">
+                    <label class="form-label">Yeni Durum</label>
+                    <select id="sm-new-status" class="form-select">
+                        <option value="completed">Ödendi</option>
+                        <option value="pending">Beklemede</option>
+                        <option value="mismatch">Manuel Ödendi (Fazla)</option>
+                        <option value="cancelled">İptal</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Not <span class="text-muted">(Opsiyonel)</span></label>
+                    <textarea id="sm-note" class="form-control" rows="2" placeholder="Durum değişikliği notu..."></textarea>
+                </div>
+                <div id="sm-error" class="alert alert-danger d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-info" id="sm-submit"><i class="ri-check-line me-1"></i>Durumu Değiştir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+.flatpickr-calendar{font-family:inherit;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15)}
+.flatpickr-day.selected,.flatpickr-day.selected:hover{background:#405189;border-color:#405189}
+.flatpickr-day.inRange{background:#e5e8f5;border-color:#e5e8f5}
+.flatpickr-day.startRange,.flatpickr-day.endRange{background:#405189;border-color:#405189}
+#quickFilters .btn.active{box-shadow:0 0 0 2px rgba(64,81,137,.4)}
+.inv-row{transition:background .15s}
+.inv-row:hover{background:rgba(64,81,137,.04)!important}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+function getCryptoIcon(c){if(!c)return'generic';const u=c.toUpperCase();if(u.startsWith('USDT'))return'usdt';if(u.startsWith('USDC'))return'usdc';if(u.includes('_'))return u.split('_')[0].toLowerCase();return u.toLowerCase();}
+function getCryptoLabel(c){if(!c)return'';const u=c.toUpperCase();const m={'USDT_TRX':'USDT (TRC20)','USDT_ETH':'USDT (ERC20)','USDT_BSC':'USDT (BEP20)','BTC':'Bitcoin','ETH':'Ethereum','TRX':'Tron','LTC':'Litecoin','DOGE':'Dogecoin','BNB':'BNB','SOL':'Solana'};return m[u]||u;}
+function getCurrencySymbol(c){if(!c)return'';const m={'USD':'$','EUR':'€','EURO':'€','TRY':'₺','TL':'₺','GBP':'£'};return m[c.toUpperCase()]||c;}
+function escStr(s){return String(s??'').replace(/'/g,"\\'");}
+
+let allInvoices=[], filteredInvoices=[], fpInstance=null, fpStart=null, fpEnd=null, monthlyStatusMap={};
+let currentPage=1;
+const PAGE_SIZE=15;
+
+async function loadRecurringMonthlyStatus(invoices){
+    const rec=invoices.filter(i=>i.isRecurring);
+    if(!rec.length)return;
+    const now=new Date(), cm=now.getMonth()+1;
+    await Promise.all(rec.map(async inv=>{
+        try{
+            const r=await fetch(`/api/invoices/${inv.id}/monthly-history?year=${now.getFullYear()}`);
+            if(!r.ok)return;
+            const d=await r.json();
+            const tm=d.months.find(m=>m.month===cm);
+            if(tm)monthlyStatusMap[inv.id]=tm.status;
+        }catch{}
+    }));
+}
+
+function getDateRange(p){
+    const n=new Date(),s=new Date(n);
+    if(p==='today'){s.setHours(0,0,0,0);}
+    else if(p==='week'){s.setDate(n.getDate()-n.getDay());s.setHours(0,0,0,0);}
+    else if(p==='month'){s.setDate(1);s.setHours(0,0,0,0);}
+    else if(p==='year'){s.setMonth(0,1);s.setHours(0,0,0,0);}
+    else return null;
+    return s;
+}
+
+const statusMap={'Unpaid':['pending','expired','new','overdue'],'Paid':['completed','mismatch'],'Cancel':['cancelled'],'Overdue':['overdue']};
+
+function getEffectiveStatus(i){
+    if(i.isRecurring){const ms=monthlyStatusMap[i.id];if(ms==='paid')return'completed';if(ms==='overdue')return'overdue';return'pending';}
+    return(i.status||'pending').toLowerCase();
+}
+
+function convertInv(amt,src){if(window.CurrencyConverter?.convertFromSource)return window.CurrencyConverter.convertFromSource(amt,src);return amt;}
+function fmtMoney(v){return v.toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+function updateStatCards(list){
+    const paid=list.filter(i=>{const s=getEffectiveStatus(i);return s==='completed'||s==='mismatch';});
+    const overdue=list.filter(i=>getEffectiveStatus(i)==='overdue');
+    const pending=list.filter(i=>{const s=getEffectiveStatus(i);return s!=='completed'&&s!=='mismatch'&&s!=='cancelled'&&s!=='overdue';});
+    const sum=arr=>arr.reduce((s,i)=>s+convertInv(parseFloat(i.sourceAmount)||0,i.sourceCurrency),0);
+    const el=id=>document.getElementById(id);
+    const set=(id,val)=>{if(el(id))el(id).textContent=val;};
+    const sym=window.CurrencyConverter?.getCurrentSymbol()||'€';
+    const rate=list.length>0?(paid.length/list.length*100).toFixed(1):'0';
+    set('stat-sent-amount',sym+' '+fmtMoney(sum(list)));
+    set('stat-sent-count',list.length+' Adet');
+    set('stat-collection-rate','Tahsilat: %'+rate);
+    const bar=document.getElementById('stat-collection-bar');
+    if(bar)bar.style.width=rate+'%';
+    set('stat-paid-amount',sym+' '+fmtMoney(sum(paid)));
+    set('stat-paid-count',paid.length+' Adet');
+    set('stat-unpaid-amount',sym+' '+fmtMoney(sum(pending)));
+    set('stat-unpaid-count',pending.length+' Adet');
+    set('stat-overdue-amount',sym+' '+fmtMoney(sum(overdue)));
+    set('stat-overdue-count',overdue.length+' Adet');
+}
+
+function getCustomerName(i){
+    if(i.customer?.companyName)return i.customer.companyName;
+    if(i.customer)return(i.customer.firstName+' '+i.customer.lastName).trim();
+    return i.email||'-';
+}
+
+function statusBadgeHtml(i){
+    if(i.isRecurring){
+        const ms=monthlyStatusMap[i.id];
+        if(ms==='paid')return'<span class="badge bg-success-subtle text-success"><i class="ri-checkbox-circle-fill me-1"></i>Bu Ay: Ödendi</span>';
+        if(ms==='overdue')return'<span class="badge bg-danger-subtle text-danger"><i class="ri-error-warning-fill me-1"></i>Gecikmiş</span>';
+        return'<span class="badge bg-warning-subtle text-warning"><i class="ri-time-line me-1"></i>Bu Ay: Bekliyor</span>';
+    }
+    switch(i.status){
+        case'completed':return'<span class="badge bg-success-subtle text-success">Ödendi</span>';
+        case'mismatch':return'<span class="badge bg-success-subtle text-success">Fazla Ödendi</span>';
+        case'pending':return'<span class="badge bg-warning-subtle text-warning">Bekliyor</span>';
+        case'expired':return'<span class="badge bg-danger-subtle text-danger">Süresi Doldu</span>';
+        case'cancelled':return'<span class="badge bg-secondary-subtle text-secondary">İptal</span>';
+        case'error':return'<span class="badge bg-danger-subtle text-danger">Hata</span>';
+        case'new':return'<span class="badge bg-warning-subtle text-warning">Ödeme Bekliyor</span>';
+        default:return'<span class="badge bg-info-subtle text-info">'+i.status+'</span>';
+    }
+}
+
+function fmtDate(d){if(!d)return'-';const dt=new Date(d);if(isNaN(dt))return'-';return dt.toLocaleDateString('tr-TR');}
+
+function applyAllFilters(){
+    const period=document.getElementById('filter-period').value;
+    const periodStart=getDateRange(period);
+    const statusRaw=document.getElementById('idStatus').value;
+    const statusVal=(statusRaw===''||statusRaw==='all')?'':statusRaw;
+    const searchQ=(document.getElementById('searchInput')?.value||'').trim().toLowerCase();
+    const typeFilter=document.getElementById('filter-type')?.value||'';
+    const hasDateFilter=periodStart||fpStart||fpEnd;
+
+    const filtered=allInvoices.filter(i=>{
+        const d=new Date(i.createdDate);
+        const valid=!isNaN(d.getTime());
+        const skipDate=i.isRecurring&&hasDateFilter;
+        if(!skipDate){
+            if(periodStart&&(!valid||d<periodStart))return false;
+            if(fpStart&&(!valid||d<fpStart))return false;
+            if(fpEnd){const ed=new Date(fpEnd);ed.setHours(23,59,59,999);if(!valid||d>ed)return false;}
+        }
+        if(statusVal){
+            const eff=getEffectiveStatus(i);
+            const allowed=statusMap[statusVal]||[statusVal.toLowerCase()];
+            if(!allowed.includes(eff))return false;
+        }
+        if(typeFilter==='recurring'&&!i.isRecurring)return false;
+        if(typeFilter==='onetime'&&i.isRecurring)return false;
+        if(searchQ){
+            const hay=`${i.orderName} ${i.orderNumber} ${i.email} ${i.id} ${getCustomerName(i)}`.toLowerCase();
+            if(!hay.includes(searchQ))return false;
+        }
+        return true;
+    });
+    currentPage=1;
+    filteredInvoices=filtered;
+    renderInvoices(filteredInvoices);
+}
+
+function renderInvoices(list){
+    updateStatCards(list);
+    const tbody=document.getElementById('invoicesList');
+    const noresult=document.getElementById('noresult');
+    const fc=document.getElementById('filteredCount');
+    if(fc)fc.textContent=list.length+' fatura';
+
+    if(!list.length){
+        tbody.innerHTML='';
+        noresult?.classList.remove('d-none');
+        document.getElementById('paginationArea').style.display='none';
+        return;
+    }
+    noresult?.classList.add('d-none');
+
+    const totalPages=Math.ceil(list.length/PAGE_SIZE);
+    if(currentPage>totalPages)currentPage=totalPages;
+    const start=(currentPage-1)*PAGE_SIZE;
+    const pageItems=list.slice(start,start+PAGE_SIZE);
+
+    tbody.innerHTML='';
+    const sym=window.CurrencyConverter?.getCurrentSymbol()||'€';
+
+    pageItems.forEach(i=>{
+        const cName=getCustomerName(i);
+        const initial=cName.length>0?cName[0].toUpperCase():'?';
+        const amt=convertInv(parseFloat(i.sourceAmount)||0,i.sourceCurrency);
+        const typeTag=i.isRecurring
+            ?`<span class="badge bg-success-subtle text-success fs-11" title="Her ayın ${i.recurringDay||'?'}. günü"><i class="ri-repeat-line me-1"></i>${i.recurringDay}. gün</span>`
+            :'<span class="badge bg-light text-muted fs-11">Tek</span>';
+
+        tbody.innerHTML+=`<tr class="inv-row" data-id="${i.id}" data-txn-id="${i.txnId||''}" data-status="${i.status}">
+            <td><div class="form-check"><input class="form-check-input chk_child" type="checkbox" value="${i.id}"></div></td>
+            <td><a href="/invoices/invoice-detail/${i.id}" class="fw-semibold link-primary">#${i.id}</a></td>
+            <td>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="avatar-xs"><span class="avatar-title bg-primary-subtle text-primary rounded-circle fs-13">${initial}</span></div>
+                    <div>
+                        <h6 class="mb-0 fs-13 text-truncate" style="max-width:160px;" title="${escStr(cName)}">${cName}</h6>
+                        <small class="text-muted fs-11 text-truncate d-block" style="max-width:160px;">${i.email||''}</small>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div>
+                    <a href="/invoices/invoice-detail/${i.id}" class="text-body fw-medium text-truncate d-block" style="max-width:180px;" title="${escStr(i.orderName)}">${i.orderName}</a>
+                    <div class="d-flex align-items-center gap-1 mt-1">${typeTag}<small class="text-muted">${i.orderNumber||''}</small></div>
+                </div>
+            </td>
+            <td><span class="fw-semibold currency-display" data-base-amount="${i.sourceAmount}" data-source-currency="${i.sourceCurrency||'EUR'}">${sym} ${fmtMoney(amt)}</span></td>
+            <td class="status">${statusBadgeHtml(i)}</td>
+            <td><small class="text-muted">${fmtDate(i.createdDate)}</small></td>
+            <td>
+                <div class="d-flex gap-1">
+                    <a href="/invoices/invoice-detail/${i.id}" class="btn btn-sm btn-soft-primary" title="Detay"><i class="ri-eye-fill"></i></a>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-soft-secondary" data-bs-toggle="dropdown"><i class="ri-more-fill"></i></button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/invoices/invoice-edit/${i.id}"><i class="ri-pencil-line me-2 text-warning"></i>Düzenle</a></li>
+                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="openStatusModal(${i.id},'${escStr(i.orderName)}','${i.status}')"><i class="ri-exchange-line me-2 text-info"></i>Durum Değiştir</a></li>
+                            ${i.txnId?`<li><a class="dropdown-item" href="/pay/${i.id}?txnId=${encodeURIComponent(i.txnId)}" target="_blank"><i class="ri-link me-2 text-success"></i>Ödeme Sayfası</a></li>`:''}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger remove-item-btn" href="javascript:void(0)" data-id="${i.id}"><i class="ri-delete-bin-fill me-2"></i>Sil</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </td>
+        </tr>`;
+    });
+
+    renderPagination(list.length,totalPages);
+}
+
+function renderPagination(total,totalPages){
+    const area=document.getElementById('paginationArea');
+    const info=document.getElementById('paginationInfo');
+    const btns=document.getElementById('paginationBtns');
+    if(totalPages<=1){area.style.display='none';return;}
+    area.style.display='';
+    const s=(currentPage-1)*PAGE_SIZE+1;
+    const e=Math.min(currentPage*PAGE_SIZE,total);
+    info.textContent=`${s}-${e} / ${total} fatura gösteriliyor`;
+    btns.innerHTML='';
+    const addBtn=(label,page,disabled,active)=>{
+        const b=document.createElement('button');
+        b.className='btn btn-sm '+(active?'btn-primary':'btn-soft-primary');
+        b.textContent=label;
+        b.disabled=disabled;
+        if(!disabled&&!active)b.onclick=()=>{currentPage=page;renderInvoices(filteredInvoices);window.scrollTo({top:document.getElementById('invoiceTable').offsetTop-100,behavior:'smooth'});};
+        btns.appendChild(b);
+    };
+    addBtn('«',1,currentPage===1,false);
+    addBtn('‹',currentPage-1,currentPage===1,false);
+    let startP=Math.max(1,currentPage-2),endP=Math.min(totalPages,currentPage+2);
+    if(startP>1){addBtn('1',1,false,currentPage===1);if(startP>2){const d=document.createElement('span');d.className='align-self-end px-1 text-muted';d.textContent='...';btns.appendChild(d);}}
+    for(let p=startP;p<=endP;p++)addBtn(p,p,false,p===currentPage);
+    if(endP<totalPages){if(endP<totalPages-1){const d=document.createElement('span');d.className='align-self-end px-1 text-muted';d.textContent='...';btns.appendChild(d);}addBtn(totalPages,totalPages,false,currentPage===totalPages);}
+    addBtn('›',currentPage+1,currentPage===totalPages,false);
+    addBtn('»',totalPages,currentPage===totalPages,false);
+}
+
+function onPeriodChange(){if(fpInstance)fpInstance.clear();fpStart=null;fpEnd=null;applyAllFilters();}
+
+function quickFilter(f){
+    document.querySelectorAll('#quickFilters .btn').forEach(b=>b.classList.remove('active'));
+    document.querySelector(`#quickFilters [data-filter="${f}"]`)?.classList.add('active');
+    if(f==='all'){document.getElementById('idStatus').value='all';document.getElementById('filter-type').value='';}
+    else if(f==='recurring'){document.getElementById('idStatus').value='all';document.getElementById('filter-type').value='recurring';}
+    else if(f==='onetime'){document.getElementById('idStatus').value='all';document.getElementById('filter-type').value='onetime';}
+    else{document.getElementById('idStatus').value=f;document.getElementById('filter-type').value='';}
+    applyAllFilters();
+}
+
+function clearAllFilters(){
+    document.getElementById('filter-period').value='';
+    document.getElementById('idStatus').value='all';
+    document.getElementById('filter-type').value='';
+    document.getElementById('searchInput').value='';
+    if(fpInstance)fpInstance.clear();fpStart=null;fpEnd=null;
+    document.querySelectorAll('#quickFilters .btn').forEach(b=>b.classList.remove('active'));
+    document.querySelector('#quickFilters [data-filter="all"]')?.classList.add('active');
+    applyAllFilters();
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', async()=>{
+    const tbody=document.getElementById('invoicesList');
+    if(!tbody)return;
+    try{
+        const res=await fetch('/api/invoices/GetAll');
+        if(!res.ok)throw new Error('API error');
+        allInvoices=await res.json();
+    }catch(e){
+        tbody.innerHTML='<tr><td colspan="8" class="text-center py-4 text-danger">Faturalar yüklenemedi. Sayfayı yenileyiniz.</td></tr>';
+        return;
+    }
+    await loadRecurringMonthlyStatus(allInvoices);
+    applyAllFilters();
+
+    fpInstance=flatpickr('#datepicker-range',{
+        mode:'range',dateFormat:'d.m.Y',
+        locale:{firstDayOfWeek:1,weekdays:{shorthand:['Pz','Pt','Sa','Ça','Pe','Cu','Ct'],longhand:['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi']},months:{shorthand:['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'],longhand:['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık']}},
+        allowInput:false,
+        onChange(sel){fpStart=sel[0]||null;fpEnd=sel[1]||null;if(sel.length>0)document.getElementById('filter-period').value='';if(sel.length===0||sel.length===2)applyAllFilters();}
+    });
+    document.getElementById('clear-date-btn').addEventListener('click',()=>{fpInstance.clear();fpStart=null;fpEnd=null;applyAllFilters();});
+    document.getElementById('searchInput')?.addEventListener('input',applyAllFilters);
+
+    document.getElementById('checkAll')?.addEventListener('change',function(){
+        document.querySelectorAll('.chk_child').forEach(c=>c.checked=this.checked);
+        const ra=document.getElementById('remove-actions');
+        if(ra){if(this.checked)ra.classList.remove('d-none');else ra.classList.add('d-none');}
+    });
+    document.getElementById('invoicesList')?.addEventListener('change',function(e){
+        if(!e.target.classList.contains('chk_child'))return;
+        const checked=document.querySelectorAll('.chk_child:checked');
+        const ra=document.getElementById('remove-actions');
+        if(ra){if(checked.length)ra.classList.remove('d-none');else ra.classList.add('d-none');}
+        document.getElementById('checkAll').checked=checked.length===document.querySelectorAll('.chk_child').length;
+    });
+
+    startLiveStatusPolling();
+    document.addEventListener('currencyChanged',()=>{if(allInvoices.length)applyAllFilters();});
+});
+
+function startLiveStatusPolling(){
+    setInterval(async()=>{
+        const rows=document.querySelectorAll('tr[data-txn-id][data-status="new"],tr[data-txn-id][data-status="pending"]');
+        if(!rows.length)return;
+        for(const row of rows){
+            const txn=row.getAttribute('data-txn-id');if(!txn)continue;
+            try{
+                const r=await fetch(`/api/invoices/status/${encodeURIComponent(txn)}`);
+                if(!r.ok)continue;
+                const d=await r.json();
+                const old=row.getAttribute('data-status');
+                if(d.status&&d.status!==old){
+                    row.setAttribute('data-status',d.status);
+                    const inv=allInvoices.find(x=>x.id===parseInt(row.getAttribute('data-id')));
+                    if(inv)inv.status=d.status;
+                    applyAllFilters();
+                }
+            }catch{}
+        }
+    },5000);
+}
+
+// Durum Değiştir Modal
+function openStatusModal(id,name,cur){
+    document.getElementById('sm-invoice-id').value=id;
+    document.getElementById('sm-invoice-name').textContent=name;
+    document.getElementById('sm-current-status').textContent=cur;
+    document.getElementById('sm-note').value='';
+    document.getElementById('sm-error').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('statusModal')).show();
+}
+
+document.getElementById('sm-submit')?.addEventListener('click',async()=>{
+    const id=document.getElementById('sm-invoice-id').value;
+    const ns=document.getElementById('sm-new-status').value;
+    const note=document.getElementById('sm-note').value;
+    const err=document.getElementById('sm-error');
+    const btn=document.getElementById('sm-submit');
+    btn.disabled=true;err.classList.add('d-none');
+    try{
+        const np=note?`&note=${encodeURIComponent(note)}`:'';
+        const res=await fetch(`/api/invoices/manual-status-change?id=${id}&newStatus=${ns}${np}`,{method:'POST'});
+        const data=await res.json().catch(()=>({}));
+        if(data.pending){
+            bootstrap.Modal.getInstance(document.getElementById('statusModal'))?.hide();
+            Swal.fire({icon:'info',title:'Onay Bekleniyor',html:'<p>Talep MasterAdmin onayına gönderildi.</p>',confirmButtonText:'Tamam'});
+        }else if(res.ok){
+            bootstrap.Modal.getInstance(document.getElementById('statusModal'))?.hide();
+            Swal.fire({icon:'success',title:'Güncellendi',timer:1500,showConfirmButton:false}).then(()=>location.reload());
+        }else{err.textContent=data.title||data.message||'Başarısız.';err.classList.remove('d-none');}
+    }catch(e){err.textContent='Sunucuya ulaşılamadı.';err.classList.remove('d-none');}
+    btn.disabled=false;
+});
+
+// Silme
+document.addEventListener('click',function(e){
+    const btn=e.target.closest('.remove-item-btn');if(!btn)return;
+    const id=btn.dataset.id;
+    Swal.fire({title:'Emin misiniz?',text:'Bu işlem geri alınamaz!',icon:'warning',showCancelButton:true,confirmButtonText:'Evet, sil',cancelButtonText:'Vazgeç'}).then(result=>{
+        if(!result.isConfirmed)return;
+        fetch(`/api/invoices/invoice-update-registration-status?id=${id}&status=${false}`,{method:'POST'}).then(async res=>{
+            const data=await res.json().catch(()=>({}));
+            if(data.pending){
+                Swal.fire({icon:'info',title:'Onay Bekleniyor',html:'<p>Silme talebi MasterAdmin onayına gönderildi.</p>',confirmButtonText:'Tamam'});
+                const row=btn.closest('tr');if(row){row.style.opacity='0.5';const sc=row.querySelector('.status');if(sc)sc.innerHTML='<span class="badge bg-warning-subtle text-warning">Onay Bekliyor</span>';}
+            }else if(res.ok||data.message){
+                Swal.fire({icon:'success',title:'Silindi',timer:1500,showConfirmButton:false});
+                allInvoices=allInvoices.filter(x=>x.id!==parseInt(id));
+                applyAllFilters();
+            }else throw new Error();
+        }).catch(()=>Swal.fire('Hata','Silme başarısız','error'));
+    });
+});
+</script>
+}

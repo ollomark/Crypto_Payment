@@ -1,0 +1,245 @@
+@model Crypto_Payment.DTOS.InvoiceDto
+@{
+    ViewBag.Title = "Fatura Düzenle";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <h4 class="mb-sm-0">Fatura Düzenle</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="/invoices">Faturalar</a></li>
+                        <li class="breadcrumb-item"><a href="/invoices/invoice-detail/@Model.Id">Fatura #@Model.Id</a></li>
+                        <li class="breadcrumb-item active">Düzenle</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-xxl-9">
+            <div class="card">
+                <div class="card-header bg-warning-subtle d-flex align-items-center">
+                    <h5 class="card-title mb-0 flex-grow-1">
+                        <i class="ri-pencil-line me-1"></i>Fatura #@Model.Id — @Model.OrderName
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Fatura Adı <span class="text-danger">*</span></label>
+                            <input type="text" id="edit-order-name" class="form-control" value="@Model.OrderName" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Fatura Numarası</label>
+                            <input type="text" id="edit-order-number" class="form-control" value="@Model.OrderNumber" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Tutar <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                @{ var sym = (Model.SourceCurrency ?? "").ToUpper() switch { "USD" => "$", "TL" => "₺", "GBP" => "£", _ => "€" }; }
+                                <span class="input-group-text" id="edit-amount-symbol">@sym</span>
+                                <input type="number" id="edit-amount" class="form-control" step="0.01" min="0.01" value="@Model.SourceAmount" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Kaynak Para Birimi</label>
+                            @{ var sc = (Model.SourceCurrency ?? "").ToUpper(); }
+                            <select id="edit-currency" class="form-select">
+                                <option value="USD" selected="@(sc == "USD")">USD ($)</option>
+                                <option value="EURO" selected="@(sc == "EURO")">EURO (€)</option>
+                                <option value="TL" selected="@(sc == "TL")">TL (₺)</option>
+                                <option value="GBP" selected="@(sc == "GBP")">GBP (£)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Ödeme Kripto</label>
+                            @{ var cc = (Model.Currency ?? "").ToUpper(); }
+                            <select id="edit-crypto" class="form-select">
+                                <option value="BTC" selected="@(cc == "BTC")">Bitcoin (BTC)</option>
+                                <option value="ETH" selected="@(cc == "ETH")">Ethereum (ETH)</option>
+                                <option value="USDT" selected="@(cc == "USDT")">Tether (USDT)</option>
+                                <option value="USDC" selected="@(cc == "USDC")">USD Coin (USDC)</option>
+                                <option value="LTC" selected="@(cc == "LTC")">Litecoin (LTC)</option>
+                                <option value="TRX" selected="@(cc == "TRX")">Tron (TRX)</option>
+                                <option value="BNB" selected="@(cc == "BNB")">Binance Coin (BNB)</option>
+                                <option value="DOGE" selected="@(cc == "DOGE")">Dogecoin (DOGE)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Müşteri</label>
+                            <select id="edit-customer" class="form-select">
+                                <option value="">— Müşteri Seç —</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">E-posta</label>
+                            <input type="email" id="edit-email" class="form-control" value="@Model.Email" />
+                        </div>
+
+                        <div class="col-12"><hr class="my-1" /></div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Fatura Türü</label>
+                            <div class="d-flex gap-3 mt-1">
+                                <div class="form-check">
+                                    @if (!Model.IsRecurring)
+                                    {
+                                        <input class="form-check-input" type="radio" name="editRecurring" id="editRecurringNo" value="false" checked onchange="toggleRecurringDay()">
+                                    }
+                                    else
+                                    {
+                                        <input class="form-check-input" type="radio" name="editRecurring" id="editRecurringNo" value="false" onchange="toggleRecurringDay()">
+                                    }
+                                    <label class="form-check-label" for="editRecurringNo">Tek Seferlik</label>
+                                </div>
+                                <div class="form-check">
+                                    @if (Model.IsRecurring)
+                                    {
+                                        <input class="form-check-input" type="radio" name="editRecurring" id="editRecurringYes" value="true" checked onchange="toggleRecurringDay()">
+                                    }
+                                    else
+                                    {
+                                        <input class="form-check-input" type="radio" name="editRecurring" id="editRecurringYes" value="true" onchange="toggleRecurringDay()">
+                                    }
+                                    <label class="form-check-label" for="editRecurringYes">Yinelenen</label>
+                                </div>
+                            </div>
+                        </div>
+                        @if (Model.IsRecurring)
+                        {
+                            <div class="col-md-6" id="editRecurringDayWrap">
+                                <label class="form-label fw-medium">Ayın Kaçıncı Günü?</label>
+                                <select id="edit-recurring-day" class="form-select">
+                                    @for (int d = 1; d <= 28; d++)
+                                    {
+                                        <option value="@d" selected="@(Model.RecurringDay == d)">@d</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-md-6 d-none" id="editRecurringDayWrap">
+                                <label class="form-label fw-medium">Ayın Kaçıncı Günü?</label>
+                                <select id="edit-recurring-day" class="form-select">
+                                    @for (int d = 1; d <= 28; d++)
+                                    {
+                                        <option value="@d">@d</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+
+                        <div class="col-12">
+                            <label class="form-label fw-medium">Düzenleme Notu</label>
+                            <textarea id="edit-note" class="form-control" rows="2" placeholder="Düzenleme ile ilgili not (opsiyonel)..."></textarea>
+                        </div>
+                    </div>
+
+                    <div id="edit-error" class="alert alert-danger mt-3 mb-0 d-none"></div>
+
+                    <div class="hstack gap-2 justify-content-end mt-4">
+                        <a href="/invoices/invoice-detail/@Model.Id" class="btn btn-light"><i class="ri-arrow-left-line me-1"></i>Geri Dön</a>
+                        <button type="button" class="btn btn-warning" id="edit-submit" onclick="submitEdit()">
+                            <i class="ri-save-line me-1"></i>Değişiklikleri Kaydet
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const INVOICE_ID = @Model.Id;
+
+function toggleRecurringDay() {
+    const isRecurring = document.getElementById('editRecurringYes').checked;
+    document.getElementById('editRecurringDayWrap').classList.toggle('d-none', !isRecurring);
+}
+
+document.getElementById('edit-currency')?.addEventListener('change', function() {
+    document.getElementById('edit-amount-symbol').textContent = currencySymbol(this.value);
+});
+
+(async function loadCustomers() {
+    try {
+        const res = await fetch('/api/customers/GetAll');
+        if (!res.ok) return;
+        const customers = await res.json();
+        const sel = document.getElementById('edit-customer');
+        customers.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = `${c.firstName} ${c.lastName}${c.companyName ? ' - ' + c.companyName : ''}`;
+            sel.appendChild(opt);
+        });
+        const currentCustId = @(Model.CustomerId?.ToString() ?? "null");
+        if (currentCustId) sel.value = currentCustId;
+    } catch(e) { console.warn('Müşteri listesi yüklenemedi:', e); }
+})();
+
+async function submitEdit() {
+    const orderName = document.getElementById('edit-order-name').value.trim();
+    const amount = parseFloat(document.getElementById('edit-amount').value);
+    const errEl = document.getElementById('edit-error');
+    const btn = document.getElementById('edit-submit');
+
+    errEl.classList.add('d-none');
+
+    if (!orderName || !amount || amount <= 0) {
+        errEl.textContent = 'Fatura adı ve tutar zorunludur.';
+        errEl.classList.remove('d-none');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Kaydediliyor...';
+
+    const isRecurring = document.getElementById('editRecurringYes').checked;
+
+    try {
+        const res = await fetch('/api/invoices/edit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: INVOICE_ID,
+                orderName,
+                sourceAmount: amount,
+                sourceCurrency: document.getElementById('edit-currency').value,
+                note: document.getElementById('edit-note').value.trim() || null,
+                orderNumber: document.getElementById('edit-order-number').value.trim() || null,
+                currency: document.getElementById('edit-crypto').value || null,
+                email: document.getElementById('edit-email').value.trim() || null,
+                customerId: parseInt(document.getElementById('edit-customer').value) || null,
+                isRecurring: isRecurring,
+                recurringDay: isRecurring ? parseInt(document.getElementById('edit-recurring-day').value) : null
+            })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (data.pending) {
+            Swal.fire({ icon: 'info', title: 'Onay Bekleniyor', html: '<p>Düzenleme talebiniz <b>MasterAdmin</b> onayına gönderildi.</p>', confirmButtonText: 'Tamam' })
+                .then(() => window.location.href = '/invoices/invoice-detail/' + INVOICE_ID);
+        } else if (res.ok) {
+            Swal.fire({ icon: 'success', title: 'Fatura Güncellendi', timer: 1500, showConfirmButton: false })
+                .then(() => window.location.href = '/invoices/invoice-detail/' + INVOICE_ID);
+        } else {
+            errEl.textContent = data.title || data.message || 'İşlem başarısız.';
+            errEl.classList.remove('d-none');
+        }
+    } catch(e) {
+        errEl.textContent = 'Sunucuya ulaşılamadı.';
+        errEl.classList.remove('d-none');
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ri-save-line me-1"></i>Değişiklikleri Kaydet';
+}
+</script>
+}

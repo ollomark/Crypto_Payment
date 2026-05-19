@@ -1,0 +1,51 @@
+@{
+    Layout = "_AuthLayout";
+    var email = ViewData["Email"] as string ?? Context.Request.Query["email"].ToString() ?? "";
+}
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-body text-center">
+            <h4 class="text-warning mb-3">Email Doğrulama Gerekli</h4>
+
+            @if (TempData["ResendSuccess"] != null)
+            {
+                <div class="alert alert-success mb-3">@TempData["ResendSuccess"]</div>
+            }
+            @if (TempData["ResendError"] != null)
+            {
+                <div class="alert alert-danger mb-3">@TempData["ResendError"]</div>
+            }
+
+            <p>
+                Hesabınızı kullanabilmek için email adresinizi doğrulamanız gerekiyor.
+                Mail kutunuzu kontrol edin.
+            </p>
+
+            <p class="text-muted">
+                Mail gelmediyse spam klasörünü kontrol edin.
+            </p>
+
+            <form method="post" action="/api/auth/resend-confirmation">
+                @Html.AntiForgeryToken()
+                @if (!string.IsNullOrEmpty(email))
+                {
+                    <input type="hidden" name="email" value="@email" />
+                }
+                else
+                {
+                    <div class="mb-3 text-start">
+                        <label for="resendEmail" class="form-label">E-posta</label>
+                        <input type="email" class="form-control" id="resendEmail" name="email" placeholder="ornek@email.com" required />
+                    </div>
+                }
+                <button type="submit" class="btn btn-primary mt-3">
+                    Maili Tekrar Gönder
+                </button>
+            </form>
+
+            <p class="mt-3">
+                <a href="/api/auth/login" class="text-primary">Giriş sayfasına dön</a>
+            </p>
+        </div>
+    </div>
+</div>

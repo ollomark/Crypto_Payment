@@ -1,0 +1,284 @@
+@model Crypto_Payment.DTOS.PaymentViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - @Model.OrderNumber</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .payment-container { background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 420px; width: 100%; overflow: hidden; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; }
+        .header h1 { font-size: 1.5rem; margin-bottom: 5px; }
+        .header .order-info { font-size: 0.9rem; opacity: 0.9; }
+        .amount-section { padding: 20px; text-align: center; border-bottom: 1px solid #eee; }
+        .fiat-amount { font-size: 2rem; font-weight: 700; color: #333; }
+        .crypto-amount { font-size: 1.2rem; color: #667eea; margin-top: 5px; }
+        .network-badge { display: inline-block; background: #f0f0f0; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; color: #666; margin-top: 10px; }
+        .qr-section { padding: 20px; display: flex; gap: 15px; align-items: flex-start; }
+        .qr-code { flex-shrink: 0; }
+        .qr-code img { width: 140px; height: 140px; border-radius: 8px; border: 2px solid #eee; }
+        .qr-placeholder { width: 140px; height: 140px; background: #f5f5f5; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 0.8rem; }
+        .wallet-info { flex: 1; min-width: 0; }
+        .info-label { font-size: 0.75rem; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+        .info-value { display: flex; align-items: center; gap: 8px; background: #f8f9fa; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; }
+        .info-value span { flex: 1; font-family: monospace; font-size: 0.85rem; word-break: break-all; color: #333; }
+        .copy-btn { background: none; border: none; cursor: pointer; padding: 5px; color: #667eea; }
+        .copy-btn svg { width: 18px; height: 18px; }
+        .timer-section { padding: 15px 20px; background: #fff8e1; border-top: 1px solid #ffe082; text-align: center; }
+        .timer-label { font-size: 0.85rem; color: #f57c00; margin-bottom: 5px; }
+        .timer-value { font-size: 1.5rem; font-weight: 700; color: #e65100; font-family: monospace; }
+        .timer-expired { color: #d32f2f; }
+        .status-section { padding: 20px; text-align: center; }
+        .status-badge { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 25px; font-weight: 600; font-size: 0.9rem; }
+        .status-pending { background: #fff3e0; color: #e65100; }
+        .status-completed, .status-confirmed { background: #e8f5e9; color: #2e7d32; }
+        .status-expired { background: #ffebee; color: #c62828; }
+        .status-icon { width: 20px; height: 20px; }
+        .tx-section { padding: 0 20px 20px; }
+        .tx-title { font-size: 0.85rem; color: #666; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+        .tx-list { background: #f8f9fa; border-radius: 8px; padding: 10px; }
+        .tx-item { display: flex; align-items: center; gap: 8px; padding: 8px; background: white; border-radius: 6px; margin-bottom: 5px; }
+        .tx-item:last-child { margin-bottom: 0; }
+        .tx-hash { flex: 1; font-family: monospace; font-size: 0.75rem; color: #667eea; word-break: break-all; }
+        .warning-section { padding: 15px 20px; background: #fff3e0; border-top: 1px solid #ffe082; }
+        .warning-text { display: flex; align-items: flex-start; gap: 10px; font-size: 0.85rem; color: #e65100; }
+        .footer { padding: 15px 20px; background: #f8f9fa; text-align: center; font-size: 0.8rem; color: #999; }
+        .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #e65100; border-radius: 50%; border-top-color: transparent; animation: spin 1s linear infinite; }
+        @@keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 8px; font-size: 0.9rem; opacity: 0; transition: opacity 0.3s; z-index: 1000; }
+        .toast.show { opacity: 1; }
+        .preparing-overlay { padding: 40px 20px; text-align: center; }
+        .preparing-overlay .spinner-large { display: inline-block; width: 48px; height: 48px; border: 4px solid #e0e0e0; border-radius: 50%; border-top-color: #667eea; animation: spin 1s linear infinite; margin-bottom: 16px; }
+        .preparing-overlay h2 { font-size: 1.2rem; color: #333; margin-bottom: 8px; }
+        .preparing-overlay p { font-size: 0.9rem; color: #666; line-height: 1.5; }
+        .preparing-overlay .retry-info { margin-top: 12px; font-size: 0.8rem; color: #999; }
+        .expired-overlay { padding: 40px 20px; text-align: center; }
+        .expired-overlay .expired-icon { width: 64px; height: 64px; margin: 0 auto 16px; background: #ffebee; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .expired-overlay .expired-icon svg { width: 32px; height: 32px; stroke: #d32f2f; fill: none; stroke-width: 2; }
+        .expired-overlay h2 { font-size: 1.2rem; color: #d32f2f; margin-bottom: 8px; }
+        .expired-overlay p { font-size: 0.9rem; color: #666; line-height: 1.5; margin-bottom: 20px; }
+        .renew-btn { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 14px 32px; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; text-decoration: none; transition: opacity 0.2s; }
+        .renew-btn:hover { opacity: 0.9; }
+        .renew-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="payment-container">
+        <div class="header">
+            <h1>Crypto Payment</h1>
+            <div class="order-info">Order: @Model.OrderNumber</div>
+        </div>
+        <div id="amountSection" class="amount-section">
+            <div class="fiat-amount">@Model.SourceAmount.ToString("N2", new System.Globalization.CultureInfo("tr-TR")) @(Model.SourceCurrency switch { "USD" => "$", "EUR" or "EURO" => "€", "TRY" or "TL" => "₺", _ => Model.SourceCurrency })</div>
+            <div class="crypto-amount">≈ @Model.CryptoAmount @Model.CryptoCurrency.Replace("_", " ")</div>
+            <div class="network-badge">@Model.Network</div>
+        </div>
+        @if (Model.Status == "preparing")
+        {
+            <div class="preparing-overlay" id="preparingSection">
+                <div class="spinner-large"></div>
+                <h2>Payment is being prepared...</h2>
+                <p>The wallet address for this cryptocurrency is being generated. This may take a few seconds depending on the network.</p>
+                <div class="retry-info" id="retryInfo">Checking... <span id="retryCount">0</span></div>
+            </div>
+        }
+        else if (Model.Status == "expired" || Model.Status == "cancelled")
+        {
+            <div class="expired-overlay" id="expiredSection">
+                <div style="margin: 0 auto 16px; width: 64px; height: 64px; background: #ffebee; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#d32f2f" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <h2 style="font-size: 1.2rem; color: #d32f2f; margin-bottom: 8px;">Ödeme Süresi Doldu</h2>
+                <p style="font-size: 0.9rem; color: #666; line-height: 1.5; margin-bottom: 20px;">
+                    Bu faturanın ödeme süresi dolmuştur. Güncel kur ile yeniden hesaplamak için aşağıdaki butona tıklayın.
+                </p>
+                <form method="post" action="/pay/@Model.InvoiceId/renew?txnId=@Uri.EscapeDataString(Model.TxnId ?? "")" id="renewForm">
+                    <button type="submit" class="renew-btn" id="renewBtn" onclick="this.disabled=true; this.textContent='Yenileniyor...'; this.form.submit();">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                        Faturayı Yenile
+                    </button>
+                </form>
+            </div>
+        }
+        else
+        {
+        <div id="qrSection" class="qr-section">
+            <div class="qr-code">
+                @if (!string.IsNullOrEmpty(Model.QrCodeUrl))
+                {
+                    <img src="@Model.QrCodeUrl" alt="QR Code" />
+                }
+                else
+                {
+                    <div class="qr-placeholder">QR Code</div>
+                }
+            </div>
+            <div class="wallet-info">
+                <div class="info-label">Wallet Address</div>
+                <div class="info-value">
+                    <span id="walletAddress">@Model.WalletAddress</span>
+                    <button class="copy-btn" onclick="copyToClipboard('walletAddress', 'Address copied!')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+                <div class="info-label">Amount</div>
+                <div class="info-value">
+                    <span id="cryptoAmount">@Model.CryptoAmount @Model.CryptoCurrency.Replace("_", " ")</span>
+                    <button class="copy-btn" onclick="copyToClipboard('cryptoAmount', 'Amount copied!')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="timer-section" id="timerSection">
+            <div class="timer-label"><span class="spinner"></span> Time remaining for payment</div>
+            <div class="timer-value" id="countdown">--:--:--</div>
+        </div>
+        @if (Model.TxIds != null && Model.TxIds.Count > 0)
+        {
+            <div class="tx-section" id="txSection">
+                <div class="tx-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    Transaction ID(s)
+                </div>
+                <div class="tx-list">
+                    @foreach (var txId in Model.TxIds)
+                    {
+                        <div class="tx-item">
+                            <span class="tx-hash">@txId</span>
+                            <button class="copy-btn" onclick="copyText('@txId', 'TX ID copied!')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="tx-section hidden" id="txSection">
+                <div class="tx-title">Transaction ID(s)</div>
+                <div class="tx-list" id="txList"></div>
+            </div>
+        }
+        }
+        <div id="warningSection" class="warning-section">
+            <div class="warning-text">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                <span>After payment, wait until you are redirected to the order confirmation page.</span>
+            </div>
+        </div>
+        <div class="footer">Powered by wandaplay</div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <script>
+        const expireTime = @Html.Raw(Model.ExpireTime.HasValue ? $"new Date('{Model.ExpireTime.Value:yyyy-MM-ddTHH:mm:ssZ}')" : "null");
+        const currentStatus = '@Model.Status';
+        const invoiceId = @Model.InvoiceId;
+        const txnId = '@Model.TxnId';
+        
+        
+        function updateCountdown() {
+            if (!expireTime) { const el = document.getElementById('countdown'); if (el) el.textContent = '--:--:--'; return; }
+            const now = new Date();
+            const diff = expireTime - now;
+            if (diff <= 0) {
+                const el = document.getElementById('countdown');
+                if (el) { el.textContent = 'EXPIRED'; el.classList.add('timer-expired'); }
+                // Süre doldu — sayfayı yenile ki expired UI gösterilsin
+                if (currentStatus !== 'expired' && currentStatus !== 'cancelled') {
+                    setTimeout(() => window.location.reload(), 2000);
+                }
+                return;
+            }
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+            document.getElementById('countdown').textContent = hours.toString().padStart(2, '0') + ':' + minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
+        }
+        
+        // adres kopyalama ve toast çıkarma
+        function copyToClipboard(elementId, message) { const text = document.getElementById(elementId).textContent.trim(); copyText(text, message); }
+        function copyText(text, message) { navigator.clipboard.writeText(text).then(() => { showToast(message); }); }
+        function showToast(message) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2000); }
+        
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+        
+        // Ödeme durumunu kontrol et (polling)
+        let statusCheckCount = 0;
+        let pollingTimer = null;
+        const isPreparing = currentStatus === 'preparing';
+        // Preparing: 2sn (wallet adresi bekleniyor), normal: 3sn (callback DB'yi anlık günceller, polling yakalar)
+        const pollInterval = isPreparing ? 2000 : 3000;
+
+        async function checkPaymentStatus() {
+            try {
+                statusCheckCount++;
+                const retryEl = document.getElementById('retryCount');
+                if (retryEl) retryEl.textContent = statusCheckCount;
+
+                const response = await fetch(`/api/invoices/status/${encodeURIComponent(txnId)}`);
+                if (!response.ok) {
+                    if (response.status === 404) console.log('[POLLING] Invoice not found');
+                    return;
+                }
+
+                const data = await response.json();
+                const newStatus = data.status;
+                const walletReady = data.walletReady || false;
+                const isTerminal = data.terminal || false;
+
+                // Preparing: wallet hazır oldu → sayfayı yenile
+                if (isPreparing && walletReady) {
+                    clearInterval(pollingTimer);
+                    window.location.reload();
+                    return;
+                }
+
+                // Terminal durum → expired/cancelled ise sayfayı yenile (yenile butonu gösterilsin), diğerleri result'a
+                if (isTerminal) {
+                    clearInterval(pollingTimer);
+                    if (newStatus === 'expired' || newStatus === 'cancelled') {
+                        window.location.reload();
+                    } else {
+                        window.location.href = `/result-invoice/${invoiceId}?txnId=${encodeURIComponent(txnId)}`;
+                    }
+                    return;
+                }
+            } catch (error) {
+                console.error('[POLLING] Status check error:', error);
+            }
+        }
+
+        // Sayfa yüklendiğinde durumu kontrol et
+        const waitingStatuses = ['preparing', 'new', 'pending'];
+        const renewableStatuses = ['expired', 'cancelled'];
+        if (renewableStatuses.includes(currentStatus)) {
+            // Expired/cancelled — yenile butonu gösteriliyor, polling yapma
+        } else if (!waitingStatuses.includes(currentStatus)) {
+            // Completed/mismatch gibi terminal durumlar — result sayfasına yönlendir
+            window.location.href = `/result-invoice/${invoiceId}?txnId=${encodeURIComponent(txnId)}`;
+        } else {
+            pollingTimer = setInterval(checkPaymentStatus, pollInterval);
+            checkPaymentStatus();
+        }
+    </script>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+<div id="supportChatData" data-invoice-id="@Model.InvoiceId" data-customer-name="@(Model.Email ?? "")" data-order-name="@(Model.OrderName ?? Model.OrderNumber)" style="display:none;"></div>
+@await Html.PartialAsync("~/Views/Shared/_SupportChatWidget.cshtml")
+</body>
+</html>

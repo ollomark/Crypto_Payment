@@ -1,0 +1,159 @@
+@{
+    ViewBag.Title = "Rol Yetkileri";
+    Layout = "_Layout";
+}
+
+<!-- Skeleton Placeholder -->
+<div class="container-fluid" id="page-skeleton">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <div class="skeleton skeleton-title"></div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xxl-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="skeleton skeleton-text" style="width:280px;margin-bottom:16px;"></div>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="skeleton skeleton-text-sm" style="width:60px;margin-bottom:8px;"></div>
+                            <div class="skeleton" style="width:100%;height:38px;border-radius:6px;"></div>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-3">
+                        @for (int sk = 0; sk < 6; sk++)
+                        {
+                        <div class="skeleton" style="width:120px;height:32px;border-radius:6px;"></div>
+                        }
+                    </div>
+                    <div class="mt-4">
+                        <div class="skeleton skeleton-btn" style="width:100px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid" id="page-real" style="display:none;">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <h4 class="mb-sm-0">Rol Yetkileri</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xxl-12">
+            <div class="card">
+                <div class="card-body">
+                    <p class="text-muted mb-4">Bir rol seçin ve o role atanacak yetkileri işaretleyin.</p>
+
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label for="roleSelect" class="form-label fw-semibold">Rol Seçin</label>
+                            <select class="form-select" id="roleSelect">
+                                <option value="">-- Rol Seçin --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="permissionsArea" class="d-none">
+                        <h6 class="text-muted text-uppercase fw-semibold mb-3">Yetkiler</h6>
+                        <div class="d-flex flex-wrap gap-3" id="permissionCheckboxes">
+                        </div>
+
+                        <div class="mt-4">
+                            <button class="btn btn-success" id="saveClaimsBtn">
+                                <i class="ri-save-line me-1"></i> Kaydet
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="noPermissions" class="d-none text-center text-muted py-4">
+                        <p>Henüz yetki tanımlanmamış. Önce <a href="/permissions">Yetkiler</a> sayfasından yetki ekleyin.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    // Skeleton kaldır, gerçek içeriği göster
+    const skel = document.getElementById('page-skeleton');
+    const real = document.getElementById('page-real');
+    if (skel) skel.remove();
+    if (real) real.style.display = '';
+
+    const roleSelect = document.getElementById('roleSelect');
+    const permArea = document.getElementById('permissionsArea');
+    const permCheckboxes = document.getElementById('permissionCheckboxes');
+    const noPerm = document.getElementById('noPermissions');
+
+    // Rolleri yükle
+    try {
+        const res = await fetch('/api/roles/GetAll');
+        const roles = await res.json();
+        roles.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r.id;
+            opt.textContent = r.name;
+            roleSelect.appendChild(opt);
+        });
+    } catch { }
+
+    // Yetkileri yükle
+    let permissions = [];
+    try {
+        const res = await fetch('/api/permissions/GetAll');
+        permissions = await res.json();
+    } catch { }
+
+    if (permissions.length === 0) {
+        noPerm.classList.remove('d-none');
+        return;
+    }
+
+    roleSelect.addEventListener('change', () => {
+        if (!roleSelect.value) {
+            permArea.classList.add('d-none');
+            return;
+        }
+
+        permCheckboxes.innerHTML = '';
+        permissions.forEach(p => {
+            const name = p.name ?? '';
+            permCheckboxes.innerHTML += `
+            <div class="form-check mb-2 perm-check-col">
+                <input class="form-check-input perm-check" type="checkbox" value="${p.id}" id="perm-${p.id}">
+                <label class="form-check-label text-break" for="perm-${p.id}">${name}</label>
+            </div>`;
+        });
+
+        permArea.classList.remove('d-none');
+    });
+
+    // Kaydet butonu (bilgilendirme — backend endpoint henüz yok)
+    document.getElementById('saveClaimsBtn')?.addEventListener('click', () => {
+        const checked = [...document.querySelectorAll('.perm-check:checked')].map(c => c.value);
+        const roleId = roleSelect.value;
+
+        if (!roleId) { alert('Lütfen bir rol seçin.'); return; }
+
+        Swal.fire({
+            icon: 'info',
+            title: 'Bilgi',
+            text: `Seçilen rol: ${roleSelect.options[roleSelect.selectedIndex].text}, ${checked.length} yetki seçildi. (Rol-yetki atama API\'si henüz mevcut değil)`,
+            confirmButtonText: 'Tamam'
+        });
+    });
+});
+</script>
+}

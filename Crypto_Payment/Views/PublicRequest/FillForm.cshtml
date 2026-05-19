@@ -1,0 +1,176 @@
+@{
+    Layout = "~/Views/Shared/_LayoutPublic.cshtml";
+    ViewData["Title"] = "Ödeme Talebi";
+    var token = ViewBag.Token as Guid? ?? Guid.Empty;
+    var dto = ViewBag.Dto as Crypto_Payment.Controllers.FillWithdrawalDto;
+
+    var selBanka = dto?.PaymentMethod == Crypto_Payment.Models.WdPaymentMethod.Banka ? "selected" : "";
+    var selKripto = dto?.PaymentMethod == Crypto_Payment.Models.WdPaymentMethod.Kripto ? "selected" : "";
+    var selTRC20 = dto?.CryptoNetwork == Crypto_Payment.Models.CryptoNetwork.TRC20 ? "selected" : "";
+    var selERC20 = dto?.CryptoNetwork == Crypto_Payment.Models.CryptoNetwork.ERC20 ? "selected" : "";
+    var selBTC = dto?.CryptoNetwork == Crypto_Payment.Models.CryptoNetwork.BTC ? "selected" : "";
+    var walletVal = dto?.PaymentMethod == Crypto_Payment.Models.WdPaymentMethod.Kripto ? dto?.WalletAddressOrIban : "";
+    var ibanVal = dto?.PaymentMethod == Crypto_Payment.Models.WdPaymentMethod.Banka ? dto?.WalletAddressOrIban : "";
+    var selUSD = (dto?.Currency ?? "USD") == "USD" ? "selected" : "";
+    var selEUR = dto?.Currency == "EUR" ? "selected" : "";
+    var selTRY = dto?.Currency == "TRY" ? "selected" : "";
+    var selGBP = dto?.Currency == "GBP" ? "selected" : "";
+}
+
+<div class="brand-logo">
+    <i class="ri-secure-payment-line"></i>
+</div>
+<h5 class="brand-title">Ödeme Talebi</h5>
+<p class="brand-sub">Lütfen aşağıdaki bilgileri eksiksiz doldurunuz.</p>
+
+<div class="d-flex justify-content-center gap-2 mb-3">
+    <span class="badge bg-primary-subtle text-primary" style="font-size:0.85rem;padding:6px 14px;border-radius:20px;">
+        <i class="ri-price-tag-3-line me-1"></i>@ViewBag.CategoryLabel
+    </span>
+    @if (!string.IsNullOrEmpty((string?)ViewBag.RequestCode))
+    {
+        <span class="badge bg-dark-subtle text-dark" style="font-size:0.85rem;padding:6px 14px;border-radius:20px;">
+            <i class="ri-hashtag me-1"></i>@ViewBag.RequestCode
+        </span>
+    }
+</div>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger py-2 px-3" style="border-radius:10px;font-size:0.85rem;">
+        <i class="ri-error-warning-line me-1"></i>Lütfen hataları düzeltiniz.
+    </div>
+}
+
+<form method="post" action="/secure-request/@token" id="withdrawalForm">
+    @Html.AntiForgeryToken()
+
+    <div class="mb-3">
+        <label class="form-label">Ad Soyad <span class="text-danger">*</span></label>
+        <input type="text" name="CustomerName" class="form-control" placeholder="Adınız Soyadınız"
+               value="@(dto?.CustomerName)" required />
+        @if (ViewData.ModelState.ContainsKey("CustomerName"))
+        {
+            <div class="validation-error">@ViewData.ModelState["CustomerName"]?.Errors.FirstOrDefault()?.ErrorMessage</div>
+        }
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Şirket Adı <span class="text-muted">(Opsiyonel)</span></label>
+        <input type="text" name="CompanyName" class="form-control" placeholder="Şirket adı"
+               value="@(dto?.CompanyName)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Tutar <span class="text-danger">*</span></label>
+        <div class="input-group">
+            @Html.Raw($@"<select name=""Currency"" id=""currencySelect"" class=""form-select"" style=""max-width:110px;"">
+                <option value=""USD"" {selUSD}>USD ($)</option>
+                <option value=""EUR"" {selEUR}>EUR (€)</option>
+                <option value=""TRY"" {selTRY}>TRY (₺)</option>
+                <option value=""GBP"" {selGBP}>GBP (£)</option>
+            </select>")
+            <input type="number" name="Amount" class="form-control" placeholder="0.00" step="0.01" min="0.01"
+                   value="@(dto?.Amount > 0 ? dto.Amount : "")" required />
+        </div>
+        @if (ViewData.ModelState.ContainsKey("Amount"))
+        {
+            <div class="validation-error">@ViewData.ModelState["Amount"]?.Errors.FirstOrDefault()?.ErrorMessage</div>
+        }
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Ödeme Yöntemi <span class="text-danger">*</span></label>
+        @Html.Raw($@"<select name=""PaymentMethod"" id=""paymentMethod"" class=""form-select"" required>
+            <option value=""1"" {selBanka}>Banka (IBAN)</option>
+            <option value=""2"" {selKripto}>Kripto</option>
+        </select>")
+    </div>
+
+    <!-- Kripto alanları -->
+    <div id="cryptoFields" style="display:none;">
+        <div class="mb-3">
+            <label class="form-label">Ağ Seçimi <span class="text-danger">*</span></label>
+            @Html.Raw($@"<select name=""CryptoNetwork"" id=""cryptoNetwork"" class=""form-select"">
+                <option value="""">Seçiniz</option>
+                <option value=""1"" {selTRC20}>TRC20</option>
+                <option value=""2"" {selERC20}>ERC20</option>
+                <option value=""3"" {selBTC}>BTC</option>
+            </select>")
+            @if (ViewData.ModelState.ContainsKey("CryptoNetwork"))
+            {
+                <div class="validation-error">@ViewData.ModelState["CryptoNetwork"]?.Errors.FirstOrDefault()?.ErrorMessage</div>
+            }
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Cüzdan Adresi <span class="text-danger">*</span></label>
+            <input type="text" name="WalletAddressOrIban" id="walletInput" class="form-control wallet-field"
+                   placeholder="Cüzdan adresinizi giriniz" value="@walletVal" />
+        </div>
+    </div>
+
+    <!-- Banka alanı -->
+    <div id="bankFields">
+        <div class="mb-3">
+            <label class="form-label">IBAN <span class="text-danger">*</span></label>
+            <input type="text" name="WalletAddressOrIban" id="ibanInput" class="form-control iban-field"
+                   placeholder="TR00 0000 0000 0000 0000 0000 00" value="@ibanVal" />
+        </div>
+    </div>
+
+    @if (ViewData.ModelState.ContainsKey("WalletAddressOrIban"))
+    {
+        <div class="validation-error mb-3">@ViewData.ModelState["WalletAddressOrIban"]?.Errors.FirstOrDefault()?.ErrorMessage</div>
+    }
+
+    <div class="mb-3">
+        <label class="form-label">Not <span class="text-muted">(Opsiyonel)</span></label>
+        <textarea name="CustomerNote" class="form-control" rows="2" placeholder="Eklemek istediğiniz not...">@(dto?.CustomerNote)</textarea>
+    </div>
+
+    <button type="submit" class="btn btn-submit" id="submitBtn">
+        <i class="ri-send-plane-line me-1"></i>Talebi Gönder
+    </button>
+</form>
+
+@section Scripts {
+<script>
+    const methodSelect = document.getElementById('paymentMethod');
+    const cryptoFields = document.getElementById('cryptoFields');
+    const bankFields = document.getElementById('bankFields');
+    const walletInput = document.getElementById('walletInput');
+    const ibanInput = document.getElementById('ibanInput');
+    const cryptoNetwork = document.getElementById('cryptoNetwork');
+
+    function toggleFields() {
+        const val = methodSelect.value;
+        if (val === '2') {
+            cryptoFields.style.display = '';
+            bankFields.style.display = 'none';
+            ibanInput.disabled = true;
+            ibanInput.name = '';
+            walletInput.disabled = false;
+            walletInput.name = 'WalletAddressOrIban';
+            cryptoNetwork.required = true;
+        } else {
+            cryptoFields.style.display = 'none';
+            bankFields.style.display = '';
+            walletInput.disabled = true;
+            walletInput.name = '';
+            ibanInput.disabled = false;
+            ibanInput.name = 'WalletAddressOrIban';
+            cryptoNetwork.required = false;
+        }
+    }
+
+    methodSelect.addEventListener('change', toggleFields);
+    toggleFields();
+
+    // Çift tıklama engelleme
+    document.getElementById('withdrawalForm').addEventListener('submit', function() {
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Gönderiliyor...';
+    });
+</script>
+}

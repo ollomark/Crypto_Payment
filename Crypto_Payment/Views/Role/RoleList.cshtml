@@ -1,0 +1,203 @@
+@{
+    ViewBag.Title = "Rol Listesi";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <h4 class="mb-sm-0">Roller</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <div class="flex-grow-1">
+                            <button class="btn btn-info add-btn" data-bs-toggle="modal" data-bs-target="#showModal">
+                                <i class="ri-add-fill me-1 align-bottom"></i> Rol Ekle
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xxl-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="search-box">
+                                <input type="text" class="form-control search" id="searchRole" placeholder="Rol ara...">
+                                <i class="ri-search-line search-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive table-card">
+                        <table class="table align-middle table-nowrap mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col" style="width: 50px;">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="checkAll">
+                                        </div>
+                                    </th>
+                                    <th scope="col">Rol ID</th>
+                                    <th scope="col">Rol Adı</th>
+                                    <th scope="col">Eylemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roleList" class="list form-check-all">
+                                @for (int i = 0; i < 4; i++)
+                                {
+                                <tr class="skeleton-row">
+                                    <th scope="row"><div class="skeleton skeleton-text" style="width:18px;"></div></th>
+                                    <td><div class="skeleton skeleton-text" style="width:30px;"></div></td>
+                                    <td><div class="skeleton skeleton-text" style="width:120px;"></div></td>
+                                    <td><div class="skeleton skeleton-btn" style="width:28px;"></div></td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <div class="noresult" style="display: none" id="noResult">
+                            <div class="text-center">
+                                <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop"
+                                    colors="primary:#121331,secondary:#08a88a" style="width:75px;height:75px"></lord-icon>
+                                <h5 class="mt-2">Sonuç Bulunamadı</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rol Ekle Modal -->
+<div class="modal fade" id="showModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-info-subtle p-3">
+                <h5 class="modal-title">Rol Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+            </div>
+            <form id="roleAddForm" autocomplete="off">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="roleName" class="form-label">Rol Adı</label>
+                        <input type="text" id="roleName" class="form-control" placeholder="Rol Adı Girin" required />
+                    </div>
+                    <div id="apiError" class="alert alert-danger d-none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Kapat</button>
+                    <button type="submit" class="btn btn-success">Rol Ekle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    const tbody = document.getElementById('roleList');
+    if (!tbody) return;
+
+    try {
+        const res = await fetch('/api/roles/GetAll');
+        const list = await res.json();
+
+        tbody.innerHTML = '';
+
+        if (list.length === 0) {
+            document.getElementById('noResult').style.display = 'block';
+            return;
+        }
+
+        list.forEach(r => {
+            tbody.innerHTML += `
+            <tr data-id="${r.id}">
+                <th scope="row">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox">
+                    </div>
+                </th>
+                <td class="role_id">${r.id}</td>
+                <td class="role_name">${r.name}</td>
+                <td>
+                    <ul class="list-inline hstack gap-2 mb-0">
+                        <li class="list-inline-item">
+                            <a href="javascript:void(0);" class="text-danger btn-delete-role" data-id="${r.id}" title="Sil">
+                                <i class="ri-delete-bin-2-line fs-16"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </td>
+            </tr>`;
+        });
+
+        // Silme
+        tbody.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.btn-delete-role');
+            if (!btn) return;
+            const id = btn.dataset.id;
+            if (!confirm('Bu rolü silmek istediğinize emin misiniz?')) return;
+            try {
+                const res = await fetch(`/api/roles/${id}`, { method: 'DELETE' });
+                if (res.ok || res.status === 204) {
+                    btn.closest('tr')?.remove();
+                } else {
+                    alert('Silme başarısız.');
+                }
+            } catch { alert('Sunucuya ulaşılamadı.'); }
+        });
+    } catch {
+        document.getElementById('noResult').style.display = 'block';
+    }
+
+    // Arama
+    document.getElementById('searchRole')?.addEventListener('input', function() {
+        const val = this.value.toLowerCase();
+        document.querySelectorAll('#roleList tr').forEach(row => {
+            const name = row.querySelector('.role_name')?.textContent?.toLowerCase() || '';
+            row.style.display = name.includes(val) ? '' : 'none';
+        });
+    });
+});
+
+// Rol ekleme formu
+document.getElementById('roleAddForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const apiError = document.getElementById('apiError');
+    apiError.classList.add('d-none');
+
+    const payload = { name: document.getElementById('roleName').value.trim() };
+
+    try {
+        const res = await fetch('/api/roles/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            window.location.href = '/roles';
+        } else {
+            const data = await res.json().catch(() => ({}));
+            apiError.textContent = data.title || 'Kayıt başarısız.';
+            apiError.classList.remove('d-none');
+        }
+    } catch {
+        apiError.textContent = 'Sunucuya ulaşılamadı.';
+        apiError.classList.remove('d-none');
+    }
+});
+</script>
+}

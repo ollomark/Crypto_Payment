@@ -1,0 +1,27 @@
+{
+  "name": "Crypto Payment System",
+  "short_name": "CryptoPayment",
+  "description": "Kripto ödeme ve fatura yönetim sistemi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e1e2d",
+  "theme_color": "#0ab39c",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/admin/velzon-dist/assets/images/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "business"],
+  "lang": "tr"
+}

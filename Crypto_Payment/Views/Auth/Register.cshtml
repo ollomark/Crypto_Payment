@@ -1,0 +1,191 @@
+@{
+    ViewBag.Title = "Üye Ol";
+    Layout = "_AuthLayout";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="text-center mt-sm-5 mb-4 text-white-50">
+                <div>
+                    <a href="/" class="d-inline-block auth-logo">
+                        <img src="https://wandaplay.com/assets/logo_dark.png" alt="WandaPlay" height="24" style="filter:brightness(0) invert(1);">
+                    </a>
+                </div>
+                <p class="mt-3 fs-16 fw-medium">Kripto Ödeme Yönetim Paneli</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 col-xl-5">
+            <div class="card mt-4 card-bg-fill">
+                <div class="card-body p-4">
+                    <div class="text-center mt-2">
+                        <h5 class="text-primary fs-20">Hesap Oluştur</h5>
+                        <p class="text-muted">Ücretsiz hesabınızı oluşturun.</p>
+                    </div>
+                    <div class="p-2 mt-3">
+                        <form id="registerForm" class="needs-validation" novalidate>
+                            @Html.AntiForgeryToken()
+
+                            <div class="mb-3">
+                                <label for="fullname" class="form-label">Ad Soyad <span class="text-danger">*</span></label>
+                                <div class="position-relative">
+                                    <input type="text" name="FullName" class="form-control ps-5" id="fullname" placeholder="Ad Soyad girin" required autocomplete="name">
+                                    <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-user-line fs-16"></i></span>
+                                </div>
+                                <div class="invalid-feedback">Ad Soyad zorunludur.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="useremail" class="form-label">E-posta <span class="text-danger">*</span></label>
+                                <div class="position-relative">
+                                    <input type="email" name="Email" class="form-control ps-5" id="useremail" placeholder="ornek@email.com" required autocomplete="email">
+                                    <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-mail-line fs-16"></i></span>
+                                </div>
+                                <div class="invalid-feedback">Geçerli bir e-posta girin.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Kullanıcı Adı <span class="text-danger">*</span></label>
+                                <div class="position-relative">
+                                    <input type="text" name="UserName" class="form-control ps-5" id="username" placeholder="Kullanıcı adınız" required autocomplete="username">
+                                    <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-at-line fs-16"></i></span>
+                                </div>
+                                <div class="invalid-feedback">Kullanıcı adı zorunludur.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="password-input">Şifre <span class="text-danger">*</span></label>
+                                <div class="position-relative auth-pass-inputgroup">
+                                    <input type="password" name="Password" class="form-control ps-5 pe-5 password-input" onpaste="return false" placeholder="Şifrenizi belirleyin" id="password-input" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" required autocomplete="new-password">
+                                    <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-lock-2-line fs-16"></i></span>
+                                    <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon material-shadow-none" type="button" id="password-addon">
+                                        <i class="ri-eye-fill align-middle"></i>
+                                    </button>
+                                </div>
+                                <div class="invalid-feedback">Şifre en az 8 karakter, 1 büyük harf, 1 küçük harf ve 1 rakam içermelidir.</div>
+                            </div>
+
+                            <!-- Şifre Güçlülük Göstergesi -->
+                            <div class="mb-3">
+                                <div class="d-flex gap-1">
+                                    <div class="flex-grow-1"><div class="progress" style="height:4px;"><div class="progress-bar" id="pwStr1"></div></div></div>
+                                    <div class="flex-grow-1"><div class="progress" style="height:4px;"><div class="progress-bar" id="pwStr2"></div></div></div>
+                                    <div class="flex-grow-1"><div class="progress" style="height:4px;"><div class="progress-bar" id="pwStr3"></div></div></div>
+                                    <div class="flex-grow-1"><div class="progress" style="height:4px;"><div class="progress-bar" id="pwStr4"></div></div></div>
+                                </div>
+                                <small class="text-muted" id="pwStrLabel"></small>
+                            </div>
+
+                            <div id="apiError" class="alert alert-danger d-none"></div>
+
+                            <div class="mt-4">
+                                <button class="btn btn-success w-100 py-2 fs-15" type="submit" id="registerBtn">
+                                    <span id="regBtnText">Kayıt Ol</span>
+                                    <span id="regBtnSpinner" class="d-none"><span class="spinner-border spinner-border-sm me-1"></span>Kaydediliyor...</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 text-center">
+                <p class="mb-0 text-white-50">Zaten bir hesabınız var mı? <a href="/api/auth/login" class="fw-semibold text-white text-decoration-underline">Giriş Yapın</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('fullname')?.focus();
+});
+
+// Şifre güçlülük göstergesi
+document.getElementById('password-input')?.addEventListener('input', function() {
+    const pw = this.value;
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+    if (/\d/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+    const colors = ['', 'bg-danger', 'bg-warning', 'bg-info', 'bg-success'];
+    const labels = ['', 'Zayıf', 'Orta', 'İyi', 'Güçlü'];
+    for (let i = 1; i <= 4; i++) {
+        const bar = document.getElementById('pwStr' + i);
+        bar.className = 'progress-bar ' + (i <= score ? colors[score] : '');
+        bar.style.width = i <= score ? '100%' : '0%';
+    }
+    document.getElementById('pwStrLabel').textContent = pw.length > 0 ? labels[score] || '' : '';
+});
+
+(() => {
+    'use strict';
+    const form = document.getElementById('registerForm');
+    const apiError = document.getElementById('apiError');
+    const btn = document.getElementById('registerBtn');
+    const btnText = document.getElementById('regBtnText');
+    const btnSpinner = document.getElementById('regBtnSpinner');
+
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        apiError.classList.add('d-none');
+        apiError.innerHTML = '';
+
+        if (!form.checkValidity()) { form.classList.add('was-validated'); return; }
+
+        btn.disabled = true;
+        btnText.classList.add('d-none');
+        btnSpinner.classList.remove('d-none');
+
+        const payload = {
+            fullName: document.getElementById('fullname').value.trim(),
+            email: document.getElementById('useremail').value.trim(),
+            userName: document.getElementById('username').value.trim(),
+            password: document.getElementById('password-input').value
+        };
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        try {
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json().catch(() => ({}));
+
+            if (res.ok) {
+                window.location.href = data.redirectUrl ?? '/api/auth/register-success';
+                return;
+            }
+
+            if (data.errors) {
+                const msgs = [];
+                for (const key in data.errors) msgs.push(...data.errors[key]);
+                apiError.innerHTML = '<i class="ri-error-warning-line me-2 fs-18 float-start mt-1"></i><div>' + msgs.map(m => '<div>' + m + '</div>').join('') + '</div>';
+            } else {
+                apiError.innerHTML = '<i class="ri-error-warning-line me-2 fs-18"></i>' + (data.title ?? 'Kayıt işlemi başarısız.');
+            }
+            apiError.classList.remove('d-none');
+        } catch {
+            apiError.innerHTML = '<i class="ri-wifi-off-line me-2 fs-18"></i>Sunucuya bağlanılamadı. Lütfen tekrar deneyin.';
+            apiError.classList.remove('d-none');
+        }
+
+        btn.disabled = false;
+        btnText.classList.remove('d-none');
+        btnSpinner.classList.add('d-none');
+    });
+})();
+</script>
+}

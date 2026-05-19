@@ -1,0 +1,148 @@
+@{
+    var returnUrl = (string?)ViewData["ReturnUrl"] ?? Context.Request.Query["ReturnUrl"].ToString();
+    ViewBag.Title = "Giriş Yap";
+    Layout = "_AuthLayout";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="text-center mt-sm-5 mb-4 text-white-50">
+                <div>
+                    <a href="/" class="d-inline-block auth-logo">
+                        <img src="https://wandaplay.com/assets/logo_dark.png" alt="WandaPlay" height="24" style="filter:brightness(0) invert(1);">
+                    </a>
+                </div>
+                <p class="mt-3 fs-16 fw-medium">Kripto Ödeme Yönetim Paneli</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 col-xl-5">
+            <div class="card mt-4 card-bg-fill">
+                <div class="card-body p-4">
+                    <div class="text-center mt-2">
+                        <h5 class="text-primary fs-20">Hoş Geldiniz</h5>
+                        <p class="text-muted">Devam etmek için giriş yapın.</p>
+                    </div>
+                    <div class="p-2 mt-3">
+                        <form id="loginForm" class="needs-validation" novalidate>
+                            @Html.AntiForgeryToken()
+
+                            <div class="mb-3">
+                                <label for="email" class="form-label">E-posta</label>
+                                <div class="position-relative">
+                                    <input type="email" class="form-control ps-5" id="email" name="Email" placeholder="ornek@email.com" required autocomplete="email">
+                                    <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-mail-line fs-16"></i></span>
+                                </div>
+                                <div class="invalid-feedback">Geçerli bir e-posta adresi girin.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="password-input">Şifre</label>
+                                <div class="position-relative auth-pass-inputgroup">
+                                    <input type="password" class="form-control ps-5 pe-5 password-input" id="password-input" name="Password" placeholder="Şifrenizi girin" required autocomplete="current-password">
+                                    <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-lock-2-line fs-16"></i></span>
+                                    <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon material-shadow-none" type="button" id="password-addon">
+                                        <i class="ri-eye-fill align-middle"></i>
+                                    </button>
+                                </div>
+                                <div class="invalid-feedback">Şifrenizi girin.</div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="auth-remember-check">
+                                    <label class="form-check-label" for="auth-remember-check">Beni Hatırla</label>
+                                </div>
+                            </div>
+
+                            <div class="mt-3" id="apiError" style="display:none;"></div>
+
+                            <div class="mt-4">
+                                <button class="btn btn-success w-100 py-2 fs-15" type="submit" id="loginBtn">
+                                    <span id="loginBtnText">Giriş Yap</span>
+                                    <span id="loginBtnSpinner" class="d-none"><span class="spinner-border spinner-border-sm me-1"></span>Giriş yapılıyor...</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 text-center">
+                <p class="mb-0 text-white-50">Hesabınız yok mu? <a href="/api/auth/register" class="fw-semibold text-white text-decoration-underline">Üye Ol</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('email')?.focus();
+});
+
+(() => {
+    'use strict';
+    const form = document.getElementById('loginForm');
+    const apiError = document.getElementById('apiError');
+    const btn = document.getElementById('loginBtn');
+    const btnText = document.getElementById('loginBtnText');
+    const btnSpinner = document.getElementById('loginBtnSpinner');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!form.checkValidity()) { form.classList.add('was-validated'); return; }
+
+        apiError.style.display = 'none';
+        apiError.className = '';
+        apiError.innerText = '';
+
+        btn.disabled = true;
+        btnText.classList.add('d-none');
+        btnSpinner.classList.remove('d-none');
+
+        const payload = {
+            email: document.getElementById('email').value.trim(),
+            password: document.getElementById('password-input').value,
+            rememberMe: document.getElementById('auth-remember-check').checked
+        };
+        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                apiError.style.display = 'block';
+                apiError.className = 'alert alert-danger d-flex align-items-center';
+                apiError.innerHTML = '<i class="ri-error-warning-line me-2 fs-18"></i><span>' + (data.title || 'E-posta veya şifre hatalı.') + '</span>';
+                btn.disabled = false;
+                btnText.classList.remove('d-none');
+                btnSpinner.classList.add('d-none');
+                return;
+            }
+
+            const data = await res.json().catch(() => ({}));
+            if (data.twoFactorRequired) { window.location.href = data.redirectUrl || '/auth/twofactor'; return; }
+            window.location.href = data.redirectUrl || '/';
+        } catch {
+            apiError.style.display = 'block';
+            apiError.className = 'alert alert-danger d-flex align-items-center';
+            apiError.innerHTML = '<i class="ri-wifi-off-line me-2 fs-18"></i><span>Sunucuya ulaşılamadı. Lütfen tekrar deneyin.</span>';
+            btn.disabled = false;
+            btnText.classList.remove('d-none');
+            btnSpinner.classList.add('d-none');
+        }
+    });
+})();
+</script>
+}

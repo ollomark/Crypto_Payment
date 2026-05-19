@@ -1,0 +1,915 @@
+@{
+    ViewBag.Title = "Müşteriler";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+            <h4 class="mb-sm-0">Müşteriler</h4>
+            <div class="page-title-right">
+                <ol class="breadcrumb m-0">
+                    <li class="breadcrumb-item"><a href="/">Ana Sayfa</a></li>
+                    <li class="breadcrumb-item active">Müşteriler</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Özet Kartları -->
+<div class="row">
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Toplam Müşteri</p></div>
+                </div>
+                <div class="d-flex align-items-end justify-content-between mt-3">
+                    <h4 class="fs-22 fw-semibold ff-secondary mb-0" id="stat-total">0</h4>
+                    <div class="avatar-sm"><span class="avatar-title bg-primary-subtle rounded fs-3"><i class="ri-team-line text-primary"></i></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Şirket Müşterisi</p></div>
+                </div>
+                <div class="d-flex align-items-end justify-content-between mt-3">
+                    <h4 class="fs-22 fw-semibold ff-secondary mb-0" id="stat-company">0</h4>
+                    <div class="avatar-sm"><span class="avatar-title bg-success-subtle rounded fs-3"><i class="ri-building-line text-success"></i></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Bireysel</p></div>
+                </div>
+                <div class="d-flex align-items-end justify-content-between mt-3">
+                    <h4 class="fs-22 fw-semibold ff-secondary mb-0" id="stat-individual">0</h4>
+                    <div class="avatar-sm"><span class="avatar-title bg-info-subtle rounded fs-3"><i class="ri-user-line text-info"></i></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Bu Ay Eklenen</p></div>
+                </div>
+                <div class="d-flex align-items-end justify-content-between mt-3">
+                    <h4 class="fs-22 fw-semibold ff-secondary mb-0" id="stat-new">0</h4>
+                    <div class="avatar-sm"><span class="avatar-title bg-warning-subtle rounded fs-3"><i class="ri-user-add-line text-warning"></i></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Sol: Müşteri Listesi -->
+    <div class="col-xxl-9 col-lg-8">
+        <div class="card">
+            <div class="card-header border-0">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <h5 class="card-title mb-0 flex-grow-1">
+                        <i class="ri-contacts-line me-1"></i>Müşteri Listesi
+                        <span class="badge bg-soft-secondary text-secondary ms-1 fs-12" id="filteredCount"></span>
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-soft-danger btn-sm d-none" id="remove-actions"><i class="ri-delete-bin-2-line me-1"></i>Seçilenleri Sil</button>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addModal"><i class="ri-add-line me-1"></i>Müşteri Ekle</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body border-top border-bottom border-dashed py-3">
+                <div class="row g-3 align-items-end">
+                    <div class="col-lg-5 col-md-6">
+                        <div class="search-box">
+                            <input type="text" class="form-control bg-light border-light" id="searchInput" placeholder="Ad, şirket, email, telefon ara...">
+                            <i class="ri-search-line search-icon"></i>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-3 col-6">
+                        <select class="form-select bg-light border-light" id="filterType" onchange="applyFilters()">
+                            <option value="">Tüm Müşteriler</option>
+                            <option value="company">Şirket Müşterisi</option>
+                            <option value="individual">Bireysel</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-3 col-6">
+                        <select class="form-select bg-light border-light" id="sortBy" onchange="applyFilters()">
+                            <option value="name">Ada Göre</option>
+                            <option value="company">Şirkete Göre</option>
+                            <option value="newest">En Yeni</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-3">
+                        <button type="button" class="btn btn-light w-100" onclick="clearFilters()"><i class="ri-refresh-line me-1"></i>Sıfırla</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive table-card">
+                    <table class="table align-middle table-hover table-nowrap mb-0" id="customerTable">
+                        <thead class="table-light text-muted">
+                            <tr>
+                                <th style="width:40px;"><div class="form-check"><input class="form-check-input" type="checkbox" id="checkAll"></div></th>
+                                <th>Müşteri</th>
+                                <th>İletişim</th>
+                                <th>Şirket</th>
+                                <th style="width:100px;">Kanallar</th>
+                                <th style="width:90px;">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customerList">
+                            @for (int i = 0; i < 5; i++)
+                            {
+                            <tr class="skeleton-row">
+                                <td><div class="skeleton skeleton-text" style="width:18px;"></div></td>
+                                <td><div class="d-flex align-items-center gap-2"><div class="skeleton skeleton-circle" style="width:36px;height:36px;"></div><div><div class="skeleton skeleton-text" style="width:120px;margin-bottom:4px;"></div><div class="skeleton skeleton-text-sm" style="width:80px;"></div></div></div></td>
+                                <td><div class="skeleton skeleton-text-sm" style="width:130px;margin-bottom:4px;"></div><div class="skeleton skeleton-text-sm" style="width:90px;"></div></td>
+                                <td><div class="skeleton skeleton-text" style="width:100px;"></div></td>
+                                <td><div class="d-flex gap-1"><div class="skeleton" style="width:28px;height:28px;border-radius:50%;"></div><div class="skeleton" style="width:28px;height:28px;border-radius:50%;"></div></div></td>
+                                <td><div class="skeleton skeleton-btn" style="width:60px;"></div></td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <div class="d-none text-center py-5" id="noresult">
+                        <i class="ri-user-search-line" style="font-size:48px;color:#878a99;"></i>
+                        <h5 class="mt-3">Müşteri Bulunamadı</h5>
+                        <p class="text-muted mb-0">Filtreleri değiştirerek tekrar deneyin.</p>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3" id="paginationArea" style="display:none!important;">
+                    <small class="text-muted" id="pageInfo"></small>
+                    <div class="d-flex gap-1" id="pageBtns"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sağ: Detay Kartı -->
+    <div class="col-xxl-3 col-lg-4">
+        <div class="card" id="detailCard">
+            <div class="card-body text-center pt-4">
+                <div class="avatar-lg mx-auto mb-3">
+                    <span class="avatar-title bg-primary-subtle text-primary rounded-circle fs-24" id="detail-avatar">?</span>
+                </div>
+                <h5 class="mb-1" id="detail-name">Müşteri Seçin</h5>
+                <p class="text-muted fs-13 mb-0" id="detail-company">Listeden bir müşteriye tıklayın</p>
+            </div>
+            <div class="card-body border-top" id="detail-body" style="display:none;">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="ri-mail-line me-2 text-muted fs-16"></i>
+                    <div>
+                        <small class="text-muted d-block">E-posta</small>
+                        <span class="fw-medium" id="detail-email">-</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center mb-3">
+                    <i class="ri-phone-line me-2 text-muted fs-16"></i>
+                    <div>
+                        <small class="text-muted d-block">Telefon</small>
+                        <span class="fw-medium" id="detail-phone">-</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center mb-3">
+                    <i class="ri-building-line me-2 text-muted fs-16"></i>
+                    <div>
+                        <small class="text-muted d-block">Şirket</small>
+                        <span class="fw-medium" id="detail-company2">-</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center mb-3">
+                    <i class="ri-telegram-line me-2 text-info fs-16"></i>
+                    <div>
+                        <small class="text-muted d-block">Telegram</small>
+                        <span class="fw-medium" id="detail-telegram">-</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center mb-0">
+                    <i class="ri-skype-line me-2 text-primary fs-16"></i>
+                    <div>
+                        <small class="text-muted d-block">Skype</small>
+                        <span class="fw-medium" id="detail-skype">-</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center mb-0 mt-3">
+                    <i class="ri-calendar-line me-2 text-muted fs-16"></i>
+                    <div>
+                        <small class="text-muted d-block">Doğum tarihi</small>
+                        <span class="fw-medium" id="detail-dob">-</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body border-top d-none" id="detail-ledger">
+                <h6 class="text-muted text-uppercase fw-semibold mb-3"><i class="ri-file-list-3-line me-1"></i>Cari Hareketler</h6>
+                <div class="d-flex gap-2 mb-3 flex-wrap">
+                    <button type="button" class="btn btn-sm btn-success" id="btn-add-collection"><i class="ri-bank-card-2-line me-1"></i>Tahsilat Ekle</button>
+                    <button type="button" class="btn btn-sm btn-outline-success" id="btn-add-refund"><i class="ri-arrow-left-right-line me-1"></i>Geri Ödeme Ekle</button>
+                    <button type="button" class="btn btn-sm btn-danger" id="btn-add-expense"><i class="ri-money-dollar-circle-line me-1"></i>Masraf Ekle</button>
+                </div>
+                <div class="row g-2 mb-3" id="ledger-summary">
+                    <div class="col-6"><div class="p-2 rounded bg-success-subtle text-success small"><strong>Tahsilat</strong><div id="ledger-tahsilat" class="fw-semibold"></div></div></div>
+                    <div class="col-6"><div class="p-2 rounded bg-danger-subtle text-danger small"><strong>Geri Ödeme</strong><div id="ledger-refund" class="fw-semibold"></div></div></div>
+                    <div class="col-6"><div class="p-2 rounded bg-warning-subtle text-warning small"><strong>Masraf</strong><div id="ledger-masraf" class="fw-semibold"></div></div></div>
+                    <div class="col-6"><div class="p-2 rounded bg-primary-subtle text-primary small"><strong>Bakiye</strong><div id="ledger-bakiye" class="fw-semibold"></div></div></div>
+                </div>
+                <div class="mb-2 d-flex justify-content-between align-items-center">
+                    <div class="small text-muted"><b id="ledger-toplam">0</b> (toplam)</div>
+                    <select id="ledger-filter-type" class="form-select form-select-sm" style="width:auto;">
+                        <option value="">Tüm Hareketler</option>
+                        <option value="tahsilat">Tahsilat</option>
+                        <option value="geri_odeme">Geri Ödeme</option>
+                        <option value="masraf">Masraf</option>
+                    </select>
+                </div>
+                <div class="table-responsive" style="max-height:280px;overflow-y:auto;">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light sticky-top"><tr><th>Tarih</th><th>Tür</th><th>Açıklama</th><th class="text-end">Tutar</th></tr></thead>
+                        <tbody id="ledger-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer text-center d-none" id="detail-actions">
+                <button class="btn btn-sm btn-soft-warning me-1" id="detail-edit-btn"><i class="ri-pencil-line me-1"></i>Düzenle</button>
+                <button class="btn btn-sm btn-soft-danger" id="detail-delete-btn"><i class="ri-delete-bin-line me-1"></i>Sil</button>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Tahsilat Ekle Modal -->
+<div class="modal fade" id="collectionModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success-subtle"><h5 class="modal-title">Tahsilat Ekle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="collection-customer-id" />
+                <div class="mb-2"><label class="form-label">Tutar *</label><input type="number" step="0.01" id="collection-amount" class="form-control" required /></div>
+                <div class="mb-2"><label class="form-label">Para Birimi</label><select id="collection-currency" class="form-select"><option value="EUR">€ EUR</option><option value="USD">$ USD</option><option value="TRY">₺ TRY</option></select></div>
+                <div class="mb-2"><label class="form-label">Açıklama</label><input type="text" id="collection-desc" class="form-control" placeholder="Tahsilat açıklaması" /></div>
+                <div class="mb-0"><label class="form-label">Referans (Fatura no vb.)</label><input type="text" id="collection-ref" class="form-control" /></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button><button type="button" class="btn btn-success" id="collection-submit">Kaydet</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Geri Ödeme Ekle Modal -->
+<div class="modal fade" id="refundModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success-subtle"><h5 class="modal-title">Geri Ödeme Ekle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="refund-customer-id" />
+                <div class="mb-2"><label class="form-label">Tutar *</label><input type="number" step="0.01" id="refund-amount" class="form-control" required /></div>
+                <div class="mb-2"><label class="form-label">Para Birimi</label><select id="refund-currency" class="form-select"><option value="EUR">€ EUR</option><option value="USD">$ USD</option><option value="TRY">₺ TRY</option></select></div>
+                <div class="mb-2"><label class="form-label">Açıklama</label><input type="text" id="refund-desc" class="form-control" placeholder="İade nedeni" /></div>
+                <div class="mb-0"><label class="form-label">Referans (Fatura no vb.)</label><input type="text" id="refund-ref" class="form-control" /></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button><button type="button" class="btn btn-success" id="refund-submit">Kaydet</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Masraf Ekle Modal (Müşteriye atfedilen) -->
+<div class="modal fade" id="expenseModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger-subtle"><h5 class="modal-title">Masraf Ekle</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" id="expense-customer-id" />
+                <div class="mb-2"><label class="form-label">Tutar *</label><input type="number" step="0.01" id="expense-amount" class="form-control" required /></div>
+                <div class="mb-2"><label class="form-label">Para Birimi</label><select id="expense-currency" class="form-select"><option value="EUR">€ EUR</option><option value="USD">$ USD</option><option value="TRY">₺ TRY</option></select></div>
+                <div class="mb-2"><label class="form-label">Kategori</label><select id="expense-category" class="form-select"><option value="6">Diğer</option><option value="3">Sunucu Gideri</option><option value="4">Ofis Gideri</option></select></div>
+                <div class="mb-0"><label class="form-label">Açıklama</label><input type="text" id="expense-desc" class="form-control" placeholder="Masraf açıklaması" /></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button><button type="button" class="btn btn-danger" id="expense-submit">Kaydet</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- Müşteri Ekle Modal -->
+<div class="modal fade" id="addModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-primary-subtle">
+                <h5 class="modal-title"><i class="ri-user-add-line me-2"></i>Yeni Müşteri Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addForm" autocomplete="off">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Ad <span class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <input type="text" id="add-firstName" class="form-control ps-5" placeholder="Müşteri adı" required>
+                                <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-user-line"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Soyad <span class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <input type="text" id="add-lastName" class="form-control ps-5" placeholder="Müşteri soyadı" required>
+                                <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-user-line"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-medium">Şirket Adı</label>
+                            <div class="position-relative">
+                                <input type="text" id="add-companyName" class="form-control ps-5" placeholder="Şirket adı (opsiyonel)">
+                                <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-building-line"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">E-posta <span class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <input type="email" id="add-email" class="form-control ps-5" placeholder="ornek@email.com" required>
+                                <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-mail-line"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Telefon <span class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <input type="tel" id="add-phone" class="form-control ps-5" placeholder="+90 5XX XXX XX XX" required>
+                                <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-phone-line"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Telegram</label>
+                            <div class="position-relative">
+                                <input type="text" id="add-telegram" class="form-control ps-5" placeholder="kullanici_adi">
+                                <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-info"><i class="ri-telegram-line"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Skype</label>
+                            <div class="position-relative">
+                                <input type="text" id="add-skype" class="form-control ps-5" placeholder="Skype kullanıcı adı">
+                                <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-primary"><i class="ri-skype-line"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Doğum tarihi</label>
+                            <div class="position-relative">
+                                <input type="date" id="add-dateOfBirth" class="form-control ps-5">
+                                <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-calendar-line"></i></span>
+                            </div>
+                            <small class="text-muted">Toplu e-posta &quot;bugün doğanlar&quot; için (opsiyonel)</small>
+                        </div>
+                    </div>
+                    <div id="addError" class="alert alert-danger mt-3 d-none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary" id="addBtn">
+                        <span id="addBtnText"><i class="ri-add-line me-1"></i>Müşteri Ekle</span>
+                        <span id="addBtnSpinner" class="d-none"><span class="spinner-border spinner-border-sm me-1"></span>Ekleniyor...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Müşteri Düzenle Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-warning-subtle">
+                <h5 class="modal-title"><i class="ri-pencil-line me-2"></i>Müşteri Düzenle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editForm" autocomplete="off">
+                <div class="modal-body">
+                    <input type="hidden" id="edit-id" />
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Ad <span class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <input type="text" id="edit-firstName" class="form-control ps-5" required>
+                                <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-user-line"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Soyad <span class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <input type="text" id="edit-lastName" class="form-control ps-5" required>
+                                <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-user-line"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-medium">Şirket Adı</label>
+                            <div class="position-relative">
+                                <input type="text" id="edit-companyName" class="form-control ps-5">
+                                <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-building-line"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">E-posta <span class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <input type="email" id="edit-email" class="form-control ps-5" required>
+                                <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-mail-line"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Telefon <span class="text-danger">*</span></label>
+                            <div class="position-relative">
+                                <input type="tel" id="edit-phone" class="form-control ps-5" required>
+                                <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-phone-line"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Telegram</label>
+                            <div class="position-relative">
+                                <input type="text" id="edit-telegram" class="form-control ps-5">
+                                <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-info"><i class="ri-telegram-line"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Skype</label>
+                            <div class="position-relative">
+                                <input type="text" id="edit-skype" class="form-control ps-5">
+                                <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-primary"><i class="ri-skype-line"></i></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-medium">Doğum tarihi</label>
+                            <div class="position-relative">
+                                <input type="date" id="edit-dateOfBirth" class="form-control ps-5">
+                                <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"><i class="ri-calendar-line"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="editError" class="alert alert-danger mt-3 d-none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-warning" id="editBtn">
+                        <span id="editBtnText"><i class="ri-save-line me-1"></i>Güncelle</span>
+                        <span id="editBtnSpinner" class="d-none"><span class="spinner-border spinner-border-sm me-1"></span>Kaydediliyor...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<style>
+.cust-row{transition:background .15s;cursor:pointer}
+.cust-row:hover{background:rgba(64,81,137,.04)!important}
+.cust-row.active-row{background:rgba(64,81,137,.08)!important}
+.form-control.ps-5{padding-left:2.8rem!important}
+</style>
+<script>
+let allCustomers=[];
+let selectedId=null;
+let lastLedgerData=null;
+let currentPage=1;
+const PAGE_SIZE=12;
+
+function escStr(s){return String(s??'').replace(/'/g,"\\'");}
+function getInitials(c){return((c.firstName||'')[0]||'')+(( c.lastName||'')[0]||'');} 
+function getFullName(c){return((c.firstName||'')+' '+(c.lastName||'')).trim()||c.email||'-';}
+function getDisplayCompany(c){return c.companyName||'Bireysel';}
+
+function updateStats(list){
+    const el=id=>document.getElementById(id);
+    el('stat-total').textContent=list.length;
+    el('stat-company').textContent=list.filter(c=>c.companyName&&c.companyName.trim()).length;
+    el('stat-individual').textContent=list.filter(c=>!c.companyName||!c.companyName.trim()).length;
+    const now=new Date();
+    el('stat-new').textContent=list.filter(c=>{if(!c.createdDate)return false;const d=new Date(c.createdDate);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();}).length;
+}
+
+function applyFilters(){
+    const q=(document.getElementById('searchInput')?.value||'').trim().toLowerCase();
+    const type=document.getElementById('filterType')?.value||'';
+    const sort=document.getElementById('sortBy')?.value||'name';
+
+    let filtered=allCustomers.filter(c=>{
+        if(type==='company'&&(!c.companyName||!c.companyName.trim()))return false;
+        if(type==='individual'&&c.companyName&&c.companyName.trim())return false;
+        if(q){const h=`${c.firstName} ${c.lastName} ${c.companyName} ${c.email} ${c.phone} ${c.telegram} ${c.skype}`.toLowerCase();if(!h.includes(q))return false;}
+        return true;
+    });
+
+    if(sort==='name')filtered.sort((a,b)=>getFullName(a).localeCompare(getFullName(b),'tr'));
+    else if(sort==='company')filtered.sort((a,b)=>(a.companyName||'').localeCompare(b.companyName||'','tr'));
+    else if(sort==='newest')filtered.sort((a,b)=>new Date(b.createdDate||0)-new Date(a.createdDate||0));
+
+    currentPage=1;
+    renderList(filtered);
+}
+
+function renderList(list){
+    updateStats(allCustomers);
+    const tbody=document.getElementById('customerList');
+    const noresult=document.getElementById('noresult');
+    const fc=document.getElementById('filteredCount');
+    if(fc)fc.textContent=list.length+' müşteri';
+
+    if(!list.length){tbody.innerHTML='';noresult.classList.remove('d-none');document.getElementById('paginationArea').style.display='none';return;}
+    noresult.classList.add('d-none');
+
+    const totalPages=Math.ceil(list.length/PAGE_SIZE);
+    if(currentPage>totalPages)currentPage=totalPages;
+    const start=(currentPage-1)*PAGE_SIZE;
+    const pageItems=list.slice(start,start+PAGE_SIZE);
+
+    tbody.innerHTML='';
+    const colors=['primary','success','info','warning','danger','secondary'];
+
+    pageItems.forEach((c,idx)=>{
+        const name=getFullName(c);
+        const initials=getInitials(c).toUpperCase()||'?';
+        const color=colors[(c.id||idx)%colors.length];
+        const hasCompany=c.companyName&&c.companyName.trim();
+        const isActive=selectedId===c.id;
+
+        tbody.innerHTML+=`<tr class="cust-row${isActive?' active-row':''}" data-id="${c.id}">
+            <td><div class="form-check"><input class="form-check-input chk_child" type="checkbox" value="${c.id}"></div></td>
+            <td>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="avatar-sm"><span class="avatar-title bg-${color}-subtle text-${color} rounded-circle fs-14">${initials}</span></div>
+                    <div>
+                        <h6 class="mb-0 fs-13">${name}</h6>
+                        ${hasCompany?`<small class="text-muted fs-11"><i class="ri-building-line me-1"></i>${c.companyName}</small>`:'<small class="text-muted fs-11">Bireysel</small>'}
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div class="fs-13">${c.email||'<span class="text-muted">—</span>'}</div>
+                <small class="text-muted">${c.phone||''}</small>
+            </td>
+            <td><span class="${hasCompany?'fw-medium':'text-muted'}">${hasCompany?c.companyName:'—'}</span></td>
+            <td>
+                <div class="d-flex gap-1">
+                    ${c.telegram?`<a href="https://t.me/${c.telegram.replace('@@','')}" target="_blank" class="btn btn-sm btn-soft-info rounded-circle" title="${c.telegram}"><i class="ri-telegram-line"></i></a>`:''}
+                    ${c.skype?`<a href="skype:${c.skype}?chat" class="btn btn-sm btn-soft-primary rounded-circle" title="${c.skype}"><i class="ri-skype-line"></i></a>`:''}
+                    ${!c.telegram&&!c.skype?'<span class="text-muted fs-12">—</span>':''}
+                </div>
+            </td>
+            <td>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-soft-warning btn-edit" data-id="${c.id}" title="Düzenle"><i class="ri-pencil-line"></i></button>
+                    <button class="btn btn-sm btn-soft-danger btn-delete" data-id="${c.id}" title="Sil"><i class="ri-delete-bin-line"></i></button>
+                </div>
+            </td>
+        </tr>`;
+    });
+
+    // Sayfalama
+    const area=document.getElementById('paginationArea');
+    if(totalPages<=1){area.style.display='none';return;}
+    area.style.display='';area.style.cssText='display:flex!important;';
+    const s=start+1,e=Math.min(start+PAGE_SIZE,list.length);
+    document.getElementById('pageInfo').textContent=`${s}-${e} / ${list.length}`;
+    const btns=document.getElementById('pageBtns');btns.innerHTML='';
+    const addBtn=(l,p,dis,act)=>{const b=document.createElement('button');b.className='btn btn-sm '+(act?'btn-primary':'btn-soft-primary');b.textContent=l;b.disabled=dis;if(!dis&&!act)b.onclick=()=>{currentPage=p;applyFilters();};btns.appendChild(b);};
+    addBtn('‹',currentPage-1,currentPage===1,false);
+    for(let p=1;p<=totalPages;p++)addBtn(p,p,false,p===currentPage);
+    addBtn('›',currentPage+1,currentPage===totalPages,false);
+}
+
+function formatDobForInput(v){
+    if(!v)return '';
+    if(typeof v==='string'&&v.length>=10)return v.slice(0,10);
+    return '';
+}
+function formatDobDisplay(v){
+    if(!v)return '-';
+    const s=formatDobForInput(v);
+    if(!s)return '-';
+    const p=s.split('-');if(p.length===3)return p[2]+'.'+p[1]+'.'+p[0];
+    return s;
+}
+
+function showDetail(c){
+    selectedId=c.id;
+    const colors=['primary','success','info','warning','danger','secondary'];
+    const color=colors[(c.id||0)%colors.length];
+    const initials=getInitials(c).toUpperCase()||'?';
+    document.getElementById('detail-avatar').className=`avatar-title bg-${color}-subtle text-${color} rounded-circle fs-24`;
+    document.getElementById('detail-avatar').textContent=initials;
+    document.getElementById('detail-name').textContent=getFullName(c);
+    document.getElementById('detail-company').textContent=getDisplayCompany(c);
+    document.getElementById('detail-email').textContent=c.email||'-';
+    document.getElementById('detail-phone').textContent=c.phone||'-';
+    document.getElementById('detail-company2').textContent=c.companyName||'-';
+    document.getElementById('detail-telegram').textContent=c.telegram||'-';
+    document.getElementById('detail-skype').textContent=c.skype||'-';
+    document.getElementById('detail-dob').textContent=formatDobDisplay(c.dateOfBirth);
+    document.getElementById('detail-body').style.display='';
+    document.getElementById('detail-ledger').classList.remove('d-none');
+    document.getElementById('detail-actions').classList.remove('d-none');
+    document.getElementById('detail-edit-btn').onclick=()=>openEdit(c.id);
+    document.getElementById('detail-delete-btn').onclick=()=>doDelete(c.id);
+    document.getElementById('btn-add-collection').onclick=()=>openCollectionModal(c.id);
+    document.getElementById('btn-add-refund').onclick=()=>openRefundModal(c.id);
+    document.getElementById('btn-add-expense').onclick=()=>openExpenseModal(c.id);
+    document.querySelectorAll('.cust-row').forEach(r=>r.classList.toggle('active-row',String(r.dataset.id)===String(c.id)));
+    loadLedger(c.id);
+}
+
+function formatMoney(n){return (Number(n)||0).toLocaleString('tr-TR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+const symMap = { EUR: '€', EURO: '€', USD: '$', TRY: '₺', TL: '₺' };
+function fmtByCurrency(obj) {
+    if (!obj) return '—';
+    const parts = [];
+    ['EUR','USD','TRY'].forEach(c => { const v = obj[c] || obj[c.toLowerCase()]; if (v && Number(v)!==0) parts.push(symMap[c] + ' ' + formatMoney(v)); });
+    return parts.length ? parts.join(' · ') : '0';
+}
+function toplamConverted(obj) {
+    if (!obj || !window.CurrencyConverter?.convertFromSource) return 0;
+    let sum = 0;
+    ['EUR','USD','TRY'].forEach(c => { const v = obj[c] || obj[c.toLowerCase()]; if (v) sum += window.CurrencyConverter.convertFromSource(Number(v), c); });
+    return sum;
+}
+
+async function loadLedger(customerId){
+    const tbody=document.getElementById('ledger-tbody');
+    const set=(id,txt)=>{const e=document.getElementById(id);if(e)e.textContent=txt||'—';};
+    try{
+        const res=await fetch(`/api/customers/${customerId}/ledger`,{credentials:'include'});
+        const d=await res.json().catch(()=>null);
+        if(!res.ok){if(tbody)tbody.innerHTML='<tr><td colspan="4" class="text-danger small">Yüklenemedi: '+(d?.title||d?.message||res.status)+'</td></tr>';set('ledger-tahsilat','—');set('ledger-refund','—');set('ledger-masraf','—');set('ledger-bakiye','—');set('ledger-toplam','—');return;}
+        lastLedgerData = d;
+        const tc=d.tahsilatByCurrency,rc=d.refundByCurrency,mc=d.masrafByCurrency,bc=d.bakiyeByCurrency;
+        const fmt=tc||rc||mc||bc?fmtByCurrency:()=>'0';
+        set('ledger-tahsilat',tc?fmtByCurrency(tc):(d.tahsilatTotal!=null?formatMoney(d.tahsilatTotal):'0'));
+        set('ledger-refund',rc?fmtByCurrency(rc):(d.refundTotal!=null?formatMoney(d.refundTotal):'0'));
+        set('ledger-masraf',mc?fmtByCurrency(mc):(d.masrafTotal!=null?formatMoney(d.masrafTotal):'0'));
+        set('ledger-bakiye',bc?fmtByCurrency(bc):(d.bakiye!=null?formatMoney(d.bakiye):'0'));
+        const tot=bc?toplamConverted(bc):(d.bakiye!=null?Number(d.bakiye):0);
+        const sym=window.CurrencyConverter?.getCurrentSymbol()||'€';
+        set('ledger-toplam',sym+' '+formatMoney(tot));
+        const typeLabels={tahsilat:'Tahsilat',geri_odeme:'Geri Ödeme',masraf:'Masraf'};
+        const filterVal=document.getElementById('ledger-filter-type')?.value||'';
+        const filtered=(d.hareketler||[]).filter(h=>!filterVal||h.type===filterVal);
+        if(!filtered.length){tbody.innerHTML='<tr><td colspan="4" class="text-muted small">'+(filterVal?'Bu türde hareket yok.':'Hareket yok.')+'</td></tr>';return;}
+        tbody.innerHTML=filtered.map(h=>{
+            const dStr=new Date(h.date).toLocaleDateString('tr-TR');
+            const amt=h.amount;const cls=amt>=0?'text-success':'text-danger';
+            const cur=(h.currency||'EUR').toUpperCase().replace('EURO','EUR').replace('TL','TRY');
+            const symCur=symMap[cur]||(typeof currencySymbol==='function'?currencySymbol(h.currency):'')||cur;
+            return `<tr><td class="small">${dStr}</td><td class="small">${typeLabels[h.type]||h.type}</td><td class="small">${(h.desc||'').substring(0,40)}${(h.desc||'').length>40?'…':''}</td><td class="text-end ${cls}">${amt>=0?'+':''}${formatMoney(amt)} ${symCur}</td></tr>`;
+        }).join('');
+    }catch(e){console.warn('Ledger yüklenemedi:',e);if(tbody)tbody.innerHTML='<tr><td colspan="4" class="text-danger small">Bağlantı hatası.</td></tr>';set('ledger-tahsilat','—');set('ledger-refund','—');set('ledger-masraf','—');set('ledger-bakiye','—');set('ledger-toplam','—');}
+}
+function renderLedgerTable(d){
+    const tbody=document.getElementById('ledger-tbody');
+    if(!tbody||!d?.hareketler)return;
+    const typeLabels={tahsilat:'Tahsilat',geri_odeme:'Geri Ödeme',masraf:'Masraf'};
+    const filterVal=document.getElementById('ledger-filter-type')?.value||'';
+    const filtered=(d.hareketler||[]).filter(h=>!filterVal||h.type===filterVal);
+    if(!filtered.length){tbody.innerHTML='<tr><td colspan="4" class="text-muted small">'+(filterVal?'Bu türde hareket yok.':'Hareket yok.')+'</td></tr>';return;}
+    tbody.innerHTML=filtered.map(h=>{
+        const dStr=new Date(h.date).toLocaleDateString('tr-TR');
+        const amt=h.amount;const cls=amt>=0?'text-success':'text-danger';
+        const cur=(h.currency||'EUR').toUpperCase().replace('EURO','EUR').replace('TL','TRY');
+        const symCur=symMap[cur]||(typeof currencySymbol==='function'?currencySymbol(h.currency):'')||cur;
+        return `<tr><td class="small">${dStr}</td><td class="small">${typeLabels[h.type]||h.type}</td><td class="small">${(h.desc||'').substring(0,40)}${(h.desc||'').length>40?'…':''}</td><td class="text-end ${cls}">${amt>=0?'+':''}${formatMoney(amt)} ${symCur}</td></tr>`;
+    }).join('');
+}
+
+function openCollectionModal(customerId){
+    document.getElementById('collection-customer-id').value=customerId;
+    document.getElementById('collection-amount').value='';
+    document.getElementById('collection-desc').value='';
+    document.getElementById('collection-ref').value='';
+    new bootstrap.Modal(document.getElementById('collectionModal')).show();
+}
+
+function openRefundModal(customerId){
+    document.getElementById('refund-customer-id').value=customerId;
+    document.getElementById('refund-amount').value='';
+    document.getElementById('refund-desc').value='';
+    document.getElementById('refund-ref').value='';
+    new bootstrap.Modal(document.getElementById('refundModal')).show();
+}
+
+function openExpenseModal(customerId){
+    document.getElementById('expense-customer-id').value=customerId;
+    document.getElementById('expense-amount').value='';
+    document.getElementById('expense-desc').value='';
+    new bootstrap.Modal(document.getElementById('expenseModal')).show();
+}
+
+document.getElementById('collection-submit')?.addEventListener('click',async ()=>{
+    const cid=document.getElementById('collection-customer-id').value;
+    const amt=parseFloat(document.getElementById('collection-amount').value);
+    if(!cid||!amt||amt<=0){Swal.fire('Hata','Tutar girin.','warning');return;}
+    try{
+        const res=await fetch(`/api/customers/${cid}/collections`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:amt,currency:document.getElementById('collection-currency').value,description:document.getElementById('collection-desc').value,reference:document.getElementById('collection-ref').value})});
+        if(res.ok){bootstrap.Modal.getInstance(document.getElementById('collectionModal'))?.hide();loadLedger(parseInt(cid));Swal.fire({icon:'success',title:'Tahsilat eklendi.',timer:1500,showConfirmButton:false});}
+        else{const d=await res.json().catch(()=>({}));Swal.fire('Hata',d.title||'İşlem başarısız.','error');}
+    }catch{Swal.fire('Hata','Sunucuya ulaşılamadı.','error');}
+});
+
+document.getElementById('refund-submit')?.addEventListener('click',async ()=>{
+    const cid=document.getElementById('refund-customer-id').value;
+    const amt=parseFloat(document.getElementById('refund-amount').value);
+    if(!cid||!amt||amt<=0){Swal.fire('Hata','Tutar girin.','warning');return;}
+    try{
+        const res=await fetch(`/api/customers/${cid}/refunds`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:amt,currency:document.getElementById('refund-currency').value,description:document.getElementById('refund-desc').value,reference:document.getElementById('refund-ref').value})});
+        if(res.ok){bootstrap.Modal.getInstance(document.getElementById('refundModal'))?.hide();loadLedger(parseInt(cid));Swal.fire({icon:'success',title:'Geri ödeme eklendi.',timer:1500,showConfirmButton:false});}
+        else{const d=await res.json().catch(()=>({}));Swal.fire('Hata',d.title||'İşlem başarısız.','error');}
+    }catch{Swal.fire('Hata','Sunucuya ulaşılamadı.','error');}
+});
+
+document.getElementById('expense-submit')?.addEventListener('click',async ()=>{
+    const cid=document.getElementById('expense-customer-id').value;
+    const amt=parseFloat(document.getElementById('expense-amount').value);
+    if(!cid||!amt||amt<=0){Swal.fire('Hata','Tutar girin.','warning');return;}
+    try{
+        const res=await fetch('/api/expenses/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:amt,currency:document.getElementById('expense-currency').value,category:parseInt(document.getElementById('expense-category').value),description:document.getElementById('expense-desc').value,customerId:parseInt(cid)})});
+        if(res.ok){bootstrap.Modal.getInstance(document.getElementById('expenseModal'))?.hide();loadLedger(parseInt(cid));Swal.fire({icon:'success',title:'Masraf talebi oluşturuldu.',timer:1500,showConfirmButton:false});}
+        else{const d=await res.json().catch(()=>({}));Swal.fire('Hata',d.title||'İşlem başarısız.','error');}
+    }catch{Swal.fire('Hata','Sunucuya ulaşılamadı.','error');}
+});
+
+function clearFilters(){
+    document.getElementById('searchInput').value='';
+    document.getElementById('filterType').value='';
+    document.getElementById('sortBy').value='name';
+    applyFilters();
+}
+
+function openEdit(id){
+    const c=allCustomers.find(x=>x.id===id);if(!c)return;
+    document.getElementById('edit-id').value=c.id;
+    document.getElementById('edit-firstName').value=c.firstName||'';
+    document.getElementById('edit-lastName').value=c.lastName||'';
+    document.getElementById('edit-companyName').value=c.companyName||'';
+    document.getElementById('edit-email').value=c.email||'';
+    document.getElementById('edit-phone').value=c.phone||'';
+    document.getElementById('edit-telegram').value=c.telegram||'';
+    document.getElementById('edit-skype').value=c.skype||'';
+    document.getElementById('edit-dateOfBirth').value=formatDobForInput(c.dateOfBirth);
+    document.getElementById('editError').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+
+async function doDelete(id){
+    const r=await Swal.fire({title:'Emin misiniz?',text:'Bu müşteri silinecek.',icon:'warning',showCancelButton:true,confirmButtonText:'Evet, sil',cancelButtonText:'Vazgeç'});
+    if(!r.isConfirmed)return;
+    try{
+        const res=await fetch(`/api/customers/${id}`,{method:'DELETE',credentials:'include'});
+        const data=await res.json().catch(()=>({}));
+        if(data.pending){Swal.fire({icon:'info',title:'Onay Bekleniyor',html:'<p>Silme talebi MasterAdmin onayına gönderildi.</p>',confirmButtonText:'Tamam'});}
+        else if(res.ok||res.status===204){allCustomers=allCustomers.filter(c=>c.id!==id);applyFilters();Swal.fire({icon:'success',title:'Silindi',timer:1500,showConfirmButton:false});}
+        else{Swal.fire('Hata',data.title||'Silme başarısız.','error');}
+    }catch{Swal.fire('Hata','Sunucuya ulaşılamadı.','error');}
+}
+
+// Init
+document.addEventListener('DOMContentLoaded',async()=>{
+    try{
+        const res=await fetch('/api/customers/GetAll',{credentials:'include'});
+        if(!res.ok){
+            let d=null; try{d=await res.json().catch(()=>null);}catch{}
+            const msg=(res.status===401||res.status===403)?'Oturum süresi dolmuş. Tekrar giriş yapın.':(d?.message||d?.title||'HTTP '+res.status);
+            document.getElementById('customerList').innerHTML='<tr><td colspan="6" class="text-center py-4 text-danger">Müşteriler yüklenemedi. '+msg+'</td></tr>';return;
+        }
+        allCustomers=await res.json();
+    }catch(e){
+        const msg=(e&&e.message&&e.message.includes('JSON'))?'Sunucu yanıtı geçersiz (oturum süresi dolmuş olabilir).':'Bağlantı hatası.';
+        document.getElementById('customerList').innerHTML='<tr><td colspan="6" class="text-center py-4 text-danger">Müşteriler yüklenemedi. '+msg+'</td></tr>';return;
+    }
+    applyFilters();
+
+    document.getElementById('searchInput')?.addEventListener('input',applyFilters);
+
+    // Satır tıklama -> detay
+    document.getElementById('customerList')?.addEventListener('click',e=>{
+        if(e.target.closest('.btn-edit')||e.target.closest('.btn-delete')||e.target.closest('.form-check-input'))return;
+        const row=e.target.closest('.cust-row');if(!row)return;
+        const c=allCustomers.find(x=>String(x.id)===row.dataset.id);if(c)showDetail(c);
+    });
+
+    // Edit butonları
+    document.getElementById('customerList')?.addEventListener('click',e=>{
+        const btn=e.target.closest('.btn-edit');if(!btn)return;
+        openEdit(parseInt(btn.dataset.id));
+    });
+
+    // Delete butonları
+    document.getElementById('customerList')?.addEventListener('click',e=>{
+        const btn=e.target.closest('.btn-delete');if(!btn)return;
+        doDelete(parseInt(btn.dataset.id));
+    });
+
+    // CheckAll
+    document.getElementById('checkAll')?.addEventListener('change',function(){
+        document.querySelectorAll('.chk_child').forEach(c=>c.checked=this.checked);
+        const ra=document.getElementById('remove-actions');
+        if(ra){if(this.checked)ra.classList.remove('d-none');else ra.classList.add('d-none');}
+    });
+
+    // Cari hareket tür filtresi (cache'den yeniden çiz, API çağrısı yok)
+    document.getElementById('ledger-filter-type')?.addEventListener('change',function(){
+        if(lastLedgerData)renderLedgerTable(lastLedgerData);
+    });
+
+    // Para birimi değiştiğinde ledger toplamını güncelle
+    document.addEventListener('currencyChanged',function(){
+        if(selectedId&&lastLedgerData&&lastLedgerData.bakiyeByCurrency){
+            const tot=toplamConverted(lastLedgerData.bakiyeByCurrency);
+            const sym=window.CurrencyConverter?.getCurrentSymbol()||'€';
+            const el=document.getElementById('ledger-toplam');if(el)el.textContent=sym+' '+formatMoney(tot);
+        }
+    });
+});
+
+// Müşteri Ekleme
+document.getElementById('addForm')?.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const err=document.getElementById('addError');err.classList.add('d-none');
+    const btn=document.getElementById('addBtn');
+    btn.disabled=true;document.getElementById('addBtnText').classList.add('d-none');document.getElementById('addBtnSpinner').classList.remove('d-none');
+
+    const payload={
+        firstName:document.getElementById('add-firstName').value.trim(),
+        lastName:document.getElementById('add-lastName').value.trim(),
+        companyName:document.getElementById('add-companyName').value.trim(),
+        email:document.getElementById('add-email').value.trim(),
+        phone:document.getElementById('add-phone').value.trim(),
+        telegram:document.getElementById('add-telegram').value.trim(),
+        skype:document.getElementById('add-skype').value.trim(),
+        dateOfBirth:(()=>{const v=document.getElementById('add-dateOfBirth')?.value;return v||null;})()
+    };
+
+    try{
+        const res=await fetch('/api/customers/create',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        if(res.ok){
+            const c=await res.json();
+            allCustomers.push(c);
+            applyFilters();
+            document.getElementById('addForm').reset();
+            bootstrap.Modal.getInstance(document.getElementById('addModal'))?.hide();
+            Swal.fire({icon:'success',title:'Müşteri Eklendi',text:getFullName(c),timer:2000,showConfirmButton:false});
+        }else{
+            const data=await res.json().catch(()=>({}));
+            err.textContent=data.message||data.title||Object.values(data.errors||{}).flat().join(', ')||'Ekleme başarısız.';
+            err.classList.remove('d-none');
+        }
+    }catch{err.textContent='Sunucuya ulaşılamadı.';err.classList.remove('d-none');}
+
+    btn.disabled=false;document.getElementById('addBtnText').classList.remove('d-none');document.getElementById('addBtnSpinner').classList.add('d-none');
+});
+
+// Müşteri Düzenleme
+document.getElementById('editForm')?.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const err=document.getElementById('editError');err.classList.add('d-none');
+    const btn=document.getElementById('editBtn');
+    btn.disabled=true;document.getElementById('editBtnText').classList.add('d-none');document.getElementById('editBtnSpinner').classList.remove('d-none');
+
+    const id=document.getElementById('edit-id').value;
+    const payload={
+        firstName:document.getElementById('edit-firstName').value.trim(),
+        lastName:document.getElementById('edit-lastName').value.trim(),
+        companyName:document.getElementById('edit-companyName').value.trim(),
+        email:document.getElementById('edit-email').value.trim(),
+        phone:document.getElementById('edit-phone').value.trim(),
+        telegram:document.getElementById('edit-telegram').value.trim(),
+        skype:document.getElementById('edit-skype').value.trim(),
+        dateOfBirth:(()=>{const v=document.getElementById('edit-dateOfBirth')?.value;return v||null;})()
+    };
+
+    try{
+        const res=await fetch(`/api/customers/${id}`,{method:'PUT',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        const data=await res.json().catch(()=>({}));
+        if(data.pending){
+            bootstrap.Modal.getInstance(document.getElementById('editModal'))?.hide();
+            Swal.fire({icon:'info',title:'Onay Bekleniyor',html:'<p>Düzenleme talebi MasterAdmin onayına gönderildi.</p>',confirmButtonText:'Tamam'});
+        }else if(res.ok){
+            const idx=allCustomers.findIndex(c=>String(c.id)===String(id));
+            if(idx!==-1)Object.assign(allCustomers[idx],payload);
+            applyFilters();
+            if(selectedId===parseInt(id)){const c=allCustomers.find(x=>x.id===parseInt(id));if(c)showDetail(c);}
+            bootstrap.Modal.getInstance(document.getElementById('editModal'))?.hide();
+            Swal.fire({icon:'success',title:'Güncellendi',timer:1500,showConfirmButton:false});
+        }else{err.textContent=data.title||data.message||'Güncelleme başarısız.';err.classList.remove('d-none');}
+    }catch{err.textContent='Sunucuya ulaşılamadı.';err.classList.remove('d-none');}
+
+    btn.disabled=false;document.getElementById('editBtnText').classList.remove('d-none');document.getElementById('editBtnSpinner').classList.add('d-none');
+});
+</script>
+}

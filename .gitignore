@@ -1,0 +1,62 @@
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# Visual Studio cache/options directory
+.vs/
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
+
+# User secrets
+appsettings.*.json
+!appsettings.Development.json
+!appsettings.json
+
+# Environment variables
+.env
+.env.local
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# VS Code
+.vscode/
+
+# Node modules (if any)
+node_modules/
+
+# Publish output
+publish/
+*.tar.gz
+
+# Velzon admin source (only dist is needed)
+**/velzon-admin/
+
+# Kiro specs
+.kiro/

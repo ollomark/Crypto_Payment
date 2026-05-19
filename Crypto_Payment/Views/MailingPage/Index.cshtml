@@ -1,0 +1,152 @@
+@{
+    ViewBag.Title = "Toplu E-posta";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <h4 class="mb-sm-0"><i class="ri-mail-send-line me-2 text-primary"></i>Toplu E-posta</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="/">Ana Sayfa</a></li>
+                        <li class="breadcrumb-item active">Toplu E-posta</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header border-0">
+                    <h5 class="card-title mb-0">Segment</h5>
+                    <p class="text-muted small mb-0">Sadece kayıtlı e-posta adresi olan müşterilere gönderilir. Doğum günü: İstanbul saati ile &quot;bugün&quot; ve müşteri kartında doğum tarihi dolu olmalı.</p>
+                </div>
+                <div class="card-body">
+                    <label class="form-label">Kitle</label>
+                    <select id="segment" class="form-select mb-3">
+                        <option value="birthday_today">Bugün doğanlar (DateOfBirth + e-posta)</option>
+                        <option value="no_deposit">Tamamlanmış faturası olmayan üyeler (e-posta)</option>
+                    </select>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button type="button" class="btn btn-primary" id="btn-preview"><i class="ri-eye-line me-1"></i>Önizle</button>
+                        <button type="button" class="btn btn-soft-info" id="tpl-birthday"><i class="ri-cake-line me-1"></i>Şablon: doğum günü</button>
+                        <button type="button" class="btn btn-soft-info" id="tpl-welcome"><i class="ri-gift-line me-1"></i>Şablon: hoş geldin / yatırım</button>
+                    </div>
+                    <div class="alert alert-light border small mb-0">
+                        <strong>Değişkenler:</strong> <code>{{Ad}}</code> <code>{{Soyad}}</code> <code>{{Firma}}</code> <code>{{Email}}</code> <code>{{SiteUrl}}</code> <code>{{GirisLinki}}</code>
+                        <div class="mt-1 text-muted">Müşteri portalı için <code>appsettings.json</code> içinde <code>App:PublicPortalUrl</code> tanımlayabilirsiniz; yoksa bu sitenin adresi kullanılır.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header border-0">
+                    <h5 class="card-title mb-0">Alıcı önizlemesi</h5>
+                    <span class="badge bg-secondary" id="preview-count">0 kişi</span>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" style="max-height:220px;">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light"><tr><th>E-posta</th><th>Ad</th><th>Soyad</th></tr></thead>
+                            <tbody id="preview-tbody"><tr><td colspan="3" class="text-muted small">Önizle ile listeleyin.</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header border-0">
+                    <h5 class="card-title mb-0">İçerik</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Konu</label>
+                        <input type="text" class="form-control" id="subject" placeholder="E-posta konusu" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">HTML gövde</label>
+                        <textarea class="form-control font-monospace" id="htmlBody" rows="14" placeholder="HTML içerik..."></textarea>
+                    </div>
+                    <button type="button" class="btn btn-success" id="btn-send"><i class="ri-send-plane-fill me-1"></i>Gönder</button>
+                    <div id="send-result" class="mt-3 small"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const TPL_BIRTHDAY = `<p>Merhaba {{Ad}},</p>
+<p>Doğum gününüz kutlu olsun! Nice mutlu yıllar dileriz.</p>
+<p>Saygılarımızla,<br/>{{Firma}}</p>`;
+
+const TPL_WELCOME = `<p>Merhaba {{Ad}} {{Soyad}},</p>
+<p>Bize katıldığınız için teşekkürler. Güncel bonuslarımız, yatırım yöntemlerimiz ve giriş adresimiz:</p>
+<ul>
+  <li>Giriş: <a href="{{GirisLinki}}">{{GirisLinki}}</a></li>
+  <li>Site: <a href="{{SiteUrl}}">{{SiteUrl}}</a></li>
+</ul>
+<p>Sosyal medya ve destek kanallarımız için sitemizi ziyaret edebilirsiniz.</p>
+<p>İyi günler,<br/>{{Firma}}</p>`;
+
+async function loadPreview(){
+    const seg=document.getElementById('segment').value;
+    const tbody=document.getElementById('preview-tbody');
+    const cnt=document.getElementById('preview-count');
+    tbody.innerHTML='<tr><td colspan="3" class="text-muted"><span class="spinner-border spinner-border-sm"></span> Yükleniyor...</td></tr>';
+    try{
+        const res=await fetch('/api/mailing/preview?segment='+encodeURIComponent(seg),{credentials:'include'});
+        const d=await res.json().catch(()=>null);
+        if(!res.ok){tbody.innerHTML='<tr><td colspan="3" class="text-danger small">'+(d?.title||'Hata')+'</td></tr>';cnt.textContent='0 kişi';return;}
+        cnt.textContent=(d.count||0)+' kişi';
+        if(!d.recipients||!d.recipients.length){tbody.innerHTML='<tr><td colspan="3" class="text-muted small">Bu kriterde alıcı yok.</td></tr>';return;}
+        tbody.innerHTML=d.recipients.map(r=>'<tr><td>'+(r.email||'')+'</td><td>'+(r.firstName||'')+'</td><td>'+(r.lastName||'')+'</td></tr>').join('');
+    }catch(e){
+        tbody.innerHTML='<tr><td colspan="3" class="text-danger small">Bağlantı hatası.</td></tr>';
+        cnt.textContent='0 kişi';
+    }
+}
+
+document.getElementById('btn-preview')?.addEventListener('click',loadPreview);
+document.getElementById('tpl-birthday')?.addEventListener('click',()=>{
+    document.getElementById('htmlBody').value=TPL_BIRTHDAY;
+    document.getElementById('subject').value='Doğum gününüz kutlu olsun';
+});
+document.getElementById('tpl-welcome')?.addEventListener('click',()=>{
+    document.getElementById('htmlBody').value=TPL_WELCOME;
+    document.getElementById('subject').value='Wanda — Hoş geldiniz ve güncel bilgiler';
+});
+
+document.getElementById('btn-send')?.addEventListener('click',async ()=>{
+    const seg=document.getElementById('segment').value;
+    const subject=document.getElementById('subject').value.trim();
+    const htmlBody=document.getElementById('htmlBody').value;
+    const out=document.getElementById('send-result');
+    if(!subject){Swal.fire('Uyarı','Konu girin.','warning');return;}
+    const ok=await Swal.fire({title:'Gönderilsin mi?',text:'Seçilen segmentteki tüm alıcılara e-posta gidecek.',icon:'warning',showCancelButton:true,confirmButtonText:'Evet, gönder',cancelButtonText:'Vazgeç'});
+    if(!ok.isConfirmed)return;
+    out.innerHTML='<span class="text-muted">Gönderiliyor...</span>';
+    try{
+        const res=await fetch('/api/mailing/send',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({segment:seg,subject,htmlBody})});
+        const d=await res.json().catch(()=>null);
+        if(!res.ok){out.innerHTML='<span class="text-danger">'+(d?.title||'İstek başarısız')+'</span>';return;}
+        let html='<div class="alert alert-success mb-0">Gönderilen: <strong>'+d.sent+'</strong>, Hata: <strong>'+d.failed+'</strong>, Atlanan: <strong>'+d.skippedNoEmail+'</strong></div>';
+        if(d.errors&&d.errors.length){html+='<ul class="mt-2 mb-0 small text-danger">'+(d.errors.map(e=>'<li>'+e+'</li>').join(''))+'</ul>';}
+        out.innerHTML=html;
+        loadPreview();
+    }catch{out.innerHTML='<span class="text-danger">Bağlantı hatası.</span>';}
+});
+
+document.addEventListener('DOMContentLoaded',loadPreview);
+</script>
+}

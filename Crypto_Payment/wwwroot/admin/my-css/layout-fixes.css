@@ -1,0 +1,349 @@
+/**
+ * Layout & sidebar düzeltmeleri (Velzon override)
+ *
+ * Velzon app.js, m() fonksiyonunda:
+ *   - .navbar-menu innerHTML'i sıfırlar
+ *   - #scrollbar'a data-simplebar + h-100 ekler
+ *   - #navbar-nav'a data-simplebar ekler
+ * Bu yüzden #scrollbar her zaman görünür olmalı (display:none olmadan)
+ * ve SimpleBar boyut hesaplamalarının çalışması için flex yükseklik zinciri
+ * doğru kurulmalı.
+ */
+
+/* ==========================================================================
+   1. SOL MENÜ — ANA KABUK
+   ========================================================================== */
+html[data-layout="vertical"] .app-menu.navbar-menu {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #1e1e2d !important;
+  border-right: none !important;
+}
+
+/* Velzon ≤767px margin-left:-100% ve padding override'ını iptal et */
+@media (max-width: 767.98px) {
+  :is([data-layout="vertical"], [data-layout="semibox"]) .app-menu {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+/* ==========================================================================
+   2. MARKA ALANI (LOGO)
+   ========================================================================== */
+html[data-layout="vertical"] .app-menu.navbar-menu .navbar-brand-box {
+  flex-shrink: 0;
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.75rem 0 1rem;
+  box-sizing: border-box;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: transparent !important;
+}
+
+html[data-layout="vertical"] .app-menu.navbar-menu .navbar-brand-box .logo {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+html[data-layout="vertical"] .app-menu.navbar-menu .navbar-brand-box .btn-vertical-sm-hover {
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   3. SCROLLBAR ALANI (#scrollbar)
+   app.js adds: data-simplebar, .h-100
+   SimpleBar creates its own scroll structure inside.
+   We need #scrollbar to fill remaining flex space.
+   ========================================================================== */
+html[data-layout="vertical"] .app-menu.navbar-menu #scrollbar {
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  overflow: hidden;
+  position: relative;
+}
+
+/* h-100 class from app.js — override to not use 100% (which refers to parent
+   static height, not flex-assigned height). We use flex instead. */
+html[data-layout="vertical"] .app-menu.navbar-menu #scrollbar.h-100 {
+  height: auto !important;
+}
+
+/* SimpleBar wrapper chain: ensure they all fill the flex-assigned height */
+html[data-layout="vertical"] .app-menu.navbar-menu #scrollbar .simplebar-wrapper {
+  height: 100%;
+}
+
+html[data-layout="vertical"] .app-menu.navbar-menu #scrollbar .simplebar-mask {
+  height: auto;
+}
+
+html[data-layout="vertical"] .app-menu.navbar-menu #scrollbar .simplebar-content-wrapper {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  max-height: 100%;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+/* Son öğenin kesilmemesi için içeriğe alt boşluk */
+html[data-layout="vertical"] .app-menu.navbar-menu #scrollbar .simplebar-content {
+  padding-bottom: 1rem !important;
+}
+
+/* sidebar-background: flex etkisinden çıkar */
+html[data-layout="vertical"] .app-menu.navbar-menu .sidebar-background {
+  position: absolute;
+  flex: none;
+}
+
+/* Daraltılmış menüde Velzon overflow:visible'ı iptal et */
+html[data-layout="vertical"][data-sidebar-size="sm"] .app-menu.navbar-menu .simplebar-mask,
+html[data-layout="vertical"][data-sidebar-size="sm"] .app-menu.navbar-menu .simplebar-content-wrapper {
+  overflow: hidden !important;
+}
+html[data-layout="vertical"][data-sidebar-size="sm"] .app-menu.navbar-menu .simplebar-content-wrapper {
+  overflow-y: auto !important;
+}
+
+/* Fallback: data-simplebar yoksa (ilk yüklemede app.js çalışmadan önce) */
+html[data-layout="vertical"] .app-menu.navbar-menu #scrollbar:not([data-simplebar]) {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* İnce scrollbar — fallback ve SimpleBar track */
+html[data-layout="vertical"] .app-menu.navbar-menu #scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+html[data-layout="vertical"] .app-menu.navbar-menu #scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+html[data-layout="vertical"] .app-menu.navbar-menu #scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+/* ==========================================================================
+   4. MENÜ ÖĞELERİ
+   ========================================================================== */
+html[data-layout="vertical"] .app-menu.navbar-menu .navbar-nav {
+  width: 100%;
+}
+
+html[data-layout="vertical"] .app-menu.navbar-menu .navbar-nav .nav-item {
+  margin: 0 0 2px;
+  padding: 0 0.5rem;
+  box-sizing: border-box;
+}
+
+html[data-layout="vertical"] .app-menu.navbar-menu .menu-title {
+  padding: 18px 1rem 6px;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.22);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+html[data-layout="vertical"] .app-menu.navbar-menu .menu-title:first-child {
+  padding-top: 10px;
+}
+
+html[data-layout="vertical"] .app-menu.navbar-menu .navbar-nav .nav-link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.75rem;
+  min-height: 2.35rem;
+  color: rgba(255, 255, 255, 0.45);
+  border-radius: 6px;
+  border-left: 3px solid transparent;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  font-size: 13px;
+  font-weight: 400;
+  gap: 0.5rem;
+  touch-action: pan-y;
+}
+
+html[data-layout="vertical"] .app-menu.navbar-menu .navbar-nav .nav-link i {
+  flex-shrink: 0;
+  width: 1.375rem;
+  min-width: 1.375rem;
+  margin-right: 0;
+  font-size: 17px;
+  line-height: 1;
+  text-align: center;
+  opacity: 0.72;
+  transition: opacity 0.15s;
+}
+
+html[data-layout="vertical"] .app-menu.navbar-menu .navbar-nav .nav-link > span:not(.badge):not(.sidebar-menu-badge) {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-layout="vertical"] .app-menu.navbar-menu .navbar-nav .nav-link .sidebar-menu-badge {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 600;
+  line-height: 1.4;
+  min-width: 1.125rem;
+  text-align: center;
+}
+
+html[data-layout="vertical"] .app-menu.navbar-menu .navbar-nav .nav-link:hover {
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+}
+html[data-layout="vertical"] .app-menu.navbar-menu .navbar-nav .nav-link:hover i {
+  opacity: 1;
+}
+
+html[data-layout="vertical"] .app-menu.navbar-menu .navbar-nav .nav-link.active {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.09) !important;
+  font-weight: 500;
+  border-left-color: #0ab39c;
+}
+html[data-layout="vertical"] .app-menu.navbar-menu .navbar-nav .nav-link.active i {
+  opacity: 1;
+}
+
+html[data-layout="vertical"] .app-menu.navbar-menu .navbar-nav .nav-link::before,
+html[data-layout="vertical"] .app-menu.navbar-menu .navbar-nav .nav-link::after {
+  display: none !important;
+  content: none !important;
+}
+
+html[data-layout="vertical"] .app-menu.navbar-menu .menu-dropdown {
+  padding-left: 0;
+}
+html[data-layout="vertical"] .app-menu.navbar-menu .menu-dropdown .nav-link {
+  padding-left: 2.25rem;
+  font-size: 12.5px;
+}
+html[data-layout="vertical"] .app-menu.navbar-menu .menu-dropdown .nav-link i {
+  font-size: 0.5rem;
+}
+
+/* ==========================================================================
+   5. DARALTILMIŞ MENÜ (sm) — masaüstü
+   ========================================================================== */
+@media (min-width: 992px) {
+  html[data-layout="vertical"][data-sidebar-size="sm"] .app-menu.navbar-menu .navbar-nav .nav-link {
+    justify-content: center;
+    border-left-color: transparent !important;
+    padding: 0.5rem;
+  }
+  html[data-layout="vertical"][data-sidebar-size="sm"] .app-menu.navbar-menu .navbar-nav .nav-link.active {
+    background: rgba(255, 255, 255, 0.12) !important;
+  }
+}
+
+/* ==========================================================================
+   6. OVERLAY
+   ========================================================================== */
+html[data-layout="vertical"] .vertical-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1003;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s, visibility 0.25s;
+  -webkit-tap-highlight-color: transparent;
+}
+html[data-layout="vertical"] body.vertical-sidebar-enable .vertical-overlay {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ==========================================================================
+   7. MOBİL / TABLET DRAWER
+   ========================================================================== */
+@media (max-width: 991.98px) {
+  html[data-layout="vertical"] .app-menu.navbar-menu {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 1004;
+  }
+  html[data-layout="vertical"] body.vertical-sidebar-enable .app-menu.navbar-menu {
+    transform: translateX(0);
+  }
+  html[data-layout="vertical"] .main-content {
+    margin-left: 0 !important;
+  }
+  html[data-layout="vertical"] #page-topbar {
+    left: 0 !important;
+  }
+}
+
+/* ==========================================================================
+   8. SAYFA BAŞLIĞI / BREADCRUMB
+   ========================================================================== */
+.page-title-box.d-sm-flex {
+  flex-wrap: wrap;
+  row-gap: 0.5rem;
+  column-gap: 1rem;
+  align-items: flex-start !important;
+}
+.page-title-box .page-title-right {
+  max-width: 100%;
+}
+.page-title-box .breadcrumb {
+  flex-wrap: wrap;
+  margin-bottom: 0;
+}
+@media (max-width: 575.98px) {
+  .page-title-box h4,
+  .page-title-box .h4 {
+    width: 100%;
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* ==========================================================================
+   9. KART / TABLO
+   ========================================================================== */
+.card-header .d-flex.align-items-center.flex-wrap,
+.table-card-toolbar {
+  flex-wrap: wrap;
+  row-gap: 0.5rem;
+  column-gap: 0.5rem;
+  align-items: center;
+}
+.card-header .card-title {
+  min-width: 0;
+}
+.table td {
+  vertical-align: middle;
+}
+.text-break-word {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* ==========================================================================
+   10. YARDIMCI
+   ========================================================================== */
+.perm-check-col {
+  flex: 1 1 200px;
+  min-width: 0;
+  max-width: 100%;
+}

@@ -1,0 +1,100 @@
+@model Crypto_Payment.DTOS.PaymentViewModel
+
+@{
+    ViewBag.Title = "Fatura Sonucu";
+    Layout = null;
+}
+
+
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="~/admin/my-css/done.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body>
+
+    <div class="wrapper">
+
+        <div class="header">
+            <div class="brand">portal.wandaplay.com</div>
+            <br/>
+            <div class="order-info">Sipariş Numarası: @Model.OrderNumber</div>
+        </div>
+        
+        <div id="amountSection" class="amount-section">
+            <div class="fiat-amount">@Model.SourceAmount.ToString("N2", new System.Globalization.CultureInfo("tr-TR")) @(Model.SourceCurrency switch { "USD" => "$", "EUR" or "EURO" => "€", "TRY" or "TL" => "₺", _ => Model.SourceCurrency })</div>
+            <div class="crypto-amount">≈ @Model.CryptoAmount @Model.CryptoCurrency.Replace("_", " ")</div>
+            <div class="network-badge">@Model.Network</div>
+        </div>
+
+        <div class="content">
+            <div class="check @GetStatusClass()">
+                @Html.Raw(GetStatusIcon())
+            </div>
+            
+            <h1>@GetStatusText()</h1>
+
+            @if (Model.Status == "expired" || Model.Status == "cancelled")
+            {
+                <form method="post" action="/pay/@Model.InvoiceId/renew?txnId=@Uri.EscapeDataString(Model.TxnId ?? "")" style="display:inline;">
+                    <button type="submit" class="btn btn-primary" onclick="this.disabled=true; this.textContent='Yenileniyor...';">Faturayı Yenile</button>
+                </form>
+            }
+            else
+            {
+                <a class="btn btn-primary" href="/pay/@Model.InvoiceId?txnId=@Model.TxnId">Ödeme Sayfasına Dön</a>
+            }
+        </div>
+
+        <div class="confetti">
+            
+        </div>
+
+    </div>
+
+</body>
+
+<script>
+
+    let confettiTriggered = false;
+
+    const status = String('@Model.Status');
+
+    if (["completed", "mismatch"].includes(status)) {
+        triggerConfetti();
+    }
+    
+    // başarılı ise confetti patlatıyor
+    function triggerConfetti() {
+        if (confettiTriggered) return;
+        confettiTriggered = true;
+        const duration = 3000;
+        const end = Date.now() + duration;
+        (function frame() {
+            confetti({ particleCount: 3, angle: 60, spread: 55, origin: { x: 0 }, colors: ['#667eea', '#764ba2', '#2e7d32', '#ffd700'] });
+            confetti({ particleCount: 3, angle: 120, spread: 55, origin: { x: 1 }, colors: ['#667eea', '#764ba2', '#2e7d32', '#ffd700'] });
+            if (Date.now() < end) { requestAnimationFrame(frame); }
+        }());
+        
+        for (let i = 0; i < 30; i++) {
+            const s = document.createElement('span');
+            s.style.top = -50+'px';
+            s.style.left = Math.random() * 100 + '%';
+            s.style.animationDelay = Math.random() * 4 + 's';
+            document.querySelector('.confetti').appendChild(s);
+        }
+    }
+
+    @functions {
+        string GetStatusClass() { return Model.Status?.ToLower() switch { "completed" or "mismatch" => "status-completed", "expired" or "cancelled" or "error" => "status-expired", "pending" or "new" => "status-pending", _ => "status-new" }; }
+        string GetStatusText() { return Model.Status?.ToLower() switch { "completed" or "mismatch" => "Payment Confirmed!", "expired" => "Payment Expired", "cancelled" => "Payment Cancelled", "error" => "Payment Error", _ => "Waiting for payment..." }; }
+        string GetStatusIcon() { return Model.Status?.ToLower() switch { "completed" or "mismatch" => "<svg viewBox=\"0 0 24 24\">\n <polyline points=\"4 12 10 18 20 6\" />\n</svg>", "expired" or "cancelled" or "error" => "<svg class=\"status-icon\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z\"/></svg>", _ => "<span class=\"spinner\"></span>" }; }
+    }
+</script>
+
+</html>

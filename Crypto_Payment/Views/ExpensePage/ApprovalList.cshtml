@@ -1,0 +1,323 @@
+@{
+    ViewBag.Title = "Onay Bekleyen İşlemler";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <h4 class="mb-sm-0">Onay Bekleyen İşlemler</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="/">Ana Sayfa</a></li>
+                        <li class="breadcrumb-item active">Onaylar</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtre Sekmesi -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body py-2">
+                    <div class="d-flex gap-2 flex-wrap align-items-center">
+                        <button class="btn btn-sm btn-primary filter-btn active" data-filter="Pending">⏳ Bekleyen</button>
+                        <button class="btn btn-sm btn-soft-success filter-btn" data-filter="Approved">✅ Onaylanan</button>
+                        <button class="btn btn-sm btn-soft-danger filter-btn" data-filter="Rejected">❌ Reddedilen</button>
+                        <button class="btn btn-sm btn-soft-secondary filter-btn" data-filter="">Tümü</button>
+                        <div class="vr mx-1"></div>
+                        <select class="form-select form-select-sm" id="filter-period" style="width:130px;">
+                            <option value="">Tüm Zamanlar</option>
+                            <option value="today">Bugün</option>
+                            <option value="week">Bu Hafta</option>
+                            <option value="month">Bu Ay</option>
+                            <option value="year">Bu Yıl</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="ri-checkbox-circle-line me-2 text-warning"></i>Onay Talepleri
+                        <span class="badge bg-warning ms-2" id="pending-count-badge">0</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="approvalTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Talep Eden</th>
+                                    <th>İşlem Türü</th>
+                                    <th>Açıklama</th>
+                                    <th>Tarih</th>
+                                    <th>Durum</th>
+                                    <th>Eylemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="approvalList">
+                                @for (int i = 0; i < 5; i++)
+                                {
+                                <tr class="skeleton-row">
+                                    <td><div class="skeleton skeleton-text" style="width:30px;"></div></td>
+                                    <td><div class="skeleton skeleton-text" style="width:100px;"></div></td>
+                                    <td><div class="skeleton skeleton-badge"></div></td>
+                                    <td><div class="skeleton skeleton-text" style="width:180px;"></div></td>
+                                    <td><div class="skeleton skeleton-text-sm" style="width:90px;"></div></td>
+                                    <td><div class="skeleton skeleton-badge"></div></td>
+                                    <td><div class="d-flex gap-1"><div class="skeleton skeleton-btn"></div><div class="skeleton skeleton-btn"></div></div></td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detay Modal -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-info-subtle p-3">
+                <h5 class="modal-title"><i class="ri-eye-line me-1"></i>Talep Detayı</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detail-body">
+                <div class="text-center py-4 text-muted">Yükleniyor...</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Red Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-danger-subtle p-3">
+                <h5 class="modal-title">İşlemi Reddet</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="reject-id" />
+                <div class="mb-3">
+                    <label class="form-label">Red Notu (Opsiyonel)</label>
+                    <textarea id="reject-note" class="form-control" rows="3" placeholder="Neden reddedildi?"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="button" class="btn btn-danger" id="confirm-reject-btn">Reddet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let currentFilter = 'Pending';
+
+function getDateRange(period) {
+    const now = new Date();
+    const start = new Date(now);
+    if (period === 'today') { start.setHours(0,0,0,0); }
+    else if (period === 'week') { start.setDate(now.getDate() - now.getDay()); start.setHours(0,0,0,0); }
+    else if (period === 'month') { start.setDate(1); start.setHours(0,0,0,0); }
+    else if (period === 'year') { start.setMonth(0,1); start.setHours(0,0,0,0); }
+    else return null;
+    return start;
+}
+
+const typeLabels = {
+    'InvoiceStatusChange': 'Fatura Durum Değişimi',
+    'InvoiceDelete': 'Fatura Silme',
+    'InvoiceEdit': 'Fatura Düzenleme',
+    'ManualPayment': 'Manuel Ödeme Sonuçlandırma',
+    'ExpenseApproval': 'Gider Onayı'
+};
+
+const statusBadge = s => {
+    if (s === 'Pending') return '<span class="badge bg-warning-subtle text-warning">⏳ Bekliyor</span>';
+    if (s === 'Approved') return '<span class="badge bg-success-subtle text-success">✅ Onaylandı</span>';
+    return '<span class="badge bg-danger-subtle text-danger">❌ Reddedildi</span>';
+};
+
+async function loadApprovals() {
+    const tbody = document.getElementById('approvalList');
+    try {
+        const url = currentFilter ? `/api/approvals?filter=${currentFilter}` : '/api/approvals';
+        const res = await fetch('/api/approvals');
+        let all = await res.json();
+
+        const period = document.getElementById('filter-period').value;
+        const rangeStart = getDateRange(period);
+        if (rangeStart) {
+            all = all.filter(a => new Date(a.createdDate) >= rangeStart);
+        }
+
+        const list = currentFilter ? all.filter(a => a.status === currentFilter) : all;
+
+        const pendingCount = all.filter(a => a.status === 'Pending').length;
+        const badge = document.getElementById('pending-count-badge');
+        if (badge) badge.textContent = pendingCount;
+
+        if (!list.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Kayıt bulunamadı.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = list.map(a => {
+            const d = new Date(a.createdDate).toLocaleString('tr-TR');
+            const typeLabel = typeLabels[a.requestType] || a.requestType;
+            const detailBtn = `<button class="btn btn-sm btn-soft-info me-1" onclick="openDetail(${a.id})"><i class="ri-eye-line"></i> Detay</button>`;
+            const actionBtns = a.status === 'Pending'
+                ? `${detailBtn}<button class="btn btn-sm btn-success me-1" onclick="approveItem(${a.id})"><i class="ri-check-line"></i> Onayla</button>
+                   <button class="btn btn-sm btn-danger" onclick="openReject(${a.id})"><i class="ri-close-line"></i> Reddet</button>`
+                : `${detailBtn}<span class="text-muted fs-12">${a.reviewedBy || '—'}</span>`;
+            return `<tr>
+                <td><span class="fw-medium">#${a.id}</span></td>
+                <td>${a.requestedByName || a.requestedBy}</td>
+                <td><span class="badge bg-info-subtle text-info">${typeLabel}</span></td>
+                <td>${a.description || '—'}</td>
+                <td><small class="text-muted">${d}</small></td>
+                <td>${statusBadge(a.status)}</td>
+                <td>${actionBtns}</td>
+            </tr>`;
+        }).join('');
+    } catch(e) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-danger">Yüklenemedi.</td></tr>';
+    }
+}
+
+async function approveItem(id) {
+    const r = await Swal.fire({ title: 'Onaylamak istediğinize emin misiniz?', icon: 'question', showCancelButton: true, confirmButtonText: 'Evet, Onayla', cancelButtonText: 'Vazgeç' });
+    if (!r.isConfirmed) return;
+    const res = await fetch(`/api/approvals/${id}/approve`, { method: 'POST' });
+    if (res.ok) { Swal.fire({ icon: 'success', title: 'Onaylandı!', timer: 1500, showConfirmButton: false }); loadApprovals(); }
+    else { const d = await res.json().catch(()=>({})); Swal.fire('Hata', d.title || 'İşlem başarısız.', 'error'); }
+}
+
+function openReject(id) {
+    document.getElementById('reject-id').value = id;
+    document.getElementById('reject-note').value = '';
+    new bootstrap.Modal(document.getElementById('rejectModal')).show();
+}
+
+document.getElementById('confirm-reject-btn')?.addEventListener('click', async () => {
+    const id = document.getElementById('reject-id').value;
+    const note = document.getElementById('reject-note').value.trim();
+    const res = await fetch(`/api/approvals/${id}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note })
+    });
+    bootstrap.Modal.getInstance(document.getElementById('rejectModal'))?.hide();
+    if (res.ok) { Swal.fire({ icon: 'success', title: 'Reddedildi.', timer: 1500, showConfirmButton: false }); loadApprovals(); }
+    else Swal.fire('Hata', 'İşlem başarısız.', 'error');
+});
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active', 'btn-primary', 'btn-soft-success', 'btn-soft-danger', 'btn-soft-secondary'));
+        this.classList.add('active');
+        currentFilter = this.dataset.filter;
+        loadApprovals();
+    });
+});
+
+async function openDetail(id) {
+    const body = document.getElementById('detail-body');
+    body.innerHTML = '<div class="text-center py-4 text-muted">Yükleniyor...</div>';
+    new bootstrap.Modal(document.getElementById('detailModal')).show();
+    try {
+        const res = await fetch(`/api/approvals/${id}/detail`);
+        if (!res.ok) { body.innerHTML = '<div class="text-center py-4 text-danger">Detay yüklenemedi.</div>'; return; }
+        const d = await res.json();
+        const typeLabel = typeLabels[d.requestType] || d.requestType;
+        let html = `
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card border mb-0">
+                        <div class="card-header bg-light py-2"><h6 class="mb-0">Talep Bilgileri</h6></div>
+                        <div class="card-body">
+                            <p class="mb-1"><strong>Talep No:</strong> #${d.id}</p>
+                            <p class="mb-1"><strong>Tür:</strong> <span class="badge bg-info-subtle text-info">${typeLabel}</span></p>
+                            <p class="mb-1"><strong>Talep Eden:</strong> ${d.requestedByName}</p>
+                            <p class="mb-1"><strong>Tarih:</strong> ${new Date(d.createdDate).toLocaleString('tr-TR')}</p>
+                            <p class="mb-1"><strong>Açıklama:</strong> ${d.description || '—'}</p>
+                            <p class="mb-0"><strong>Durum:</strong> ${d.status}</p>
+                            ${d.adminNote ? `<p class="mb-0 mt-1"><strong>Admin Notu:</strong> <span class="text-danger">${d.adminNote}</span></p>` : ''}
+                        </div>
+                    </div>
+                </div>`;
+
+        // Mevcut fatura bilgisi
+        if (d.currentInvoice) {
+            const ci = d.currentInvoice;
+            html += `
+                <div class="col-md-6">
+                    <div class="card border mb-0">
+                        <div class="card-header bg-warning-subtle py-2"><h6 class="mb-0">Mevcut Fatura (Şu An)</h6></div>
+                        <div class="card-body">
+                            <p class="mb-1"><strong>ID:</strong> #${ci.id}</p>
+                            <p class="mb-1"><strong>Fatura Adı:</strong> ${ci.orderName || '—'}</p>
+                            <p class="mb-1"><strong>Tutar:</strong> ${ci.sourceAmount} ${ci.sourceCurrency}</p>
+                            <p class="mb-0"><strong>Durum:</strong> ${ci.status || '—'}</p>
+                        </div>
+                    </div>
+                </div>`;
+        }
+        html += '</div>';
+
+        // İstenen değişiklikler
+        if (d.requestData) {
+            const rd = d.requestData;
+            html += '<hr class="my-3">';
+            if (d.requestType === 'InvoiceEdit') {
+                html += `<div class="card border"><div class="card-header bg-success-subtle py-2"><h6 class="mb-0">İstenen Değişiklikler</h6></div><div class="card-body">`;
+                html += `<p class="mb-1"><strong>Yeni Fatura Adı:</strong> ${rd.orderName || rd.OrderName || '—'}</p>`;
+                html += `<p class="mb-1"><strong>Yeni Tutar:</strong> ${rd.sourceAmount || rd.SourceAmount || '—'} ${rd.sourceCurrency || rd.SourceCurrency || ''}</p>`;
+                if (rd.note || rd.Note) html += `<p class="mb-0"><strong>Not:</strong> <em>${rd.note || rd.Note}</em></p>`;
+                html += '</div></div>';
+            } else if (d.requestType === 'InvoiceStatusChange') {
+                html += `<div class="card border"><div class="card-header bg-success-subtle py-2"><h6 class="mb-0">İstenen Değişiklik</h6></div><div class="card-body">`;
+                html += `<p class="mb-1"><strong>Yeni Durum:</strong> <span class="badge bg-primary">${rd.newStatus || rd.NewStatus || '—'}</span></p>`;
+                if (rd.note || rd.Note) html += `<p class="mb-0"><strong>Not:</strong> <em>${rd.note || rd.Note}</em></p>`;
+                html += '</div></div>';
+            } else if (d.requestType === 'InvoiceDelete') {
+                html += `<div class="alert alert-danger mb-0"><i class="ri-delete-bin-line me-1"></i> Bu faturanın <strong>silinmesi</strong> talep edilmiştir.</div>`;
+            } else if (d.requestType === 'ManualPayment') {
+                const monthNames = ['', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+                const mp = rd;
+                html += `<div class="card border"><div class="card-header bg-info-subtle py-2"><h6 class="mb-0">Manuel Ödeme Detayı</h6></div><div class="card-body">`;
+                html += `<p class="mb-1"><strong>Fatura ID:</strong> #${mp.InvoiceId || mp.invoiceId}</p>`;
+                html += `<p class="mb-1"><strong>Dönem:</strong> ${monthNames[mp.Month || mp.month] || ''} ${mp.Year || mp.year}</p>`;
+                if (mp.Note || mp.note) html += `<p class="mb-0"><strong>Not:</strong> <em>${mp.Note || mp.note}</em></p>`;
+                html += '</div></div>';
+            }
+        }
+
+        body.innerHTML = html;
+    } catch(e) {
+        body.innerHTML = '<div class="text-center py-4 text-danger">Detay yüklenemedi.</div>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadApprovals);
+</script>
+}

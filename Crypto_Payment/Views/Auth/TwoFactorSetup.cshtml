@@ -1,0 +1,40 @@
+@{
+    ViewBag.Title = "2FA Kurulumu";
+    Layout = "_AuthLayout";
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6 col-xl-5">
+            <div class="card mt-4 card-bg-fill">
+                <div class="card-body p-4">
+                    <h5 class="mb-3 text-center text-primary">Google Authenticator Kurulumu</h5>
+
+                    <p class="mb-2 text-muted">Uygulamadan QR kodu okutun:</p>
+                    @if (ViewData["QrImage"] != null)
+                    {
+                        <div class="text-center">
+                            <img src="@ViewData["QrImage"]" style="max-width:220px;" alt="QR Code" />
+                        </div>
+                    }
+
+                    <div class="mt-3">
+                        <p class="mb-1 text-muted">QR okuyamıyorsanız manuel kod:</p>
+                        <code>@ViewData["SharedKey"]</code>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <form method="post" action="/api/auth/2fa/enable">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label">Uygulamadaki 6 haneli kod</label>
+                            <input name="Code" class="form-control" required placeholder="123456" autofocus autocomplete="one-time-code" />
+                        </div>
+                        <button class="btn btn-success w-100" type="submit">2FA'yı Aktif Et</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

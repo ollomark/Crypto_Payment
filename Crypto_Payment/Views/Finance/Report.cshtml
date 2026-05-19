@@ -1,0 +1,279 @@
+@{
+    ViewData["Title"] = "Gelir/Gider Raporu";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <h4 class="mb-sm-0"><i class="ri-bar-chart-2-line me-2 text-primary"></i>Gelir / Gider Raporu</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="/">Ana Sayfa</a></li>
+                        <li class="breadcrumb-item">Finans</li>
+                        <li class="breadcrumb-item active">Rapor</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtreler -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex gap-2 flex-wrap mb-3">
+                        <button class="btn btn-sm btn-soft-primary period-btn" onclick="setPeriod('today')">Bugün</button>
+                        <button class="btn btn-sm btn-soft-primary period-btn" onclick="setPeriod('week')">Bu Hafta</button>
+                        <button class="btn btn-sm btn-soft-primary period-btn" onclick="setPeriod('month')">Bu Ay</button>
+                        <button class="btn btn-sm btn-soft-primary period-btn" onclick="setPeriod('year')">Bu Yıl</button>
+                        <button class="btn btn-sm btn-soft-secondary period-btn active" onclick="setPeriod('3months')">Son 3 Ay</button>
+                    </div>
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label fw-medium">Başlangıç Tarihi</label>
+                            <input type="date" class="form-control" id="startDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-medium">Bitiş Tarihi</label>
+                            <input type="date" class="form-control" id="endDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-medium">Tür</label>
+                            <select class="form-select" id="typeFilter">
+                                <option value="">Tümü</option>
+                                <option value="income">Sadece Gelir</option>
+                                <option value="expense">Sadece Gider</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-primary w-100" onclick="loadReport()">
+                                <i class="ri-search-line me-1"></i>Filtrele
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Özet Kartlar -->
+    <div class="row" id="summaryCards">
+        <div class="col-xl-4 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Toplam Gelir</p></div>
+                        <div class="flex-shrink-0"><span class="badge bg-success-subtle text-success">Onaylı</span></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div><h4 class="fs-22 fw-semibold ff-secondary mb-4 text-success" id="total-income"><span class="skeleton skeleton-card-value"></span></h4><span class="text-muted">Tahsil edilen</span></div>
+                        <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-success-subtle rounded fs-3"><i class="ri-arrow-up-circle-line text-success"></i></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Toplam Gider</p></div>
+                        <div class="flex-shrink-0"><span class="badge bg-danger-subtle text-danger">Onaylı</span></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div><h4 class="fs-22 fw-semibold ff-secondary mb-4 text-danger" id="total-expense"><span class="skeleton skeleton-card-value"></span></h4><span class="text-muted">Harcanan</span></div>
+                        <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-danger-subtle rounded fs-3"><i class="ri-arrow-down-circle-line text-danger"></i></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <div class="card card-animate border-0" style="background: linear-gradient(135deg, #405189, #0ab39c);">
+                <div class="card-body text-white">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium mb-0" style="opacity:.8;">Net Kasa</p></div>
+                        <div class="flex-shrink-0"><span class="badge bg-white text-dark">Gelir - Gider</span></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div><h4 class="fs-22 fw-semibold ff-secondary mb-2 text-white" id="net-total"><span class="skeleton skeleton-card-value" style="background:linear-gradient(90deg,rgba(255,255,255,.2) 25%,rgba(255,255,255,.35) 37%,rgba(255,255,255,.2) 63%);"></span></h4><span style="opacity:.75;">Seçili dönem net</span></div>
+                        <div class="avatar-sm flex-shrink-0"><span class="avatar-title rounded fs-3" style="background:rgba(255,255,255,.2);"><i class="ri-safe-line text-white"></i></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tablo -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <h5 class="card-title mb-0 flex-grow-1">İşlem Detayları</h5>
+                    <button class="btn btn-sm btn-outline-success" onclick="exportCsv()"><i class="ri-download-line me-1"></i>CSV İndir</button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="reportTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Tür</th>
+                                    <th>Kategori</th>
+                                    <th>Açıklama</th>
+                                    <th>Taraf</th>
+                                    <th>Tutar</th>
+                                    <th>Durum</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportBody">
+                                @for (int i = 0; i < 5; i++)
+                                {
+                                <tr class="skeleton-row">
+                                    <td><div class="skeleton skeleton-text-sm" style="width:70px;"></div></td>
+                                    <td><div class="skeleton skeleton-badge"></div></td>
+                                    <td><div class="skeleton skeleton-badge" style="width:80px;"></div></td>
+                                    <td><div class="skeleton skeleton-text" style="width:140px;"></div></td>
+                                    <td><div class="skeleton skeleton-text-sm" style="width:80px;"></div></td>
+                                    <td><div class="skeleton skeleton-text" style="width:70px;"></div></td>
+                                    <td><div class="skeleton skeleton-badge"></div></td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let reportData = [];
+
+// Varsayılan tarih aralığı: son 3 ay
+const today = new Date();
+const threeMonthsAgo = new Date(today);
+threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+document.getElementById('startDate').value = threeMonthsAgo.toISOString().split('T')[0];
+document.getElementById('endDate').value = today.toISOString().split('T')[0];
+
+function setPeriod(period) {
+    document.querySelectorAll('.period-btn').forEach(b => { b.classList.remove('active', 'btn-soft-secondary'); b.classList.add('btn-soft-primary'); });
+    event.target.classList.add('active', 'btn-soft-secondary');
+    event.target.classList.remove('btn-soft-primary');
+    const now = new Date();
+    const end = now.toISOString().split('T')[0];
+    let start;
+    if (period === 'today') {
+        start = end;
+    } else if (period === 'week') {
+        const d = new Date(now); d.setDate(now.getDate() - now.getDay());
+        start = d.toISOString().split('T')[0];
+    } else if (period === 'month') {
+        const d = new Date(now.getFullYear(), now.getMonth(), 1);
+        start = d.toISOString().split('T')[0];
+    } else if (period === 'year') {
+        const d = new Date(now.getFullYear(), 0, 1);
+        start = d.toISOString().split('T')[0];
+    } else if (period === '3months') {
+        const d = new Date(now); d.setMonth(d.getMonth() - 3);
+        start = d.toISOString().split('T')[0];
+    }
+    document.getElementById('startDate').value = start;
+    document.getElementById('endDate').value = end;
+    loadReport();
+}
+
+function getCurrSym(c) {
+    return currencySymbol(c);
+}
+function cvt(amount, srcCurrency) {
+    if (window.CurrencyConverter?.convertFromSource) return window.CurrencyConverter.convertFromSource(amount, srcCurrency);
+    return amount;
+}
+
+async function loadReport() {
+    const start = document.getElementById('startDate').value;
+    const end   = document.getElementById('endDate').value;
+    const type  = document.getElementById('typeFilter').value;
+
+    const tbody = document.getElementById('reportBody');
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div> Yükleniyor...</td></tr>';
+
+    try {
+        const res = await fetch(`/finance/api/report-data?startDate=${start}&endDate=${end}&type=${type}`);
+        if (!res.ok) throw new Error();
+        reportData = await res.json();
+
+        let totalIncome = 0, totalExpense = 0;
+        tbody.innerHTML = '';
+
+        if (!reportData.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Kayıt bulunamadı.</td></tr>';
+            updateSummary(0, 0);
+            return;
+        }
+
+        const sym = window.CurrencyConverter?.getCurrentSymbol() || '€';
+        reportData.forEach(r => {
+            const isIncome = r.type === 'Gelir';
+            const converted = cvt(parseFloat(r.amount), r.currency);
+            if (isIncome) totalIncome += converted;
+            else totalExpense += converted;
+
+            const typeBadge = isIncome
+                ? '<span class="badge bg-success-subtle text-success">Gelir</span>'
+                : '<span class="badge bg-danger-subtle text-danger">Gider</span>';
+            const amountClass = isIncome ? 'text-success' : 'text-danger';
+            const sign = isIncome ? '+' : '-';
+            const d = new Date(r.date).toLocaleDateString('tr-TR');
+
+            tbody.innerHTML += `<tr>
+                <td><small class="text-muted">${d}</small></td>
+                <td>${typeBadge}</td>
+                <td><span class="badge bg-light text-dark">${r.category}</span></td>
+                <td>${r.description || '—'}</td>
+                <td>${r.actor || '—'}</td>
+                <td class="${amountClass} fw-semibold">${sign}${sym} ${formatMoney(converted)}</td>
+                <td><span class="badge ${r.category === 'Manuel Ödeme' ? 'bg-info-subtle text-info' : 'bg-secondary-subtle text-secondary'}">${r.category === 'Manuel Ödeme' ? 'Manuel Ödendi' : r.status}</span></td>
+            </tr>`;
+        });
+
+        updateSummary(totalIncome, totalExpense);
+    } catch(e) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-danger">Veri yüklenemedi.</td></tr>';
+    }
+}
+
+function updateSummary(income, expense) {
+    const sym = window.CurrencyConverter?.getCurrentSymbol() || '€';
+    document.getElementById('total-income').textContent  = sym + ' ' + formatMoney(income);
+    document.getElementById('total-expense').textContent = sym + ' ' + formatMoney(expense);
+    const net = income - expense;
+    const netEl = document.getElementById('net-total');
+    netEl.textContent = (net >= 0 ? '+' : '') + sym + ' ' + formatMoney(Math.abs(net));
+}
+
+function exportCsv() {
+    if (!reportData.length) return;
+    const headers = ['Tarih','Tür','Kategori','Açıklama','Taraf','Tutar','Para Birimi','Durum'];
+    const rows = reportData.map(r => [
+        new Date(r.date).toLocaleDateString('tr-TR'),
+        r.type, r.category, r.description, r.actor,
+        r.amount, r.currency, r.status
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `finans-raporu-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+}
+
+document.addEventListener('DOMContentLoaded', loadReport);
+document.addEventListener('currencyChanged', loadReport);
+</script>
+}

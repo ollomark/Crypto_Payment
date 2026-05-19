@@ -1,0 +1,994 @@
+@model Crypto_Payment.DTOS.InvoiceDto
+@using System.Globalization
+@{
+    ViewBag.Title = "Fatura Detayları";
+    Layout = "_Layout";
+    var tr = new CultureInfo("tr-TR");
+    string F(decimal v) => v.ToString("N2", tr);
+    string Sym(string c) => c switch { "USD" => "$", "EUR" or "EURO" => "€", "TRY" or "TL" => "₺", _ => c };
+    var statusClass = Model.Status switch { "completed" or "mismatch" => "success", "pending" or "new" => "warning", "expired" => "danger", "cancelled" => "secondary", _ => "info" };
+    var statusText = Model.Status switch { "completed" => "Ödendi", "mismatch" => "Fazla Ödendi", "pending" or "new" => "Bekliyor", "expired" => "Süresi Doldu", "cancelled" => "İptal", _ => "Bekliyor" };
+    var customerName = Model.Customer?.CompanyName ?? (Model.Customer != null ? $"{Model.Customer.FirstName} {Model.Customer.LastName}" : Model.Email);
+}
+
+<div class="container-fluid">
+
+    <!-- Başlık -->
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <h4 class="mb-sm-0">Fatura #@Model.Id</h4>
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="/invoices">Faturalar</a></li>
+                        <li class="breadcrumb-item active">Detay</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Üst Özet Kartları -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Fatura Tutarı</p></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-3">
+                        <h4 class="fs-22 fw-semibold ff-secondary mb-0">@F(Model.SourceAmount) @Sym(Model.SourceCurrency)</h4>
+                        <div class="avatar-sm"><span class="avatar-title bg-primary-subtle rounded fs-3"><i class="ri-money-euro-circle-line text-primary"></i></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Durum</p></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-3">
+                        @if (Model.IsRecurring)
+                        {
+                        <span id="invoiceStatusBadge" class="badge bg-warning-subtle text-warning fs-14 px-3 py-2"><i class="ri-time-line me-1"></i>Bu ay: Yükleniyor...</span>
+                        <div class="avatar-sm" id="invoiceStatusIconWrap"><span class="avatar-title bg-warning-subtle rounded fs-3"><i class="ri-time-line text-warning"></i></span></div>
+                        }
+                        else
+                        {
+                        <span id="invoiceStatusBadge" class="badge bg-@(statusClass)-subtle text-@statusClass fs-14 px-3 py-2">@statusText</span>
+                        <div class="avatar-sm" id="invoiceStatusIconWrap"><span class="avatar-title bg-@(statusClass)-subtle rounded fs-3"><i class="ri-checkbox-circle-line text-@statusClass"></i></span></div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Müşteri</p></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-3">
+                        <h5 class="fs-15 fw-semibold mb-0 text-truncate" style="max-width:180px;" title="@customerName">@customerName</h5>
+                        <div class="avatar-sm"><span class="avatar-title bg-info-subtle rounded fs-3"><i class="ri-user-line text-info"></i></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Fatura Türü</p></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-3">
+                        @if (Model.IsRecurring)
+                        {
+                        <span class="badge bg-success-subtle text-success fs-13 px-3 py-2"><i class="ri-repeat-line me-1"></i>Yinelenen — @(Model.RecurringDay). gün</span>
+                        }
+                        else
+                        {
+                        <span class="badge bg-light text-muted fs-13 px-3 py-2">Tek Seferlik</span>
+                        }
+                        <div class="avatar-sm"><span class="avatar-title bg-warning-subtle rounded fs-3"><i class="ri-calendar-line text-warning"></i></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Sol Kolon: Fatura Bilgileri + Kalemler -->
+        <div class="col-xl-8">
+            <!-- Fatura Detay Kartı -->
+            <div class="card" id="demo">
+                <div class="card-header border-bottom-dashed p-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <img src="https://wandaplay.com/assets/logo_dark.png" class="card-logo card-logo-dark" alt="logo" height="17">
+                            <img src="https://wandaplay.com/assets/logo_dark.png" class="card-logo card-logo-light" alt="logo" height="17">
+                        </div>
+                        <div class="text-end">
+                            <h5 class="mb-1 fs-14">@Model.OrderName</h5>
+                            <small class="text-muted">#@Model.OrderNumber</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4" id="invoice-area">
+                    <div class="row g-3">
+                        <div class="col-lg-3 col-6">
+                            <p class="text-muted mb-1 fs-12 text-uppercase">Fatura No</p>
+                            <h6 class="mb-0" data-invoice-no>@Model.OrderNumber</h6>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <p class="text-muted mb-1 fs-12 text-uppercase">Oluşturulma</p>
+                            <h6 class="mb-0">@Model.CreatedDate?.ToString("dd.MM.yyyy HH:mm")</h6>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <p class="text-muted mb-1 fs-12 text-uppercase">Email</p>
+                            <h6 class="mb-0 text-truncate" style="max-width:160px;" title="@Model.Email">@Model.Email</h6>
+                        </div>
+                        <div class="col-lg-3 col-6">
+                            <p class="text-muted mb-1 fs-12 text-uppercase">Kripto Para</p>
+                            <h6 class="mb-0">@(Model.Currency ?? "—")</h6>
+                        </div>
+                    </div>
+
+                    @if (Model.Status == "completed" && !string.IsNullOrEmpty(Model.TransactionId))
+                    {
+                        var txExplorerUrl = (Model.Currency?.ToUpper()) switch {
+                            "TRX" or "USDT_TRX" or "BTT" => $"https://tronscan.org/#/transaction/{Model.TransactionId}",
+                            "ETH" or "USDT_ERC20" => $"https://etherscan.io/tx/{Model.TransactionId}",
+                            "BTC" => $"https://www.blockchain.com/btc/tx/{Model.TransactionId}",
+                            "LTC" => $"https://blockchair.com/litecoin/transaction/{Model.TransactionId}",
+                            _ => "#"
+                        };
+                    <div class="alert alert-success d-flex align-items-center mt-3 mb-0" role="alert">
+                        <i class="ri-shield-check-line me-2 fs-20"></i>
+                        <div>
+                            <h6 class="mb-0 text-success fs-12">Blockchain TX</h6>
+                            @if (txExplorerUrl != "#") {
+                            <a href="@txExplorerUrl" target="_blank" class="link-success fw-medium">@Model.TransactionId.Substring(0, Math.Min(32, Model.TransactionId.Length))... <i class="ri-external-link-line"></i></a>
+                            } else {
+                            <code class="text-success">@Model.TransactionId</code>
+                            }
+                        </div>
+                    </div>
+                    }
+
+                    <!-- Hizmet Kalemleri -->
+                    <div class="table-responsive mt-4">
+                        <table class="table table-borderless align-middle mb-0">
+                            <thead>
+                                <tr class="table-active">
+                                    <th style="width:40px;">#</th>
+                                    <th>Hizmet</th>
+                                    <th class="text-center" style="width:60px;">Adet</th>
+                                    <th class="text-end" style="width:100px;">Fiyat</th>
+                                    <th class="text-end" style="width:100px;">Tutar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @if (Model.InvoiceItemsDto != null && Model.InvoiceItemsDto.Count > 0)
+                            {
+                                var idx = 1;
+                                foreach (var item in Model.InvoiceItemsDto)
+                                {
+                                <tr>
+                                    <td class="fw-medium">@(idx++)</td>
+                                    <td>
+                                        <span class="fw-medium">@item.ServiceName</span>
+                                        @if (!string.IsNullOrEmpty(item.ServiceDescription)) {
+                                        <p class="text-muted mb-0 fs-12">@item.ServiceDescription</p>
+                                        }
+                                    </td>
+                                    <td class="text-center">@item.Quantity</td>
+                                    <td class="text-end">@F(item.Price) @Sym(Model.SourceCurrency)</td>
+                                    <td class="text-end fw-semibold">@F(item.Total) @Sym(Model.SourceCurrency)</td>
+                                </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="5" class="text-center text-muted py-3">Kalem bulunmuyor.</td></tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="border-top border-top-dashed mt-2 pt-3">
+                        <div class="d-flex justify-content-end">
+                            <table class="table table-borderless table-nowrap mb-0" style="width:220px;">
+                                <tr class="border-top border-top-dashed fs-15">
+                                    <th>Toplam</th>
+                                    <th class="text-end text-success">@F(Model.SourceAmount) @Sym(Model.SourceCurrency)</th>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- İşlem Butonları -->
+                    <div class="hstack gap-2 justify-content-end d-print-none mt-3">
+                        <a onclick="printInvoice()" class="btn btn-soft-success btn-sm no-print"><i class="ri-printer-line me-1"></i>Yazdır</a>
+                        <a onclick="downloadInvoicePdf()" class="btn btn-soft-primary btn-sm no-print"><i class="ri-download-2-line me-1"></i>PDF İndir</a>
+                        <a href="/invoices/invoice-edit/@Model.Id" class="btn btn-soft-warning btn-sm no-print"><i class="ri-pencil-line me-1"></i>Düzenle</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sağ Kolon: Bilgi Kartları -->
+        <div class="col-xl-4">
+            <!-- Müşteri Bilgisi -->
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0"><i class="ri-user-line me-1 text-info"></i>Müşteri Bilgisi</h5></div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="avatar-sm me-3">
+                            <span class="avatar-title bg-primary-subtle rounded-circle fs-5">@(customerName?.Length > 0 ? customerName[0].ToString().ToUpper() : "?")</span>
+                        </div>
+                        <div>
+                            <h6 class="mb-0">@customerName</h6>
+                            <small class="text-muted">@Model.Email</small>
+                        </div>
+                    </div>
+                    @if (Model.Customer != null)
+                    {
+                        @if (!string.IsNullOrEmpty(Model.Customer.Phone)) {
+                        <div class="d-flex mb-2"><i class="ri-phone-line me-2 text-muted"></i><span>@Model.Customer.Phone</span></div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Customer.Telegram)) {
+                        <div class="d-flex mb-2"><i class="ri-telegram-line me-2 text-muted"></i><span>@Model.Customer.Telegram</span></div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Customer.Skype)) {
+                        <div class="d-flex mb-2"><i class="ri-skype-line me-2 text-muted"></i><span>@Model.Customer.Skype</span></div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Fatura Zaman Çizelgesi -->
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0"><i class="ri-time-line me-1 text-warning"></i>Zaman Çizelgesi</h5></div>
+                <div class="card-body">
+                    <div class="acitivity-timeline acitivity-main" id="timelineContainer">
+                        <div class="acitivity-item d-flex">
+                            <div class="flex-shrink-0 avatar-xs acitivity-avatar">
+                                <div class="avatar-title bg-primary-subtle text-primary rounded-circle"><i class="ri-file-add-line"></i></div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0 fs-13">Fatura Oluşturuldu</h6>
+                                <small class="text-muted">@Model.CreatedDate?.ToString("dd MMM yyyy, HH:mm", tr)</small>
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.TxnId))
+                        {
+                        <div class="acitivity-item d-flex">
+                            <div class="flex-shrink-0 avatar-xs acitivity-avatar">
+                                <div class="avatar-title bg-info-subtle text-info rounded-circle"><i class="ri-link"></i></div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0 fs-13">Ödeme Linki Oluşturuldu</h6>
+                                <small class="text-muted">Plisio TxnID: @Model.TxnId.Substring(0, Math.Min(12, Model.TxnId.Length))...</small>
+                            </div>
+                        </div>
+                        }
+                        @* Yinelenen faturalarda "Ödeme Tamamlandı" gösterilmez — aylık durum Aylık Ödeme Durumu tablosunda gösterilir *@
+                        @if ((Model.Status == "completed" || Model.Status == "mismatch") && !Model.IsRecurring)
+                        {
+                        <div class="acitivity-item d-flex">
+                            <div class="flex-shrink-0 avatar-xs acitivity-avatar">
+                                <div class="avatar-title bg-success-subtle text-success rounded-circle"><i class="ri-checkbox-circle-fill"></i></div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-0 fs-13">Ödeme Tamamlandı</h6>
+                                <small class="text-muted">@statusText</small>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aylık Ödeme Durumu (sadece yinelenen faturalar için) -->
+    @if (Model.IsRecurring)
+    {
+    <div class="row">
+        <div class="col-12">
+            <div class="card no-print">
+                <div class="card-header d-flex align-items-center flex-wrap gap-2">
+                    <h5 class="card-title mb-0 flex-grow-1"><i class="ri-calendar-check-line me-1"></i>Aylık Ödeme Durumu</h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="#" class="btn btn-sm btn-warning" id="btnCryptoPayRecurring" onclick="openCryptoPayPage(event)" title="Kripto ödeme sayfasını yeni sekmede aç"><i class="ri-flashlight-line me-1"></i>Kripto Ödeme</a>
+                        <span class="badge bg-success-subtle text-success" id="historyPaidSummary"></span>
+                        <span class="badge bg-danger-subtle text-danger" id="historyOverdueSummary"></span>
+                        <button class="btn btn-sm btn-outline-primary" onclick="changeHistoryYear(-1)"><i class="ri-arrow-left-s-line"></i></button>
+                        <span class="fw-semibold" id="historyYearLabel"></span>
+                        <button class="btn btn-sm btn-outline-primary" onclick="changeHistoryYear(1)"><i class="ri-arrow-right-s-line"></i></button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Ay</th>
+                                    <th style="width:100px;">Tutar</th>
+                                    <th style="width:130px;">Durum</th>
+                                    <th>Ödeme Tarihi</th>
+                                    <th>Detay</th>
+                                    <th style="width:140px;">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="monthlyHistoryBody">
+                                <tr><td colspan="6" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-1"></div>Yükleniyor...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Manuel Ödeme İşaretle (tüm faturalar için) -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card no-print border-success-subtle">
+                <div class="card-header bg-success-subtle">
+                    <h5 class="card-title mb-0"><i class="ri-hand-coin-line me-1"></i>Manuel Ödeme İşaretle</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Belirli bir ay için ödendi olarak işaretlemek için yıl ve ay seçin.</p>
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label fw-medium">Yıl</label>
+                            <select class="form-select" id="manualPayYearSelect">
+                                @for (int y = DateTime.Now.Year + 1; y >= DateTime.Now.Year - 2; y--)
+                                {
+                                <option value="@y">@y</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-medium">Ay</label>
+                            <select class="form-select" id="manualPayMonthSelect">
+                                @{ string[] aylar = { "", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık" }; }
+                                @for (int i = 1; i <= 12; i++)
+                                {
+                                <option value="@i">@aylar[i]</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-medium">Not <span class="text-muted fw-normal">(opsiyonel)</span></label>
+                            <input type="text" class="form-control" id="manualPayNoteInline" placeholder="Örn: Havale ile ödendi">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-success w-100" id="btnManualPayInline" onclick="submitManualPaymentFromForm()">
+                                <i class="ri-checkbox-circle-line me-1"></i>Ödendi İşaretle
+                            </button>
+                        </div>
+                    </div>
+                    <div id="manualPayInlineMsg" class="mt-2 small"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ödeme Linkleri -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card no-print">
+                <div class="card-header d-flex align-items-center">
+                    <h5 class="card-title mb-0 flex-grow-1"><i class="ri-links-line me-1"></i>Ödeme Linkleri</h5>
+                    <button type="button" class="btn btn-success btn-sm" id="btnCreatePaymentLink" onclick="openPaymentMethodModal()">
+                        <i class="ri-add-line me-1"></i>Yeni Ödeme Linki
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-nowrap align-middle mb-0" id="paymentLinksTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width:50px;">#</th>
+                                    <th>Ödeme Yöntemi</th>
+                                    <th>Ödeme Linki / Bilgi</th>
+                                    <th style="width:130px;">Durum</th>
+                                    <th style="width:160px;">Tarih</th>
+                                    <th style="width:140px;">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentLinksBody">
+                                <tr id="pl-loading"><td colspan="6" class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div><span class="ms-2 text-muted">Yükleniyor...</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="pl-empty" class="text-center py-4 d-none">
+                        <i class="ri-link-unlink text-muted" style="font-size:48px;"></i>
+                        <p class="text-muted mt-2 mb-0">Henüz ödeme linki oluşturulmamış.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ödeme Yöntemi Seçim Modalı -->
+    <div class="modal fade" id="payMethodSelectModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0">
+                <div class="modal-header bg-success-subtle">
+                    <h5 class="modal-title"><i class="ri-secure-payment-line me-2"></i>Ödeme Yöntemi Seç</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="pmMethodList" class="d-flex flex-column gap-2">
+                        <div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+                    </div>
+                    <div id="pmCryptoSelect" class="mt-3 d-none">
+                        <label class="form-label fw-medium">Kripto Para Birimi</label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="pmCryptoCur" id="curUSDT" value="USDT_TRC20" checked>
+                                <label class="form-check-label fw-medium" for="curUSDT">USDT (TRC20)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="pmCryptoCur" id="curTRX" value="TRX">
+                                <label class="form-check-label fw-medium" for="curTRX">TRX</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="pmDurationSelect" class="mt-3 d-none">
+                        <label class="form-label fw-medium">Ödeme Linki Süresi</label>
+                        <select class="form-select" id="pmDuration">
+                            <option value="2">2 Saat</option>
+                            <option value="4">4 Saat</option>
+                            <option value="6" selected>6 Saat</option>
+                            <option value="12">12 Saat</option>
+                            <option value="24">24 Saat</option>
+                            <option value="0">Süresiz</option>
+                        </select>
+                        <small class="text-muted mt-1 d-block">Süresiz seçilirse link manuel olarak iptal edilene kadar aktif kalır.</small>
+                    </div>
+                    <div id="pmNote" class="mt-3 d-none">
+                        <label class="form-label fw-medium">Not <span class="text-muted fw-normal">(opsiyonel)</span></label>
+                        <textarea class="form-control" id="pmNoteText" rows="2" placeholder="Ek bilgi..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-success" id="btnConfirmPayMethod" onclick="confirmCreatePaymentLink()" disabled>
+                        <span id="pmBtnText"><i class="ri-add-line me-1"></i>Ödeme Linki Oluştur</span>
+                        <span id="pmBtnSpinner" class="d-none"><span class="spinner-border spinner-border-sm me-1"></span>Oluşturuluyor...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Manuel Ödeme Modalı -->
+<div class="modal fade" id="manualPaymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success-subtle">
+                <h5 class="modal-title"><i class="ri-checkbox-circle-line me-1"></i>Manuel Ödeme Sonuçlandır</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="manualPayMonth" />
+                <input type="hidden" id="manualPayYear" />
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Ay</label>
+                    <input type="text" class="form-control" id="manualPayMonthLabel" readonly />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Not <span class="text-muted fw-normal">(isteğe bağlı)</span></label>
+                    <textarea class="form-control" id="manualPayNote" rows="3" placeholder="Ör: Havale ile ödendi, dekont no: 12345"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-success" id="btnConfirmManualPay" onclick="confirmManualPayment()">
+                    <i class="ri-checkbox-circle-line me-1"></i>Ödendi Olarak İşaretle
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ödemeyi İptal Et Modalı -->
+<div class="modal fade" id="cancelPaymentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger-subtle">
+                <h5 class="modal-title text-danger"><i class="ri-error-warning-line me-2"></i>Ödemeyi İptal Et</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3">Bu işlem geri alınamaz. Devam etmek için aşağıya <strong>DELETE</strong> yazın.</p>
+                <div class="mb-3">
+                    <input type="text" class="form-control form-control-lg text-center" id="cancelPaymentConfirmInput" placeholder="DELETE yazın" autocomplete="off" maxlength="10">
+                    <input type="hidden" id="cancelPaymentLinkId" value="">
+                </div>
+                <div id="cancelPaymentError" class="alert alert-danger py-2 d-none" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Vazgeç</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmCancelPayment" onclick="confirmCancelPayment()" disabled>
+                    <i class="ri-close-circle-line me-1"></i>Ödemeyi İptal Et
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Kopyalama Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
+    <div id="copyToast" class="toast align-items-center text-bg-success border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body"><i class="ri-checkbox-circle-line me-1"></i>Ödeme linki kopyalandı!</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const INVOICE_ID = @Model.Id;
+const IS_RECURRING = @(Model.IsRecurring ? "true" : "false");
+const MONTH_NAMES = ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+let historyYear = new Date().getFullYear();
+
+function formatMoney(v) { return v.toLocaleString('tr-TR', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function currencySymbol(c) { return c==='USD'?'$':c==='EUR'||c==='EURO'?'€':c==='TRY'||c==='TL'?'₺':c; }
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadPaymentLinks();
+    if (IS_RECURRING) {
+        document.getElementById('historyYearLabel').textContent = historyYear;
+        loadMonthlyHistory();
+    }
+    var now = new Date();
+    var yearSel = document.getElementById('manualPayYearSelect');
+    var monthSel = document.getElementById('manualPayMonthSelect');
+    if (yearSel) yearSel.value = now.getFullYear();
+    if (monthSel) monthSel.value = now.getMonth() + 1;
+    var cancelInp = document.getElementById('cancelPaymentConfirmInput');
+    if (cancelInp) cancelInp.addEventListener('input', function() {
+        var btn = document.getElementById('btnConfirmCancelPayment');
+        if (btn) btn.disabled = this.value.trim() !== 'DELETE';
+    });
+});
+
+function printInvoice() { window.print(); }
+
+// === Payment Links ===
+function plStatusBadge(status) {
+    switch(status) {
+        case 'completed': case 'mismatch': return '<span class="badge bg-success-subtle text-success">Ödendi</span>';
+        case 'pending': case 'new': return '<span class="badge bg-warning-subtle text-warning">Aktif</span>';
+        case 'expired': return '<span class="badge bg-danger-subtle text-danger">Süresi Doldu</span>';
+        case 'cancelled': return '<span class="badge bg-secondary-subtle text-secondary">İptal</span>';
+        case 'error': return '<span class="badge bg-danger-subtle text-danger">Hata</span>';
+        default: return '<span class="badge bg-info-subtle text-info">' + status + '</span>';
+    }
+}
+
+function fmtDate(d) {
+    if (!d) return '-';
+    const dt = new Date(d);
+    return dt.toLocaleDateString('tr-TR') + ' ' + dt.toLocaleTimeString('tr-TR', {hour:'2-digit',minute:'2-digit'});
+}
+
+function getPayUrl(id, txnId) {
+    return window.location.origin + '/pay/' + INVOICE_ID + '?txnId=' + encodeURIComponent(txnId);
+}
+
+function renderPaymentLinks(links) {
+    const tbody = document.getElementById('paymentLinksBody');
+    const empty = document.getElementById('pl-empty');
+    const table = document.getElementById('paymentLinksTable');
+    const createBtn = document.getElementById('btnCreatePaymentLink');
+    const hasPaid = links.some(l => l.status === 'completed' || l.status === 'mismatch');
+    if (createBtn) {
+        createBtn.disabled = hasPaid;
+        createBtn.title = hasPaid ? 'Tam tutar tahsil edildi' : '';
+    }
+    if (!links.length) { tbody.innerHTML=''; table.classList.add('d-none'); empty.classList.remove('d-none'); return; }
+    table.classList.remove('d-none'); empty.classList.add('d-none'); tbody.innerHTML='';
+    const mTypeIcons={plisio:'ri-bit-coin-line',bank_transfer:'ri-bank-line',credit_card:'ri-bank-card-line',crypto_wallet:'ri-wallet-3-line',manual:'ri-hand-coin-line',fast_crypto:'ri-flashlight-line'};
+    links.forEach((pl, idx) => {
+        const payUrl = pl.txnId ? getPayUrl(pl.id, pl.txnId) : (pl.invoiceUrl || '');
+        const isActive = pl.status === 'new' || pl.status === 'pending';
+        const isCompleted = pl.status === 'completed';
+        const isPaid = pl.status === 'completed' || pl.status === 'mismatch';
+        const mIcon = pl.methodIcon || mTypeIcons[pl.methodType] || 'ri-links-line';
+        const mName = pl.methodName || (pl.isManual ? 'Manuel Ödeme' : 'Plisio');
+        const info = payUrl || pl.note || '-';
+        const infoDisplay = info.length > 40 ? info.substring(0,40)+'...' : info;
+        const txId = pl.confirmedTxHash || pl.transactionId || '';
+        let txDisplay = '';
+        if (isCompleted && txId) {
+            const shortTx = txId.length > 16 ? txId.substring(0,8) + '...' + txId.substring(txId.length-6) : txId;
+            const explorerUrl = pl.methodType === 'fast_crypto' ? 'https://tronscan.org/#/transaction/' + txId : '';
+            txDisplay = `<div class="mt-1"><span class="badge bg-success-subtle text-success fs-10 fw-medium" title="${txId}"><i class="ri-check-double-line me-1"></i>TX: ${shortTx}</span>${explorerUrl ? ` <a href="${explorerUrl}" target="_blank" class="text-success fs-10" title="TronScan"><i class="ri-external-link-line"></i></a>` : ''}</div>`;
+        }
+        tbody.innerHTML += `<tr>
+            <td class="fw-medium">${idx+1}</td>
+            <td><span class="d-flex align-items-center gap-2"><i class="${mIcon} text-muted"></i><span class="fs-12">${mName}</span></span></td>
+            <td>${payUrl ? `<code class="text-truncate" style="max-width:250px;display:inline-block;" title="${info}">${infoDisplay}</code>` : `<small class="text-muted" title="${info}">${infoDisplay}</small>`}${txDisplay}</td>
+            <td>${plStatusBadge(pl.status)}</td>
+            <td><small class="text-muted">${fmtDate(pl.createdDate)}</small></td>
+            <td><div class="d-flex gap-1">
+                ${pl.methodType==='fast_crypto' && isActive ? `<a href="/crypto-pay/${pl.id}" target="_blank" class="btn btn-sm btn-soft-warning" title="Kripto Ödeme Sayfası"><i class="ri-flashlight-line"></i></a>` : ''}
+                ${pl.methodType==='fast_crypto' ? `<button class="btn btn-sm btn-soft-primary" onclick="copyLink(window.location.origin+'/crypto-pay/${pl.id}')" title="Link Kopyala"><i class="ri-file-copy-line"></i></button>` : ''}
+                ${isCompleted && txId ? `<button class="btn btn-sm btn-soft-success" onclick="copyLink('${txId}')" title="TX ID Kopyala"><i class="ri-file-copy-line"></i></button>` : ''}
+                ${payUrl && pl.methodType!=='fast_crypto' ? `<button class="btn btn-sm btn-soft-primary" onclick="copyLink('${payUrl}')" title="Kopyala"><i class="ri-file-copy-line"></i></button>` : ''}
+                ${isActive && pl.invoiceUrl ? `<a href="${pl.invoiceUrl}" target="_blank" class="btn btn-sm btn-soft-success" title="Ödeme Sayfası"><i class="ri-external-link-line"></i></a>` : ''}
+                ${isActive && pl.txnId && pl.methodType!=='fast_crypto' ? `<a href="${getPayUrl(pl.id,pl.txnId)}" target="_blank" class="btn btn-sm btn-soft-info" title="Ödeme"><i class="ri-bank-card-line"></i></a>` : ''}
+                ${pl.note && !payUrl && pl.methodType!=='fast_crypto' ? `<button class="btn btn-sm btn-soft-secondary" onclick="copyLink('${pl.note.replace(/'/g,"\\'")}')" title="Bilgiyi Kopyala"><i class="ri-file-copy-line"></i></button>` : ''}
+                ${isPaid ? `<button class="btn btn-sm btn-soft-danger" onclick="openCancelPaymentModal(${pl.id})" title="Ödemeyi İptal Et"><i class="ri-close-circle-line"></i></button>` : ''}
+            </div></td>
+        </tr>`;
+    });
+}
+
+async function loadPaymentLinks() {
+    try {
+        const res = await fetch('/api/invoices/'+INVOICE_ID+'/payment-links');
+        if (res.ok) {
+            const links = await res.json();
+            renderPaymentLinks(links);
+            if (links.some(l => l.status==='new'||l.status==='pending')) startPaymentLinkPolling(links);
+        }
+    } catch(e) { document.getElementById('pl-loading')?.remove(); }
+}
+
+function startPaymentLinkPolling(links) {
+    const active = links.filter(l => l.status==='new'||l.status==='pending');
+    if (!active.length) return;
+    const poll = setInterval(async () => {
+        let changed = false;
+        for (const link of active) {
+            if (!link.txnId) continue;
+            try {
+                const r = await fetch('/api/invoices/payment-link-status/'+encodeURIComponent(link.txnId));
+                if (r.ok) { const d=await r.json(); if(d.status!==link.status){link.status=d.status;changed=true;} if(d.terminal)active.splice(active.indexOf(link),1); }
+            } catch {}
+        }
+        if (changed) { const r=await fetch('/api/invoices/'+INVOICE_ID+'/payment-links'); if(r.ok)renderPaymentLinks(await r.json()); }
+        if (!active.length) clearInterval(poll);
+    }, 8000);
+}
+
+// === Ödemeyi İptal Et ===
+function openCancelPaymentModal(linkId) {
+    document.getElementById('cancelPaymentLinkId').value = linkId;
+    document.getElementById('cancelPaymentConfirmInput').value = '';
+    document.getElementById('btnConfirmCancelPayment').disabled = true;
+    document.getElementById('cancelPaymentError').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('cancelPaymentModal')).show();
+}
+function onCancelConfirmInput() {
+    const inp = document.getElementById('cancelPaymentConfirmInput');
+    const btn = document.getElementById('btnConfirmCancelPayment');
+    btn.disabled = inp.value.trim() !== 'DELETE';
+}
+async function confirmCancelPayment() {
+    const linkId = document.getElementById('cancelPaymentLinkId').value;
+    const inp = document.getElementById('cancelPaymentConfirmInput');
+    const errEl = document.getElementById('cancelPaymentError');
+    const btn = document.getElementById('btnConfirmCancelPayment');
+    if (inp.value.trim() !== 'DELETE') {
+        errEl.textContent = 'İşlemi onaylamak için DELETE yazmalısınız.';
+        errEl.classList.remove('d-none');
+        return;
+    }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>İşleniyor...';
+    errEl.classList.add('d-none');
+    try {
+        const res = await fetch('/api/invoices/'+INVOICE_ID+'/payment-links/'+linkId+'/cancel', { method: 'POST' });
+        const data = await res.json().catch(() => ({}));
+        bootstrap.Modal.getInstance(document.getElementById('cancelPaymentModal'))?.hide();
+        if (res.ok) {
+            if (data.pending) Swal.fire({ icon: 'info', title: 'Onay Bekleniyor', text: data.message || 'Talep onaya gönderildi.' });
+            else Swal.fire({ icon: 'success', title: 'Başarılı', text: data.message || 'Ödeme iptal edildi.' });
+            loadPaymentLinks();
+            if (IS_RECURRING) loadMonthlyHistory();
+        } else {
+            Swal.fire({ icon: 'error', title: 'Hata', text: data.message || 'İşlem başarısız.' });
+        }
+    } catch (e) {
+        Swal.fire({ icon: 'error', title: 'Hata', text: 'Sunucuya ulaşılamadı.' });
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ri-close-circle-line me-1"></i>Ödemeyi İptal Et';
+}
+
+let selectedPayMethodId=null;
+    const mTypeIcons={plisio:'ri-bit-coin-line',bank_transfer:'ri-bank-line',credit_card:'ri-bank-card-line',crypto_wallet:'ri-wallet-3-line',manual:'ri-hand-coin-line',fast_crypto:'ri-flashlight-line'};
+const mTypeColors={plisio:'warning',bank_transfer:'success',credit_card:'primary',crypto_wallet:'danger',manual:'secondary',fast_crypto:'warning'};
+
+async function openPaymentMethodModal(){
+    selectedPayMethodId=null;
+    const list=document.getElementById('pmMethodList');
+    const noteDiv=document.getElementById('pmNote');
+    noteDiv.classList.add('d-none');
+    document.getElementById('pmNoteText').value='';
+    document.getElementById('btnConfirmPayMethod').disabled=true;
+    list.innerHTML='<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
+    new bootstrap.Modal(document.getElementById('payMethodSelectModal')).show();
+
+    try{
+        const r=await fetch('/api/payment-methods/active');
+        if(!r.ok)throw new Error();
+        const methods=await r.json();
+        if(!methods.length){list.innerHTML='<div class="text-center text-muted py-3">Aktif ödeme yöntemi bulunamadı.</div>';return;}
+        list.innerHTML='';
+        methods.forEach(m=>{
+            const icon=m.icon||mTypeIcons[m.type]||'ri-bank-card-line';
+            const clr=mTypeColors[m.type]||'secondary';
+            let info='';
+            if(m.type==='bank_transfer'&&m.bankName)info=m.bankName;
+            if(m.type==='crypto_wallet'&&m.walletNetwork)info=m.walletNetwork;
+            list.innerHTML+=`<div class="pm-option border rounded-3 p-3 d-flex align-items-center gap-3" style="cursor:pointer;transition:all .15s" data-id="${m.id}" data-type="${m.type}" onclick="selectPayMethod(${m.id},'${m.type}')">
+                <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-${clr}-subtle text-${clr} rounded-circle fs-18"><i class="${icon}"></i></span></div>
+                <div class="flex-grow-1">
+                    <h6 class="mb-0 fs-13">${m.name}${m.isDefault?' <span class=\"badge bg-info-subtle text-info fs-10\">Varsayılan</span>':''}</h6>
+                    ${m.description?`<small class="text-muted">${m.description}</small>`:''}
+                    ${info?`<br><small class="text-muted"><i class="ri-information-line me-1"></i>${info}</small>`:''}
+                </div>
+                <i class="ri-checkbox-blank-circle-line fs-20 text-muted pm-check"></i>
+            </div>`;
+        });
+    }catch{list.innerHTML='<div class="text-center text-danger py-3">Yöntemler yüklenemedi.</div>';}
+}
+
+function selectPayMethod(id,type){
+    selectedPayMethodId=id;
+    document.querySelectorAll('.pm-option').forEach(el=>{
+        el.classList.remove('border-success','bg-success-subtle');
+        el.querySelector('.pm-check').className='ri-checkbox-blank-circle-line fs-20 text-muted pm-check';
+    });
+    const sel=document.querySelector(`.pm-option[data-id="${id}"]`);
+    if(sel){
+        sel.classList.add('border-success','bg-success-subtle');
+        sel.querySelector('.pm-check').className='ri-checkbox-circle-fill fs-20 text-success pm-check';
+    }
+    const noteDiv=document.getElementById('pmNote');
+    const cryptoDiv=document.getElementById('pmCryptoSelect');
+    const durDiv=document.getElementById('pmDurationSelect');
+    if(type==='manual'||type==='bank_transfer'||type==='credit_card')noteDiv.classList.remove('d-none');
+    else noteDiv.classList.add('d-none');
+    if(type==='fast_crypto'&&cryptoDiv)cryptoDiv.classList.remove('d-none');
+    else if(cryptoDiv)cryptoDiv.classList.add('d-none');
+    if(type==='fast_crypto'&&durDiv)durDiv.classList.remove('d-none');
+    else if(durDiv)durDiv.classList.add('d-none');
+    document.getElementById('btnConfirmPayMethod').disabled=false;
+}
+
+async function confirmCreatePaymentLink(){
+    if(!selectedPayMethodId)return;
+    const t=document.getElementById('pmBtnText'),s=document.getElementById('pmBtnSpinner'),b=document.getElementById('btnConfirmPayMethod');
+    t.classList.add('d-none');s.classList.remove('d-none');b.disabled=true;
+
+    const cryptoCur=document.querySelector('input[name="pmCryptoCur"]:checked')?.value||null;
+    const durEl=document.getElementById('pmDuration');
+    const durHours=durEl?parseInt(durEl.value):0;
+    const payload={paymentMethodId:selectedPayMethodId,note:document.getElementById('pmNoteText').value.trim()||null,cryptoCurrency:cryptoCur,durationHours:durHours||null};
+    try{
+        const res=await fetch('/api/invoices/'+INVOICE_ID+'/payment-links',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        if(res.ok){
+            const data=await res.json();
+            await loadPaymentLinks();
+            bootstrap.Modal.getInstance(document.getElementById('payMethodSelectModal'))?.hide();
+            if(data.cryptoPayUrl){
+                Swal.fire({icon:'success',title:'Kripto Ödeme Linki Oluşturuldu',text:'Ödeme sayfasına yönlendiriliyorsunuz...',timer:1500,showConfirmButton:false});
+                setTimeout(()=>window.open(data.cryptoPayUrl,'_blank'),1500);
+            }else{
+                Swal.fire({icon:'success',title:'Ödeme Linki Oluşturuldu',timer:2000,showConfirmButton:false});
+            }
+        }else{const d=await res.json().catch(()=>({}));Swal.fire('Hata',d.message||'Oluşturulamadı.','error');}
+    }catch{Swal.fire('Hata','Sunucuya ulaşılamadı.','error');}
+    t.classList.remove('d-none');s.classList.add('d-none');b.disabled=false;
+}
+
+async function openCryptoPayPage(e) {
+    if (e) e.preventDefault();
+    const btn = document.getElementById('btnCryptoPayRecurring');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Yükleniyor...'; }
+    try {
+        const linksRes = await fetch('/api/invoices/' + INVOICE_ID + '/payment-links');
+        if (linksRes.ok) {
+            const links = await linksRes.json();
+            const activeCrypto = links.find(l => (l.methodType === 'fast_crypto') && (l.status === 'new' || l.status === 'pending'));
+            if (activeCrypto) {
+                window.open('/crypto-pay/' + activeCrypto.id, '_blank');
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ri-flashlight-line me-1"></i>Kripto Ödeme'; }
+                return;
+            }
+        }
+        const methodsRes = await fetch('/api/payment-methods/active');
+        if (!methodsRes.ok) throw new Error('Ödeme yöntemleri yüklenemedi');
+        const methods = await methodsRes.json();
+        const fastCrypto = methods.find(m => m.type === 'fast_crypto');
+        if (!fastCrypto) { Swal.fire('Hata', 'Hızlı Kripto ödeme yöntemi bulunamadı.', 'error'); if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ri-flashlight-line me-1"></i>Kripto Ödeme'; } return; }
+        const payload = { paymentMethodId: fastCrypto.id, cryptoCurrency: 'USDT_TRC20', durationHours: 6 };
+        const createRes = await fetch('/api/invoices/' + INVOICE_ID + '/payment-links', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!createRes.ok) { const d = await createRes.json().catch(() => ({})); throw new Error(d.message || 'Link oluşturulamadı'); }
+        const data = await createRes.json();
+        if (data.cryptoPayUrl) { window.open(data.cryptoPayUrl, '_blank'); loadPaymentLinks(); }
+        else throw new Error('Kripto ödeme linki alınamadı');
+    } catch (err) { Swal.fire('Hata', err.message || 'İşlem başarısız', 'error'); }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ri-flashlight-line me-1"></i>Kripto Ödeme'; }
+}
+
+// === Monthly History ===
+function updateMainStatusCard(monthStatus) {
+    const badge = document.getElementById('invoiceStatusBadge');
+    const iconWrap = document.getElementById('invoiceStatusIconWrap');
+    if (!badge || !iconWrap) return;
+    let badgeClass, badgeText, iconClass;
+    if (monthStatus === 'paid') {
+        badgeClass = 'bg-success-subtle text-success';
+        badgeText = '<i class="ri-checkbox-circle-fill me-1"></i>Bu ay: Ödendi';
+        iconClass = 'bg-success-subtle text-success';
+    } else if (monthStatus === 'overdue') {
+        badgeClass = 'bg-danger-subtle text-danger';
+        badgeText = '<i class="ri-error-warning-fill me-1"></i>Bu ay: Gecikmiş';
+        iconClass = 'bg-danger-subtle text-danger';
+    } else {
+        badgeClass = 'bg-warning-subtle text-warning';
+        badgeText = '<i class="ri-time-line me-1"></i>Bu ay: Bekliyor';
+        iconClass = 'bg-warning-subtle text-warning';
+    }
+    badge.className = 'badge ' + badgeClass + ' fs-14 px-3 py-2';
+    badge.innerHTML = badgeText;
+    iconWrap.innerHTML = '<span class="avatar-title ' + iconClass + ' rounded fs-3"><i class="ri-' + (monthStatus === 'paid' ? 'checkbox-circle-fill' : monthStatus === 'overdue' ? 'error-warning-fill' : 'time-line') + ' ' + iconClass.split(' ')[1] + '"></i></span>';
+}
+
+function changeHistoryYear(dir) {
+    historyYear += dir;
+    document.getElementById('historyYearLabel').textContent = historyYear;
+    loadMonthlyHistory();
+}
+
+async function loadMonthlyHistory() {
+    const tbody = document.getElementById('monthlyHistoryBody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-1"></div>Yükleniyor...</td></tr>';
+    try {
+        const res = await fetch('/api/invoices/'+INVOICE_ID+'/monthly-history?year='+historyYear);
+        if (!res.ok) { tbody.innerHTML='<tr><td colspan="6" class="text-center py-4 text-muted">Yüklenemedi.</td></tr>'; return; }
+        const data = await res.json();
+        tbody.innerHTML = '';
+        const now = new Date();
+        const srcCurrency = '@Model.SourceCurrency';
+        let paidCount=0, overdueCount=0;
+
+        data.months.forEach(m => {
+            let statusHtml, dateHtml, detailHtml, amountHtml, actionHtml='';
+            const isCur = (historyYear===now.getFullYear() && m.month===now.getMonth()+1);
+            const amt = m.amount || @Model.SourceAmount;
+            amountHtml = '<span class="fw-medium">'+formatMoney(amt)+' '+currencySymbol(srcCurrency)+'</span>';
+
+            if (m.status==='na') {
+                statusHtml='<span class="text-muted">—</span>'; dateHtml='—'; detailHtml=''; amountHtml='<span class="text-muted">—</span>';
+            } else if (m.status==='paid') {
+                paidCount++;
+                statusHtml = m.isManual
+                    ? '<span class="badge bg-info-subtle text-info"><i class="ri-hand-coin-line me-1"></i>Manuel</span>'
+                    : '<span class="badge bg-success-subtle text-success"><i class="ri-checkbox-circle-fill me-1"></i>Ödendi</span>';
+                dateHtml = m.paidDate ? fmtDate(m.paidDate) : '—';
+                detailHtml = m.isManual && m.note ? '<span class="text-muted fs-12"><i class="ri-sticky-note-line me-1"></i>'+escHtml(m.note)+'</span>'
+                    : m.transactionId ? '<code class="text-truncate" style="max-width:180px;display:inline-block;" title="'+m.transactionId+'">'+m.transactionId.substring(0,16)+'...</code>'
+                    : '<span class="text-muted fs-12">—</span>';
+            } else if (m.status==='overdue') {
+                overdueCount++;
+                statusHtml='<span class="badge bg-danger-subtle text-danger"><i class="ri-error-warning-fill me-1"></i>Gecikmiş</span>';
+                dateHtml='—'; detailHtml='';
+            } else if (m.status==='pending') {
+                statusHtml='<span class="badge bg-warning-subtle text-warning"><i class="ri-time-line me-1"></i>Bekliyor</span>';
+                dateHtml='—'; detailHtml='';
+            } else {
+                statusHtml='<span class="text-muted">—</span>'; dateHtml='—'; detailHtml=''; amountHtml='<span class="text-muted">—</span>';
+            }
+            actionHtml = (m.status !== 'paid') ? `<button class="btn btn-sm btn-soft-success" onclick="openManualPayModal(${historyYear},${m.month})"><i class="ri-hand-coin-line me-1"></i>Manuel</button>` : '';
+            const rc = isCur ? ' class="table-active"' : m.status==='overdue' ? ' class="table-danger"' : '';
+            tbody.innerHTML += `<tr${rc}>
+                <td><span class="fw-medium">${MONTH_NAMES[m.month]}</span>${isCur?' <span class="badge bg-primary-subtle text-primary ms-1">Bu Ay</span>':''}</td>
+                <td>${amountHtml}</td><td>${statusHtml}</td><td><small>${dateHtml}</small></td><td>${detailHtml}</td><td>${actionHtml}</td>
+            </tr>`;
+        });
+        const ps=document.getElementById('historyPaidSummary'), os=document.getElementById('historyOverdueSummary');
+        if(ps)ps.textContent=paidCount+' Ödendi';
+        if(os){os.textContent=overdueCount>0?overdueCount+' Gecikmiş':'';os.style.display=overdueCount>0?'':'none';}
+        if (IS_RECURRING && historyYear === now.getFullYear()) {
+            const curMonthData = data.months.find(m => m.month === now.getMonth() + 1);
+            if (curMonthData && curMonthData.status !== 'na') updateMainStatusCard(curMonthData.status);
+        }
+    } catch(e) { tbody.innerHTML='<tr><td colspan="6" class="text-center py-4 text-muted">Yüklenemedi.</td></tr>'; }
+}
+
+function escHtml(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+
+function openManualPayModal(y,m) {
+    document.getElementById('manualPayYear').value=y;
+    document.getElementById('manualPayMonth').value=m;
+    document.getElementById('manualPayMonthLabel').value=MONTH_NAMES[m]+' '+y;
+    document.getElementById('manualPayNote').value='';
+    new bootstrap.Modal(document.getElementById('manualPaymentModal')).show();
+}
+
+async function submitManualPaymentFromForm() {
+    const year = parseInt(document.getElementById('manualPayYearSelect')?.value);
+    const month = parseInt(document.getElementById('manualPayMonthSelect')?.value);
+    const note = (document.getElementById('manualPayNoteInline')?.value || '').trim();
+    const btn = document.getElementById('btnManualPayInline');
+    if (!year || !month) { Swal.fire({ icon:'warning', title:'Uyarı', text:'Yıl ve ay seçin.' }); return; }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Kaydediliyor...';
+    try {
+        const res = await fetch('/api/invoices/'+INVOICE_ID+'/manual-payment', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({year,month,note:note||null}) });
+        const data = await res.json();
+        if (res.ok) {
+            if (data.pending) Swal.fire({ icon:'info', title:'Onay Bekleniyor', text: data.message || 'Talep onaya gönderildi.' });
+            else { Swal.fire({ icon:'success', title:'Başarılı', text: MONTH_NAMES[month]+' '+year+' ödendi olarak işaretlendi.' }); loadPaymentLinks(); if(IS_RECURRING) loadMonthlyHistory(); }
+        } else Swal.fire({ icon:'error', title:'Hata', text: data.message || 'İşlem başarısız.' });
+    } catch(e) { Swal.fire({ icon:'error', title:'Hata', text:'Bağlantı hatası.' }); }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ri-checkbox-circle-line me-1"></i>Ödendi İşaretle';
+}
+
+async function confirmManualPayment() {
+    const year=parseInt(document.getElementById('manualPayYear').value);
+    const month=parseInt(document.getElementById('manualPayMonth').value);
+    const note=document.getElementById('manualPayNote').value.trim();
+    const btn=document.getElementById('btnConfirmManualPay');
+    btn.disabled=true;btn.innerHTML='<span class="spinner-border spinner-border-sm me-1"></span>Kaydediliyor...';
+    try {
+        const res=await fetch('/api/invoices/'+INVOICE_ID+'/manual-payment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({year,month,note:note||null})});
+        const data=await res.json();
+        bootstrap.Modal.getInstance(document.getElementById('manualPaymentModal'))?.hide();
+        if(res.ok){
+            if(data.pending){Swal.fire({icon:'info',title:'Onay Bekleniyor',text:data.message||'Talep onaya gönderildi.',timer:3000,showConfirmButton:false});}
+            else{Swal.fire({icon:'success',title:'Başarılı',text:MONTH_NAMES[month]+' ödendi olarak işaretlendi.',timer:2000,showConfirmButton:false});}
+            loadMonthlyHistory();
+        }else{Swal.fire({icon:'error',title:'Hata',text:data.message||'İşlem başarısız.'});}
+    }catch(e){Swal.fire({icon:'error',title:'Hata',text:'Sunucuya ulaşılamadı.'});}
+    btn.disabled=false;btn.innerHTML='<i class="ri-checkbox-circle-line me-1"></i>Ödendi Olarak İşaretle';
+}
+
+function copyLink(url) {
+    navigator.clipboard.writeText(url).then(()=>{
+        new bootstrap.Toast(document.getElementById('copyToast'),{delay:2000}).show();
+    }).catch(()=>{
+        const i=document.createElement('input');i.value=url;document.body.appendChild(i);i.select();document.execCommand('copy');document.body.removeChild(i);
+        new bootstrap.Toast(document.getElementById('copyToast'),{delay:2000}).show();
+    });
+}
+
+async function downloadInvoicePdf() {
+    const el=document.getElementById('invoice-area');
+    const canvas=await html2canvas(el,{scale:2,useCORS:true});
+    const imgData=canvas.toDataURL('image/png');
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF('p','mm','a4');
+    const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+    const iw=pw,ih=(canvas.height*iw)/canvas.width;
+    let hl=ih,pos=0;
+    pdf.addImage(imgData,'PNG',0,pos,iw,ih);hl-=ph;
+    while(hl>0){pos=hl-ih;pdf.addPage();pdf.addImage(imgData,'PNG',0,pos,iw,ih);hl-=ph;}
+    const no=document.querySelector('[data-invoice-no]')?.textContent?.trim()||'invoice';
+    pdf.save(`${no}.pdf`);
+}
+</script>
+}

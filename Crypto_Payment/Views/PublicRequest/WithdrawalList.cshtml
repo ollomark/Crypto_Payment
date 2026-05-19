@@ -1,0 +1,511 @@
+@{
+    ViewData["Title"] = "Çekim Talepleri";
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+            <h4 class="mb-sm-0">Çekim Talepleri</h4>
+            <div class="page-title-right">
+                <button class="btn btn-primary btn-sm" id="btnCreateLink">
+                    <i class="ri-link me-1"></i>Yeni Çekim Linki Oluştur
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Kategori Seç + Link Oluştur Modal -->
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="ri-link me-1"></i>Yeni Çekim Linki Oluştur</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Kategori Seçiniz <span class="text-danger">*</span></label>
+                    <select id="createCategory" class="form-select">
+                        <option value="1">Maaş</option>
+                        <option value="2">Sunucu Ödemesi</option>
+                        <option value="3">Avans</option>
+                        <option value="4">Bayi Ödemesi</option>
+                        <option value="5" selected>Diğer</option>
+                    </select>
+                </div>
+                <div id="createError" class="alert alert-danger d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="btnDoCreate">
+                    <i class="ri-add-line me-1"></i>Linki Oluştur
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Link Göster Modal -->
+<div class="modal fade" id="linkModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="ri-check-line me-1"></i>Çekim Linki Oluşturuldu</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-2">Aşağıdaki linki müşteriye gönderin.</p>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="generatedLink" readonly />
+                    <button class="btn btn-outline-primary" id="btnCopyLink" type="button">
+                        <i class="ri-file-copy-line"></i> Kopyala
+                    </button>
+                </div>
+                <div class="text-success mt-2 d-none" id="copySuccess">
+                    <i class="ri-checkbox-circle-line"></i> Link kopyalandı!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Onay/Red Modal -->
+<div class="modal fade" id="actionModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="actionModalTitle">İşlem</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="actionModalBody"></div>
+                <div class="mb-3 d-none" id="rejectNoteGroup">
+                    <label class="form-label">Red Notu (Opsiyonel)</label>
+                    <textarea class="form-control" id="rejectNote" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn" id="actionModalBtn">Onayla</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Özet Kartlar -->
+<div class="row mb-3">
+    <div class="col-md-3 col-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-sm flex-shrink-0">
+                        <span class="avatar-title bg-info-subtle text-info rounded-circle fs-3"><i class="ri-link"></i></span>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-uppercase fw-medium text-muted mb-0">Oluşturulan</p>
+                        <h4 class="fs-22 fw-semibold mb-0" id="cntCreated"><span class="skeleton skeleton-card-value"></span></h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-sm flex-shrink-0">
+                        <span class="avatar-title bg-warning-subtle text-warning rounded-circle fs-3"><i class="ri-time-line"></i></span>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-uppercase fw-medium text-muted mb-0">Onay Bekleyen</p>
+                        <h4 class="fs-22 fw-semibold mb-0" id="cntPending"><span class="skeleton skeleton-card-value"></span></h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-sm flex-shrink-0">
+                        <span class="avatar-title bg-success-subtle text-success rounded-circle fs-3"><i class="ri-checkbox-circle-line"></i></span>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-uppercase fw-medium text-muted mb-0">Onaylanan</p>
+                        <h4 class="fs-22 fw-semibold mb-0" id="cntApproved"><span class="skeleton skeleton-card-value"></span></h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-sm flex-shrink-0">
+                        <span class="avatar-title bg-danger-subtle text-danger rounded-circle fs-3"><i class="ri-close-circle-line"></i></span>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <p class="text-uppercase fw-medium text-muted mb-0">Reddedilen</p>
+                        <h4 class="fs-22 fw-semibold mb-0" id="cntRejected"><span class="skeleton skeleton-card-value"></span></h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tablo -->
+<div class="card">
+    <div class="card-header d-flex align-items-center flex-wrap gap-2">
+        <h5 class="card-title mb-0 flex-grow-1"><i class="ri-list-check me-2 text-primary"></i>Çekim Talepleri</h5>
+        <div class="d-flex gap-2 flex-wrap">
+            <select class="form-select form-select-sm" id="filter-period" style="width:130px;" onchange="renderTable()">
+                <option value="">Tüm Zamanlar</option>
+                <option value="today">Bugün</option>
+                <option value="week">Bu Hafta</option>
+                <option value="month">Bu Ay</option>
+                <option value="year">Bu Yıl</option>
+            </select>
+            <select class="form-select form-select-sm" id="filter-status" style="width:140px;" onchange="renderTable()">
+                <option value="">Tüm Durumlar</option>
+                <option value="0">Link Oluşturuldu</option>
+                <option value="1">Onay Bekliyor</option>
+                <option value="2">Onaylandı</option>
+                <option value="3">Reddedildi</option>
+            </select>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="withdrawalTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Kod</th>
+                        <th>Kategori</th>
+                        <th>Oluşturan</th>
+                        <th>Müşteri</th>
+                        <th>Tutar</th>
+                        <th>Yöntem</th>
+                        <th>Durum</th>
+                        <th>Tarih</th>
+                        <th>İşlem</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    @for (int i = 0; i < 5; i++)
+                    {
+                    <tr class="skeleton-row">
+                        <td><div class="skeleton skeleton-text" style="width:25px;"></div></td>
+                        <td><div class="skeleton skeleton-text-sm" style="width:100px;"></div></td>
+                        <td><div class="skeleton skeleton-badge"></div></td>
+                        <td><div class="skeleton skeleton-text" style="width:90px;"></div></td>
+                        <td><div class="skeleton skeleton-text" style="width:80px;"></div></td>
+                        <td><div class="skeleton skeleton-text" style="width:60px;"></div></td>
+                        <td><div class="skeleton skeleton-text-sm" style="width:70px;"></div></td>
+                        <td><div class="skeleton skeleton-badge"></div></td>
+                        <td><div class="skeleton skeleton-text-sm" style="width:70px;"></div></td>
+                        <td><div class="d-flex gap-1"><div class="skeleton skeleton-btn" style="width:28px;"></div></div></td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let allData = [];
+
+function getDateRange(period) {
+    const now = new Date();
+    const start = new Date(now);
+    if (period === 'today') { start.setHours(0,0,0,0); }
+    else if (period === 'week') { start.setDate(now.getDate() - now.getDay()); start.setHours(0,0,0,0); }
+    else if (period === 'month') { start.setDate(1); start.setHours(0,0,0,0); }
+    else if (period === 'year') { start.setMonth(0,1); start.setHours(0,0,0,0); }
+    else return null;
+    return start;
+}
+
+const categoryLabels = {
+    1: 'Maaş', 2: 'Sunucu Ödemesi', 3: 'Avans', 4: 'Bayi Ödemesi', 5: 'Diğer'
+};
+const categoryColors = {
+    1: 'bg-primary', 2: 'bg-info', 3: 'bg-warning', 4: 'bg-secondary', 5: 'bg-dark'
+};
+
+async function loadData() {
+    try {
+        const res = await fetch('/api/withdrawal-requests');
+        if (!res.ok) return;
+        allData = await res.json();
+        updateSummary();
+        renderTable();
+    } catch(e) { console.error(e); }
+}
+
+function updateSummary() {
+    document.getElementById('cntCreated').textContent = allData.filter(w => w.statusId === 0).length;
+    document.getElementById('cntPending').textContent = allData.filter(w => w.statusId === 1).length;
+    document.getElementById('cntApproved').textContent = allData.filter(w => w.statusId === 2).length;
+    document.getElementById('cntRejected').textContent = allData.filter(w => w.statusId === 3).length;
+}
+
+function getCurrSym(c) {
+    return currencySymbol(c);
+}
+function cvt(amount, srcCurrency) {
+    if (window.CurrencyConverter?.convertFromSource) return window.CurrencyConverter.convertFromSource(amount, srcCurrency);
+    return amount;
+}
+
+function statusBadge(statusId, status) {
+    const map = {
+        0: 'bg-info',
+        1: 'bg-warning',
+        2: 'bg-success',
+        3: 'bg-danger'
+    };
+    const labels = {
+        0: 'Link Oluşturuldu',
+        1: 'Onay Bekliyor',
+        2: 'Onaylandı',
+        3: 'Reddedildi'
+    };
+    return `<span class="badge ${map[statusId] || 'bg-secondary'}">${labels[statusId] || status}</span>`;
+}
+
+function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    const period = document.getElementById('filter-period')?.value || '';
+    const statusFilter = document.getElementById('filter-status')?.value || '';
+    let filtered = [...allData];
+    const rangeStart = getDateRange(period);
+    if (rangeStart) {
+        filtered = filtered.filter(w => new Date(w.requestDate) >= rangeStart);
+    }
+    if (statusFilter !== '') {
+        filtered = filtered.filter(w => String(w.statusId) === statusFilter);
+    }
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">Henüz çekim talebi yok.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = filtered.map(w => {
+        const d = new Date(w.requestDate).toLocaleDateString('tr-TR');
+        const method = w.paymentMethod ? (w.paymentMethod + (w.cryptoNetwork ? ` (${w.cryptoNetwork})` : '')) : '-';
+        const catLabel = categoryLabels[w.categoryId] || w.category || '-';
+        const catColor = categoryColors[w.categoryId] || 'bg-secondary';
+
+        let actions = '';
+        if (w.statusId === 0) {
+            actions = `<button class="btn btn-sm btn-soft-info me-1" onclick="copyExistingLink('${w.token}')"><i class="ri-file-copy-line"></i></button>
+                       <button class="btn btn-sm btn-soft-danger" onclick="deleteRequest(${w.id})" title="Sil"><i class="ri-delete-bin-line"></i></button>`;
+        } else if (w.statusId === 1) {
+            actions = `
+                <button class="btn btn-sm btn-soft-info me-1" onclick="showDetail(${w.id})" title="Detay"><i class="ri-eye-line"></i></button>
+                <button class="btn btn-sm btn-soft-success me-1" onclick="showAction(${w.id},'approve')"><i class="ri-check-line"></i></button>
+                <button class="btn btn-sm btn-soft-danger me-1" onclick="showAction(${w.id},'reject')"><i class="ri-close-line"></i></button>
+                <button class="btn btn-sm btn-soft-danger" onclick="deleteRequest(${w.id})" title="Sil"><i class="ri-delete-bin-line"></i></button>`;
+        } else {
+            actions = `<button class="btn btn-sm btn-soft-info me-1" onclick="showDetail(${w.id})" title="Detay"><i class="ri-eye-line"></i></button>
+                       <button class="btn btn-sm btn-soft-danger" onclick="deleteRequest(${w.id})" title="Sil"><i class="ri-delete-bin-line"></i></button>`;
+        }
+
+        return `<tr>
+            <td>${w.id}</td>
+            <td><code class="text-dark">${w.requestCode || '-'}</code></td>
+            <td><span class="badge ${catColor}">${catLabel}</span></td>
+            <td>${w.createdByAdminName || '-'}</td>
+            <td>${w.customerName || '<span class="text-muted fst-italic">Bekleniyor</span>'}</td>
+            <td>${w.amount ? (window.CurrencyConverter?.getCurrentSymbol() || '€') + ' ' + cvt(Number(w.amount), w.currency || 'USD').toLocaleString('tr-TR', {minimumFractionDigits:2}) : '-'}</td>
+            <td>${method}</td>
+            <td>${statusBadge(w.statusId, w.status)}</td>
+            <td>${d}</td>
+            <td>${actions}</td>
+        </tr>`;
+    }).join('');
+}
+
+function copyExistingLink(token) {
+    const link = `${location.origin}/secure-request/${token}`;
+    navigator.clipboard.writeText(link).then(() => {
+        Toastify && Toastify({ text: "Link kopyalandı!", duration: 2000, gravity: "top", position: "right",
+            style: { background: "linear-gradient(to right, #00b09b, #96c93d)" } }).showToast();
+    });
+}
+
+// Link oluştur — önce kategori seç modalı
+document.getElementById('btnCreateLink').addEventListener('click', () => {
+    document.getElementById('createCategory').value = '5';
+    document.getElementById('createError').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('createModal')).show();
+});
+
+document.getElementById('btnDoCreate').addEventListener('click', async () => {
+    const cat = document.getElementById('createCategory').value;
+    const errEl = document.getElementById('createError');
+    const btn = document.getElementById('btnDoCreate');
+    btn.disabled = true;
+    errEl.classList.add('d-none');
+    try {
+        const res = await fetch(`/api/withdrawal-requests/create-link?category=${cat}`, { method: 'POST' });
+        if (!res.ok) { errEl.textContent = 'Link oluşturulamadı.'; errEl.classList.remove('d-none'); btn.disabled = false; return; }
+        const data = await res.json();
+        bootstrap.Modal.getInstance(document.getElementById('createModal'))?.hide();
+        document.getElementById('generatedLink').value = data.link;
+        document.getElementById('copySuccess').classList.add('d-none');
+        new bootstrap.Modal(document.getElementById('linkModal')).show();
+        loadData();
+    } catch(e) { errEl.textContent = 'Hata: ' + e.message; errEl.classList.remove('d-none'); }
+    btn.disabled = false;
+});
+
+document.getElementById('btnCopyLink').addEventListener('click', () => {
+    const input = document.getElementById('generatedLink');
+    navigator.clipboard.writeText(input.value).then(() => {
+        document.getElementById('copySuccess').classList.remove('d-none');
+    });
+});
+
+// Onay/Red
+let actionId = null, actionType = null;
+function showAction(id, type) {
+    actionId = id;
+    actionType = type;
+    const modal = document.getElementById('actionModal');
+    const title = document.getElementById('actionModalTitle');
+    const body = document.getElementById('actionModalBody');
+    const btn = document.getElementById('actionModalBtn');
+    const noteGroup = document.getElementById('rejectNoteGroup');
+
+    btn.style.display = '';
+    if (type === 'approve') {
+        title.textContent = 'Çekim Talebi Onayla';
+        body.innerHTML = '<p>Bu çekim talebini onaylamak istediğinize emin misiniz? Tutar gider olarak işlenecek ve Net Kasa\'dan düşülecektir.</p>';
+        btn.className = 'btn btn-success';
+        btn.textContent = 'Onayla';
+        noteGroup.classList.add('d-none');
+    } else {
+        title.textContent = 'Çekim Talebi Reddet';
+        body.innerHTML = '<p>Bu çekim talebini reddetmek istediğinize emin misiniz?</p>';
+        btn.className = 'btn btn-danger';
+        btn.textContent = 'Reddet';
+        noteGroup.classList.remove('d-none');
+        document.getElementById('rejectNote').value = '';
+    }
+    new bootstrap.Modal(modal).show();
+}
+
+document.getElementById('actionModalBtn').addEventListener('click', async () => {
+    if (!actionId) return;
+    const btn = document.getElementById('actionModalBtn');
+    btn.disabled = true;
+
+    try {
+        let url, body;
+        if (actionType === 'approve') {
+            url = `/api/withdrawal-requests/${actionId}/approve`;
+            body = null;
+        } else {
+            url = `/api/withdrawal-requests/${actionId}/reject`;
+            body = JSON.stringify({ note: document.getElementById('rejectNote').value });
+        }
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            alert(err.title || 'İşlem başarısız.');
+        } else {
+            bootstrap.Modal.getInstance(document.getElementById('actionModal')).hide();
+            loadData();
+        }
+    } catch(e) { alert('Hata: ' + e.message); }
+    btn.disabled = false;
+});
+
+// Detay modal
+function showDetail(id) {
+    const w = allData.find(x => x.id === id);
+    if (!w) return;
+    const catLabel = categoryLabels[w.categoryId] || w.category || '-';
+    const catColor = categoryColors[w.categoryId] || 'bg-secondary';
+    const method = w.paymentMethod ? (w.paymentMethod + (w.cryptoNetwork ? ` (${w.cryptoNetwork})` : '')) : '-';
+    const addr = w.walletAddressOrIban || '-';
+
+    let html = `
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="card border mb-0">
+                    <div class="card-header bg-light py-2"><h6 class="mb-0">Talep Bilgileri</h6></div>
+                    <div class="card-body">
+                        <p class="mb-1"><strong>Talep Kodu:</strong> <code>${w.requestCode || '-'}</code></p>
+                        <p class="mb-1"><strong>Kategori:</strong> <span class="badge ${catColor}">${catLabel}</span></p>
+                        <p class="mb-1"><strong>Oluşturan:</strong> ${w.createdByAdminName || '-'}</p>
+                        <p class="mb-1"><strong>Tarih:</strong> ${new Date(w.requestDate).toLocaleString('tr-TR')}</p>
+                        <p class="mb-0"><strong>Durum:</strong> ${statusBadge(w.statusId, w.status)}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border mb-0">
+                    <div class="card-header bg-warning-subtle py-2"><h6 class="mb-0">Müşteri Bilgileri</h6></div>
+                    <div class="card-body">
+                        <p class="mb-1"><strong>Ad Soyad:</strong> ${w.customerName || '<em class="text-muted">Henüz doldurulmadı</em>'}</p>
+                        <p class="mb-1"><strong>Şirket:</strong> ${w.companyName || '-'}</p>
+                        <p class="mb-1"><strong>Tutar:</strong> ${w.amount ? (window.CurrencyConverter?.getCurrentSymbol() || '€') + ' ' + cvt(Number(w.amount), w.currency || 'USD').toLocaleString('tr-TR', {minimumFractionDigits:2}) : '-'}</p>
+                        <p class="mb-1"><strong>Yöntem:</strong> ${method}</p>
+                        <p class="mb-0"><strong>Adres/IBAN:</strong> <small class="text-break">${addr}</small></p>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+    if (w.customerNote) {
+        html += `<div class="card border mt-3"><div class="card-header bg-info-subtle py-2"><h6 class="mb-0"><i class="ri-chat-3-line me-1"></i>Müşteri Notu</h6></div>
+            <div class="card-body"><p class="mb-0">${w.customerNote}</p></div></div>`;
+    }
+    if (w.adminNote) {
+        html += `<div class="card border mt-3"><div class="card-header bg-danger-subtle py-2"><h6 class="mb-0"><i class="ri-admin-line me-1"></i>Admin Notu</h6></div>
+            <div class="card-body"><p class="mb-0 text-danger">${w.adminNote}</p></div></div>`;
+    }
+    if (w.reviewedBy) {
+        html += `<div class="mt-2 text-muted"><small>İşlem Yapan: ${w.reviewedBy} — ${w.reviewedDate ? new Date(w.reviewedDate).toLocaleString('tr-TR') : ''}</small></div>`;
+    }
+
+    document.getElementById('actionModalBody').innerHTML = html;
+    document.getElementById('actionModalTitle').textContent = 'Talep Detayı #' + w.id;
+    document.getElementById('actionModalBtn').style.display = 'none';
+    document.getElementById('rejectNoteGroup').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('actionModal')).show();
+}
+
+async function deleteRequest(id) {
+    const ok = confirm('Bu çekim talebini silmek istediğinize emin misiniz?');
+    if (!ok) return;
+    try {
+        const res = await fetch(`/api/withdrawal-requests/${id}`, { method: 'DELETE' });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            alert(err.title || 'Silme başarısız.');
+            return;
+        }
+        loadData();
+    } catch(e) { alert('Hata: ' + e.message); }
+}
+
+loadData();
+document.addEventListener('currencyChanged', () => { renderTable(); updateSummary(); });
+</script>
+}

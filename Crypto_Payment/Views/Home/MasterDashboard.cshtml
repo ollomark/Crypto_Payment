@@ -1,0 +1,621 @@
+@model Crypto_Payment.ViewModels.MasterDashboardViewModel
+@using System.Globalization
+@{
+    ViewData["Title"] = "Dashboard";
+    var tr = new CultureInfo("tr-TR");
+    string F(decimal v) => v.ToString("N2", tr);
+    string[] monthNames = { "", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık" };
+    string Sym(string c) => c switch { "USD" => "$", "EUR" or "EURO" => "€", "TRY" or "TL" => "₺", _ => c };
+}
+
+<div class="container-fluid">
+
+    <!-- Başlık + Ay Seçici -->
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+                <h4 class="mb-sm-0">Dashboard</h4>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-outline-primary" onclick="changeMonth(-1)"><i class="ri-arrow-left-s-line"></i></button>
+                    <span class="fw-semibold fs-14" id="dash-month-label">@monthNames[Model.CurrentMonth] @Model.CurrentYear</span>
+                    <button class="btn btn-sm btn-outline-primary" onclick="changeMonth(1)"><i class="ri-arrow-right-s-line"></i></button>
+                    <button class="btn btn-sm btn-soft-primary ms-1" onclick="goToCurrentMonth()">Bu Ay</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ana Finansal Kartlar: Giren / Çıkan / Bekleyen -->
+    <div class="row">
+        <!-- Giren (Tahsilat) -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate overflow-hidden">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-success mb-0">Giren (Tahsilat)</p></div>
+                        <div class="flex-shrink-0"><span class="badge bg-success-subtle text-success" id="dash-paid-count-badge">@Model.PaidCount Adet</span></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div>
+                            <h4 class="fs-22 fw-semibold ff-secondary mb-2 text-success" id="dash-paid-amount">€ @F(Model.PaidAmount)</h4>
+                            <div class="d-flex align-items-center gap-1">
+                                <div class="progress flex-grow-1" style="height:5px;width:70px;">
+                                    <div class="progress-bar bg-success" id="dash-collection-bar" style="width:@Model.CollectionRate%"></div>
+                                </div>
+                                <small class="text-success fw-medium" id="dash-collection-rate">%@Model.CollectionRate.ToString("0.#")</small>
+                            </div>
+                        </div>
+                        <div class="avatar-sm flex-shrink-0">
+                            <span class="avatar-title bg-success-subtle rounded fs-3"><i class="ri-arrow-up-circle-line text-success"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress" style="height:3px;border-radius:0;">
+                    <div class="progress-bar bg-success" style="width:@Model.CollectionRate%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Çıkan (Gider) -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate overflow-hidden">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-danger mb-0">Çıkan (Gider)</p></div>
+                        <div class="flex-shrink-0"><span class="badge bg-danger-subtle text-danger">Onaylanan</span></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div>
+                            <h4 class="fs-22 fw-semibold ff-secondary mb-2 text-danger" id="dash-expenses">€ @F(Model.TotalExpenses)</h4>
+                            <a href="/expenses" class="text-decoration-underline text-muted fs-12">Detay</a>
+                        </div>
+                        <div class="avatar-sm flex-shrink-0">
+                            <span class="avatar-title bg-danger-subtle rounded fs-3"><i class="ri-arrow-down-circle-line text-danger"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress" style="height:3px;border-radius:0;">
+                    <div class="progress-bar bg-danger" style="width:100%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bekleyen -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate overflow-hidden">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-warning mb-0">Bekleyen</p></div>
+                        <div class="flex-shrink-0"><span class="badge bg-warning-subtle text-warning" id="dash-pending-count-badge">@Model.PendingCount Adet</span></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div>
+                            <h4 class="fs-22 fw-semibold ff-secondary mb-2 text-warning" id="dash-pending-amount">€ @F(Model.PendingAmount)</h4>
+                            @if (Model.OverdueCount > 0)
+                            {
+                            <small class="text-danger" id="dash-overdue-info"><i class="ri-error-warning-fill me-1"></i><span id="dash-overdue-count-inline">@Model.OverdueCount</span> gecikmiş</small>
+                            }
+                            else
+                            {
+                            <small class="text-muted" id="dash-overdue-info" style="display:none;"><i class="ri-error-warning-fill me-1"></i><span id="dash-overdue-count-inline">0</span> gecikmiş</small>
+                            }
+                        </div>
+                        <div class="avatar-sm flex-shrink-0">
+                            <span class="avatar-title bg-warning-subtle rounded fs-3"><i class="ri-time-line text-warning"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress" style="height:3px;border-radius:0;">
+                    <div class="progress-bar bg-warning" style="width:@(Model.TotalInvoices > 0 ? (int)((double)Model.PendingCount / Model.TotalInvoices * 100) : 0)%"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Orta Bölüm: Bugün Ödemesi Olanlar + Bekleyen Talepler -->
+    <div class="row">
+        <!-- Bugün Ödemesi Olan Müşteriler -->
+        <div class="col-xl-6">
+            <div class="card">
+                <div class="card-header align-items-center d-flex">
+                    <h4 class="card-title mb-0 flex-grow-1">
+                        <i class="ri-calendar-todo-line me-2 text-primary"></i>Bugün Ödemesi Olan Müşteriler
+                        <span class="badge bg-primary-subtle text-primary ms-2">@DateTime.UtcNow.Day @monthNames[DateTime.UtcNow.Month]</span>
+                    </h4>
+                </div>
+                <div class="card-body" style="min-height:220px;">
+                    @if (Model.TodayDueInvoices.Any())
+                    {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-centered align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Müşteri</th>
+                                    <th>Fatura</th>
+                                    <th>Tutar</th>
+                                    <th>Durum</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var due in Model.TodayDueInvoices)
+                                {
+                                <tr>
+                                    <td><span class="fw-medium">@due.CustomerName</span></td>
+                                    <td class="text-muted">@due.OrderName</td>
+                                    <td><span class="fw-semibold">@F(due.Amount) @Sym(due.Currency)</span></td>
+                                    <td>
+                                        @if (due.IsPaidThisMonth)
+                                        {
+                                        <span class="badge bg-success-subtle text-success"><i class="ri-checkbox-circle-fill me-1"></i>Ödendi</span>
+                                        }
+                                        else
+                                        {
+                                        <span class="badge bg-warning-subtle text-warning"><i class="ri-time-line me-1"></i>Bekliyor</span>
+                                        }
+                                    </td>
+                                    <td><a href="/invoices/invoice-detail/@due.InvoiceId" class="btn btn-sm btn-soft-primary"><i class="ri-eye-line"></i></a></td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    }
+                    else
+                    {
+                    <div class="text-center py-5 text-muted">
+                        <i class="ri-checkbox-circle-line fs-1 d-block mb-2 text-success"></i>
+                        <p class="mb-0">Bugün vadesi gelen fatura bulunmuyor.</p>
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Bekleyen Talepler -->
+        <div class="col-xl-6">
+            <div class="card">
+                <div class="card-header align-items-center d-flex">
+                    <h4 class="card-title mb-0 flex-grow-1">
+                        <i class="ri-shield-check-line me-2 text-warning"></i>Bekleyen Talepler
+                    </h4>
+                    <div class="flex-shrink-0 d-flex gap-2">
+                        @if (Model.PendingExpenseCount > 0)
+                        {
+                        <a href="/expenses" class="btn btn-sm btn-soft-danger">
+                            <i class="ri-money-dollar-circle-line me-1"></i>@Model.PendingExpenseCount Gider Talebi
+                        </a>
+                        }
+                        <a href="/approvals" class="btn btn-sm btn-soft-warning">Tümünü Gör</a>
+                    </div>
+                </div>
+                <div class="card-body" style="min-height:220px;">
+                    @if (Model.PendingApprovals.Any())
+                    {
+                    <div class="vstack gap-3">
+                        @foreach (var req in Model.PendingApprovals.Take(5))
+                        {
+                        var typeLabel = req.RequestType switch {
+                            "InvoiceDelete" => "Fatura Silme",
+                            "InvoiceStatusChange" => "Durum Değişimi",
+                            "InvoiceEdit" => "Fatura Düzenleme",
+                            "ManualPayment" => "Manuel Ödeme",
+                            _ => req.RequestType
+                        };
+                        var typeColor = req.RequestType switch {
+                            "InvoiceDelete" => "danger",
+                            "ManualPayment" => "info",
+                            "InvoiceStatusChange" => "primary",
+                            _ => "warning"
+                        };
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="flex-shrink-0">
+                                <div class="avatar-xs"><span class="avatar-title bg-@(typeColor)-subtle rounded-circle"><i class="ri-checkbox-circle-line text-@typeColor"></i></span></div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0 fs-13">@req.Description</h6>
+                                <small class="text-muted">@req.RequestedByName — @req.CreatedDate.ToString("dd MMM HH:mm", tr)</small>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <span class="badge bg-@(typeColor)-subtle text-@typeColor">@typeLabel</span>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                    }
+                    else
+                    {
+                    <div class="text-center py-5 text-muted">
+                        <i class="ri-checkbox-circle-line fs-1 d-block mb-2 text-success"></i>
+                        <p class="mb-0">Bekleyen talep bulunmuyor.</p>
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detay Satırı: Fatura / Gecikmiş / Yaklaşan / Müşteri -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Aylık Fatura</p></div>
+                        <div class="flex-shrink-0"><span class="badge bg-info-subtle text-info" id="dash-recurring-badge">@Model.RecurringCount yinelenen</span></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div>
+                            <h4 class="fs-22 fw-semibold ff-secondary mb-2" id="dash-total-invoices">@Model.TotalInvoices</h4>
+                            <small class="text-muted" id="dash-total-amount">€ @F(Model.TotalAmount)</small>
+                        </div>
+                        <div class="avatar-sm"><span class="avatar-title bg-primary-subtle rounded fs-3"><i class="ri-file-list-3-line text-primary"></i></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Gecikmiş</p></div>
+                        <div class="flex-shrink-0"><span class="badge bg-danger-subtle text-danger" id="dash-overdue-count-badge">@Model.OverdueCount Adet</span></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div>
+                            <h4 class="fs-22 fw-semibold ff-secondary mb-2 text-danger" id="dash-overdue-amount">€ @F(Model.OverdueAmount)</h4>
+                            <a href="/invoices" class="text-decoration-underline text-muted fs-12">Görüntüle</a>
+                        </div>
+                        <div class="avatar-sm"><span class="avatar-title bg-danger-subtle rounded fs-3"><i class="ri-error-warning-line text-danger"></i></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">7 Gün İçinde</p></div>
+                        <div class="flex-shrink-0"><span class="badge bg-info-subtle text-info" id="dash-upcoming-badge">@Model.UpcomingCount Adet</span></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div>
+                            <h4 class="fs-22 fw-semibold ff-secondary mb-2 text-info" id="dash-upcoming-amount">€ @F(Model.UpcomingAmount)</h4>
+                            <small class="text-muted">Yaklaşan tahsilat</small>
+                        </div>
+                        <div class="avatar-sm"><span class="avatar-title bg-info-subtle rounded fs-3"><i class="ri-alarm-line text-info"></i></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card card-animate">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1"><p class="text-uppercase fw-medium text-muted mb-0">Toplam Müşteri</p></div>
+                    </div>
+                    <div class="d-flex align-items-end justify-content-between mt-4">
+                        <div>
+                            <h4 class="fs-22 fw-semibold ff-secondary mb-2">@Model.TotalCustomers</h4>
+                            <a href="/customers" class="text-decoration-underline text-muted fs-12">Müşterileri Gör</a>
+                        </div>
+                        <div class="avatar-sm"><span class="avatar-title bg-secondary-subtle rounded fs-3"><i class="ri-team-line text-secondary"></i></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grafik -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header align-items-center d-flex">
+                    <h4 class="card-title mb-0 flex-grow-1"><i class="ri-line-chart-line me-2 text-primary"></i>Finansal Akış</h4>
+                    <div class="flex-shrink-0">
+                        <div class="btn-group btn-group-sm">
+                            <button type="button" class="btn btn-primary active" id="chart-12months">12 Ay</button>
+                            <button type="button" class="btn btn-outline-primary" id="chart-30days">30 Gün</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="financial-chart-loading"><div class="skeleton skeleton-chart w-100"></div></div>
+                    <div id="financial-chart" style="min-height:300px;display:none;"></div>
+                    <div id="financial-chart-empty" class="text-center py-5 text-muted" style="display:none;">
+                        <i class="ri-bar-chart-line fs-2 d-block mb-2"></i>Henüz gösterilecek veri yok.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Son Faturalar -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header align-items-center d-flex">
+                    <h4 class="card-title mb-0 flex-grow-1">Son Faturalar</h4>
+                    <div class="flex-shrink-0">
+                        <a href="/invoices" class="btn btn-soft-primary btn-sm">Tümünü Gör <i class="ri-arrow-right-line align-middle"></i></a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive table-card">
+                        <table class="table table-hover table-centered align-middle mb-0">
+                            <thead class="text-muted table-light">
+                                <tr>
+                                    <th>Müşteri</th>
+                                    <th>Fatura</th>
+                                    <th>Tür</th>
+                                    <th>Tutar</th>
+                                    <th>Durum</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.RecentInvoices.Any())
+                                {
+                                    foreach (var inv in Model.RecentInvoices)
+                                    {
+                                        var sClass = inv.Status switch { "completed" or "mismatch" => "success", "pending" or "new" => "warning", "expired" => "danger", "cancelled" => "secondary", _ => "info" };
+                                        var sText = inv.Status switch { "completed" => "Ödendi", "mismatch" => "Fazla Ödendi", "pending" or "new" => "Bekliyor", "expired" => "Süresi Doldu", "cancelled" => "İptal", _ => "Bekliyor" };
+                                        var cName = inv.Customer?.CompanyName ?? (inv.Customer != null ? $"{inv.Customer.FirstName} {inv.Customer.LastName}" : inv.Email);
+                                        <tr>
+                                            <td><span class="fw-medium">@cName</span></td>
+                                            <td class="text-muted">@inv.OrderName</td>
+                                            <td>
+                                                @if (inv.IsRecurring) { <span class="badge bg-success-subtle text-success"><i class="ri-repeat-line me-1"></i>Yinelenen</span> }
+                                                else { <span class="badge bg-light text-muted">Tek Seferlik</span> }
+                                            </td>
+                                            <td><span class="fw-semibold currency-display" data-base-amount="@inv.SourceAmount" data-source-currency="@inv.SourceCurrency">@F(inv.SourceAmount) @Sym(inv.SourceCurrency)</span></td>
+                                            <td><span class="badge bg-@(sClass)-subtle text-@sClass">@sText</span></td>
+                                            <td><a href="/invoices/invoice-detail/@inv.Id" class="btn btn-sm btn-soft-primary"><i class="ri-eye-line"></i></a></td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr><td colspan="6" class="text-center text-muted py-4">Henüz fatura bulunmuyor.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hızlı İşlemler -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card"><div class="card-body text-center">
+                <div class="avatar-md mx-auto mb-3"><span class="avatar-title bg-primary-subtle rounded-circle fs-1"><i class="ri-user-add-line text-primary"></i></span></div>
+                <h5 class="card-title">Yeni Müşteri</h5>
+                <p class="text-muted mb-3">Sisteme yeni müşteri ekleyin</p>
+                <a href="/customers" class="btn btn-primary btn-sm">Müşteri Ekle</a>
+            </div></div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card"><div class="card-body text-center">
+                <div class="avatar-md mx-auto mb-3"><span class="avatar-title bg-success-subtle rounded-circle fs-1"><i class="ri-file-add-line text-success"></i></span></div>
+                <h5 class="card-title">Yeni Fatura</h5>
+                <p class="text-muted mb-3">Crypto ödeme faturası oluşturun</p>
+                <a href="/invoices/invoice-add" class="btn btn-success btn-sm">Fatura Oluştur</a>
+            </div></div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card"><div class="card-body text-center">
+                <div class="avatar-md mx-auto mb-3"><span class="avatar-title bg-warning-subtle rounded-circle fs-1"><i class="ri-shield-check-line text-warning"></i></span></div>
+                <h5 class="card-title">Onay Bekleyenler</h5>
+                <p class="text-muted mb-3">Bekleyen işlemleri onaylayın</p>
+                <a href="/approvals" class="btn btn-warning btn-sm">Onayları Gör</a>
+            </div></div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card"><div class="card-body text-center">
+                <div class="avatar-md mx-auto mb-3"><span class="avatar-title bg-info-subtle rounded-circle fs-1"><i class="ri-bar-chart-2-line text-info"></i></span></div>
+                <h5 class="card-title">Finans Raporu</h5>
+                <p class="text-muted mb-3">Gelir/gider raporlarını görüntüleyin</p>
+                <a href="/finance/report" class="btn btn-info btn-sm">Raporu Gör</a>
+            </div></div>
+        </div>
+    </div>
+
+    <!-- Gecikmiş Faturalar (en altta) -->
+    <div class="row" id="overdue-section">
+        <div class="col-12">
+            <div class="card border-danger-subtle">
+                <div class="card-header bg-danger-subtle align-items-center d-flex">
+                    <h4 class="card-title mb-0 flex-grow-1">
+                        <i class="ri-error-warning-fill me-2 text-danger"></i>Gecikmiş Faturalar
+                        <span class="badge bg-danger ms-2" id="overdue-badge">0</span>
+                    </h4>
+                    <a href="/invoices" class="btn btn-sm btn-outline-danger">Tümünü Gör</a>
+                </div>
+                <div class="card-body" id="overdue-body" style="min-height:120px;">
+                    <div class="text-center py-4 text-muted" id="overdue-empty">
+                        <i class="ri-checkbox-circle-line fs-2 d-block mb-2 text-success"></i>
+                        <p class="mb-0">Gecikmiş fatura bulunmuyor.</p>
+                    </div>
+                    <div class="table-responsive d-none" id="overdue-table-wrap">
+                        <table class="table table-hover table-centered align-middle mb-0">
+                            <thead class="table-light">
+                                <tr><th>Müşteri</th><th>Fatura</th><th>Tutar</th><th></th></tr>
+                            </thead>
+                            <tbody id="overdue-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.2/dist/apexcharts.min.js"></script>
+<script>
+const MONTH_NAMES = ['','Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+let dashYear = @Model.CurrentYear;
+let dashMonth = @Model.CurrentMonth;
+
+function updateMonthLabel() {
+    document.getElementById('dash-month-label').textContent = MONTH_NAMES[dashMonth] + ' ' + dashYear;
+}
+
+function changeMonth(dir) {
+    dashMonth += dir;
+    if (dashMonth > 12) { dashMonth = 1; dashYear++; }
+    if (dashMonth < 1)  { dashMonth = 12; dashYear--; }
+    updateMonthLabel();
+    loadMonthlyStats();
+}
+
+function goToCurrentMonth() {
+    const now = new Date();
+    dashYear = now.getFullYear();
+    dashMonth = now.getMonth() + 1;
+    updateMonthLabel();
+    loadMonthlyStats();
+}
+
+async function loadMonthlyStats() {
+    try {
+        const res = await fetch(`/api/stats/monthly?year=${dashYear}&month=${dashMonth}`);
+        if (!res.ok) return;
+        const d = await res.json();
+        const sym = window.CurrencyConverter?.getCurrentSymbol() || '€';
+        const rate = window.CurrencyConverter?.getCurrentRate() || 1;
+        const fmt = v => sym + ' ' + (v * rate).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+        set('dash-paid-amount', fmt(d.paidAmount));
+        set('dash-paid-count-badge', d.paidCount + ' Adet');
+        set('dash-collection-rate', '%' + (d.collectionRate || 0).toFixed(1));
+        const bar = document.getElementById('dash-collection-bar');
+        if (bar) bar.style.width = (d.collectionRate || 0) + '%';
+
+        set('dash-expenses', fmt(d.netKasaGider ?? d.totalExpenses));
+        set('dash-pending-amount', fmt(d.pendingAmount));
+        set('dash-pending-count-badge', d.pendingCount + ' Adet');
+
+        const overdueInfo = document.getElementById('dash-overdue-info');
+        if (overdueInfo) {
+            if (d.overdueCount > 0) {
+                overdueInfo.style.display = '';
+                overdueInfo.className = 'text-danger';
+                set('dash-overdue-count-inline', d.overdueCount);
+            } else { overdueInfo.style.display = 'none'; }
+        }
+
+        set('dash-total-invoices', d.totalInvoices);
+        set('dash-total-amount', fmt(d.totalAmount));
+        set('dash-recurring-badge', d.recurringCount + ' yinelenen');
+        set('dash-overdue-amount', fmt(d.overdueAmount));
+        set('dash-overdue-count-badge', d.overdueCount + ' Adet');
+        set('dash-upcoming-amount', fmt(d.upcomingAmount));
+        set('dash-upcoming-badge', d.upcomingCount + ' Adet');
+
+        loadOverdueInvoices();
+    } catch(e) { console.error('Stats yüklenemedi:', e); }
+}
+
+async function loadOverdueInvoices() {
+    const empty = document.getElementById('overdue-empty');
+    const wrap = document.getElementById('overdue-table-wrap');
+    const tbody = document.getElementById('overdue-table-body');
+    const badge = document.getElementById('overdue-badge');
+    if (!empty || !wrap || !tbody) return;
+    try {
+        const res = await fetch(`/api/stats/overdue-invoices?year=${dashYear}&month=${dashMonth}`);
+        if (!res.ok) return;
+        const list = await res.json();
+        badge.textContent = list.length;
+        document.getElementById('overdue-section').style.display = list.length > 0 ? '' : 'none';
+        if (list.length === 0) {
+            empty.classList.remove('d-none'); wrap.classList.add('d-none');
+            return;
+        }
+        empty.classList.add('d-none'); wrap.classList.remove('d-none');
+        const sym = window.CurrencyConverter?.getCurrentSymbol() || '€';
+        const rate = window.CurrencyConverter?.getCurrentRate() || 1;
+        const fmt = v => sym + ' ' + (parseFloat(v) * rate).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        tbody.innerHTML = list.map(o => `<tr>
+            <td><span class="fw-medium">${o.customerName || '—'}</span></td>
+            <td class="text-muted">${o.orderName || '—'}</td>
+            <td><span class="fw-semibold text-danger">${fmt(o.amount)}</span></td>
+            <td><a href="/invoices/invoice-detail/${o.invoiceId}" class="btn btn-sm btn-soft-primary"><i class="ri-eye-line"></i></a></td>
+        </tr>`).join('');
+    } catch(e) {}
+}
+
+let financialChart = null;
+let _chartPeriod = '12months';
+
+async function loadFinancialChart(period) {
+    const loading = document.getElementById('financial-chart-loading');
+    const chartEl = document.getElementById('financial-chart');
+    const empty   = document.getElementById('financial-chart-empty');
+    if (loading) loading.style.display = '';
+    if (chartEl) chartEl.style.display = 'none';
+    if (empty)   empty.style.display = 'none';
+    try {
+        const res = await fetch(`/api/stats/financial-chart?period=${period}`);
+        if (!res.ok) { if (loading) loading.style.display='none'; if (empty) empty.style.display=''; return; }
+        const data = await res.json();
+        const allZero = [...(data.income||[]),...(data.expense||[])].every(v => v===0||v==='0');
+        if (allZero || !data.labels?.length) { if (loading) loading.style.display='none'; if (empty) empty.style.display=''; return; }
+        if (loading) loading.style.display='none';
+        if (chartEl) chartEl.style.display='';
+        const sym = window.CurrencyConverter?.getCurrentSymbol() || '€';
+        const rate = window.CurrencyConverter?.getCurrentRate() || 1;
+        const opts = {
+            chart: { type:'area', height:300, toolbar:{show:false}, animations:{enabled:true,speed:600} },
+            series: [
+                { name:'Gelir ('+sym+')', data: data.income.map(v => parseFloat((v*rate).toFixed(2))) },
+                { name:'Gider ('+sym+')', data: data.expense.map(v => parseFloat((v*rate).toFixed(2))) }
+            ],
+            colors:['#0ab39c','#f06548'],
+            fill:{type:'gradient',gradient:{shadeIntensity:1,opacityFrom:0.4,opacityTo:0.05,stops:[0,90,100]}},
+            stroke:{curve:'smooth',width:2},
+            xaxis:{categories:data.labels,labels:{style:{fontSize:'11px'}}},
+            yaxis:{labels:{formatter:v=>sym+' '+v.toLocaleString('tr-TR',{minimumFractionDigits:0})}},
+            tooltip:{y:{formatter:v=>sym+' '+v.toLocaleString('tr-TR',{minimumFractionDigits:2})}},
+            legend:{position:'top',horizontalAlign:'right'},
+            grid:{borderColor:'#f1f1f1'},
+            dataLabels:{enabled:false}
+        };
+        if (financialChart) financialChart.destroy();
+        financialChart = new ApexCharts(chartEl, opts);
+        financialChart.render();
+    } catch(e) {
+        if (loading) loading.style.display='none';
+        if (empty) empty.style.display='';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadOverdueInvoices();
+    loadFinancialChart('12months');
+
+    document.getElementById('chart-12months')?.addEventListener('click', function() {
+        this.classList.add('active','btn-primary'); this.classList.remove('btn-outline-primary');
+        const o = document.getElementById('chart-30days'); o.classList.remove('active','btn-primary'); o.classList.add('btn-outline-primary');
+        _chartPeriod='12months'; loadFinancialChart('12months');
+    });
+    document.getElementById('chart-30days')?.addEventListener('click', function() {
+        this.classList.add('active','btn-primary'); this.classList.remove('btn-outline-primary');
+        const o = document.getElementById('chart-12months'); o.classList.remove('active','btn-primary'); o.classList.add('btn-outline-primary');
+        _chartPeriod='30days'; loadFinancialChart('30days');
+    });
+});
+
+document.addEventListener('currencyChanged', () => {
+    loadFinancialChart(_chartPeriod);
+    loadMonthlyStats();
+    window.CurrencyConverter?.convertAll();
+});
+</script>
+}

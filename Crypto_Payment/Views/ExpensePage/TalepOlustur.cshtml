@@ -1,0 +1,235 @@
+@{
+    ViewBag.Title = "Çekim / Gider Talebi Oluştur";
+    Layout = "_AuthLayout";
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Çekim Talebi - Crypto Payment</title>
+    <link href="~/admin/velzon-dist/assets/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/admin/velzon-dist/assets/css/icons.min.css" rel="stylesheet" />
+    <link href="~/admin/velzon-dist/assets/css/app.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); min-height: 100vh; }
+        .talep-card { max-width: 680px; margin: 40px auto; }
+        .crypto-header { background: linear-gradient(135deg, #405189, #0ab39c); border-radius: 12px 12px 0 0; padding: 2rem; }
+        .skeleton{display:inline-block;background:linear-gradient(90deg,#e9ecef 25%,#f8f9fa 37%,#e9ecef 63%);background-size:400% 100%;animation:skeleton-wave 1.4s ease infinite;border-radius:4px}
+        .skeleton-text{height:16px;width:120px}.skeleton-text-sm{height:12px;width:80px}
+        @@keyframes skeleton-wave{0%{background-position:200% 0}to{background-position:-200% 0}}
+    </style>
+</head>
+<body>
+<!-- Skeleton -->
+<div class="container py-4" id="page-skeleton">
+    <div class="talep-card">
+        <div class="card border-0 shadow-lg">
+            <div class="crypto-header text-white text-center">
+                <div class="skeleton skeleton-circle mx-auto mb-3" style="width:48px;height:48px;background:rgba(255,255,255,.2);"></div>
+                <div class="skeleton mx-auto" style="width:200px;height:22px;background:rgba(255,255,255,.2);margin-bottom:8px;"></div>
+                <div class="skeleton mx-auto" style="width:280px;height:14px;background:rgba(255,255,255,.15);"></div>
+            </div>
+            <div class="card-body p-4">
+                @for (int sk = 0; sk < 6; sk++)
+                {
+                <div class="mb-3">
+                    <div class="skeleton skeleton-text-sm" style="width:80px;margin-bottom:8px;"></div>
+                    <div class="skeleton" style="width:100%;height:38px;border-radius:6px;"></div>
+                </div>
+                }
+                <div class="skeleton" style="width:100%;height:42px;border-radius:6px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4" id="page-real" style="display:none;">
+    <div class="talep-card">
+        <div class="card border-0 shadow-lg">
+            <div class="crypto-header text-white text-center">
+                <div class="mb-3">
+                    <i class="ri-money-dollar-circle-line" style="font-size:3rem;"></i>
+                </div>
+                <h3 class="fw-bold mb-1">Çekim / Gider Talebi</h3>
+                <p class="mb-0 opacity-75">Talebiniz incelendikten sonra işleme alınacaktır.</p>
+            </div>
+            <div class="card-body p-4">
+                <div id="successMsg" class="alert alert-success d-none">
+                    <i class="ri-checkbox-circle-line me-2"></i>
+                    <strong>Talebiniz alındı!</strong> En kısa sürede incelenecektir.
+                </div>
+                <div id="errorMsg" class="alert alert-danger d-none"></div>
+
+                <form id="talepForm" autocomplete="off">
+                    <div class="row g-3">
+                        <!-- Kişisel Bilgiler -->
+                        <div class="col-12">
+                            <h6 class="text-muted text-uppercase fw-semibold mb-2 border-bottom pb-2">
+                                <i class="ri-user-line me-1"></i>Kişisel Bilgiler
+                            </h6>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ad Soyad <span class="text-danger">*</span></label>
+                            <input type="text" id="requesterName" class="form-control" placeholder="Adınız Soyadınız" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Şirket (Opsiyonel)</label>
+                            <input type="text" id="requesterCompany" class="form-control" placeholder="Şirket Adı" />
+                        </div>
+
+                        <!-- Talep Bilgileri -->
+                        <div class="col-12 mt-2">
+                            <h6 class="text-muted text-uppercase fw-semibold mb-2 border-bottom pb-2">
+                                <i class="ri-money-dollar-circle-line me-1"></i>Talep Bilgileri
+                            </h6>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Tutar <span class="text-danger">*</span></label>
+                            <input type="number" id="amount" class="form-control" step="0.01" min="0.01" placeholder="0.00" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Para Birimi</label>
+                            <select id="currency" class="form-select">
+                                <option value="USD">USD ($)</option>
+                                <option value="EURO">EURO (€)</option>
+                                <option value="TL">TL (₺)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Kategori <span class="text-danger">*</span></label>
+                            <select id="category" class="form-select" required>
+                                <option value="1">Maaş</option>
+                                <option value="2">Avans</option>
+                                <option value="3">Sunucu Gideri</option>
+                                <option value="4">Ofis Gideri</option>
+                                <option value="5">Kar Çekimi</option>
+                                <option value="6">Diğer</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Açıklama</label>
+                            <textarea id="description" class="form-control" rows="2" placeholder="Talep açıklaması..."></textarea>
+                        </div>
+
+                        <!-- Ödeme Yöntemi -->
+                        <div class="col-12 mt-2">
+                            <h6 class="text-muted text-uppercase fw-semibold mb-2 border-bottom pb-2">
+                                <i class="ri-bank-line me-1"></i>Ödeme Yöntemi
+                            </h6>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Yöntem <span class="text-danger">*</span></label>
+                            <select id="method" class="form-select" onchange="togglePaymentFields()" required>
+                                <option value="Banka">Banka Transferi</option>
+                                <option value="Kripto">Kripto Para</option>
+                            </select>
+                        </div>
+
+                        <!-- Kripto Alanları -->
+                        <div id="cryptoFields" class="col-12 d-none">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Ağ (Network)</label>
+                                    <select id="paymentNetwork" class="form-select">
+                                        <option value="TRC20">TRC20 (USDT)</option>
+                                        <option value="ERC20">ERC20 (ETH/USDT)</option>
+                                        <option value="BEP20">BEP20 (BSC)</option>
+                                        <option value="BTC">Bitcoin (BTC)</option>
+                                        <option value="SOL">Solana (SOL)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Cüzdan Adresi</label>
+                                    <input type="text" id="walletAddress" class="form-control" placeholder="0x..." />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Banka Alanları -->
+                        <div id="bankFields" class="col-12">
+                            <label class="form-label">Banka Bilgileri (IBAN / Hesap No)</label>
+                            <textarea id="bankInfo" class="form-control" rows="2" placeholder="Banka adı, IBAN veya hesap numarası..."></textarea>
+                        </div>
+
+                        <div class="col-12 mt-3">
+                            <button type="submit" class="btn btn-primary w-100 btn-lg" id="submitBtn">
+                                <i class="ri-send-plane-line me-2"></i>Talebi Gönder
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="text-center mt-3">
+            <small class="text-white-50">© Crypto Payment System — Güvenli Talep Formu</small>
+        </div>
+    </div>
+</div>
+
+<script src="~/admin/velzon-dist/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var skel = document.getElementById('page-skeleton');
+    var real = document.getElementById('page-real');
+    if (skel) skel.remove();
+    if (real) real.style.display = '';
+});
+function togglePaymentFields() {
+    const method = document.getElementById('method').value;
+    document.getElementById('cryptoFields').classList.toggle('d-none', method !== 'Kripto');
+    document.getElementById('bankFields').classList.toggle('d-none', method !== 'Banka');
+}
+
+document.getElementById('talepForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    const errEl = document.getElementById('errorMsg');
+    const sucEl = document.getElementById('successMsg');
+    errEl.classList.add('d-none');
+    sucEl.classList.add('d-none');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Gönderiliyor...';
+
+    const method = document.getElementById('method').value;
+    const payload = {
+        requesterName: document.getElementById('requesterName').value.trim(),
+        requesterCompany: document.getElementById('requesterCompany').value.trim() || null,
+        amount: parseFloat(document.getElementById('amount').value),
+        currency: document.getElementById('currency').value,
+        category: parseInt(document.getElementById('category').value),
+        description: document.getElementById('description').value.trim() || null,
+        method: method,
+        paymentNetwork: method === 'Kripto' ? document.getElementById('paymentNetwork').value : null,
+        walletAddress: method === 'Kripto' ? document.getElementById('walletAddress').value.trim() || null : null,
+        bankInfo: method === 'Banka' ? document.getElementById('bankInfo').value.trim() || null : null
+    };
+
+    try {
+        const res = await fetch('/api/expenses/public-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (res.ok) {
+            sucEl.classList.remove('d-none');
+            document.getElementById('talepForm').reset();
+            togglePaymentFields();
+        } else {
+            errEl.textContent = data.title || 'Bir hata oluştu.';
+            errEl.classList.remove('d-none');
+        }
+    } catch {
+        errEl.textContent = 'Sunucuya ulaşılamadı.';
+        errEl.classList.remove('d-none');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ri-send-plane-line me-2"></i>Talebi Gönder';
+    }
+});
+</script>
+</body>
+</html>

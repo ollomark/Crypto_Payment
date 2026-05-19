@@ -1,0 +1,104 @@
+@{
+    var mode = (ViewBag.OnboardingMode as string) ?? "dashboard";
+    var isChat = string.Equals(mode, "chat", System.StringComparison.OrdinalIgnoreCase);
+}
+<div class="office-onboarding office-onboarding--@mode" id="officeOnboardingRoot" data-onboard-mode="@mode" data-storage-key="crypto_office_onboard_v3">
+    <div class="office-onboarding__head">
+        <div>
+            <h3 class="office-onboarding__title"><i class="ri-compasses-2-line text-primary me-1"></i>Büro rehberi</h3>
+            <p class="office-onboarding__sub">
+                Paneli adım adım keşfedin. İsterseniz aynı rehberi <strong>Mesajlar</strong> ekranındaki <strong>Rehber</strong> sekmesinden de kullanın — sohbet ile yan yana onboarding ortamı.
+            </p>
+        </div>
+        <div class="d-flex flex-column align-items-end gap-1">
+            <button type="button" class="btn btn-sm btn-soft-secondary" id="officeOnboardingMinimize" title="Daha sonra">Daha sonra</button>
+            @if (!isChat)
+            {
+                <a class="btn btn-sm btn-soft-primary" href="/chat?guide=1"><i class="ri-chat-smile-2-line me-1"></i>Rehberi sohbet ekranında aç</a>
+            }
+        </div>
+    </div>
+    <div class="office-onboarding__progress"><div class="office-onboarding__progress-bar" id="officeOnboardingProgress" style="width:20%"></div></div>
+    <div class="office-onboarding__body" id="officeOnboardingBody">
+        <!-- steps injected by script -->
+    </div>
+    <div class="office-onboarding__actions">
+        <span class="text-muted small" id="officeOnboardingStepLabel">1 / 5</span>
+        <div class="office-onboarding__nav">
+            <button type="button" class="btn btn-sm btn-light" id="officeOnboardingPrev">Geri</button>
+            <button type="button" class="btn btn-sm btn-primary" id="officeOnboardingNext">İleri</button>
+            <button type="button" class="btn btn-sm btn-success d-none" id="officeOnboardingDone">Tamamla</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var root = document.getElementById('officeOnboardingRoot');
+    if (!root) return;
+    var mode = root.getAttribute('data-onboard-mode') || 'dashboard';
+    var key = root.getAttribute('data-storage-key') || 'crypto_office_onboard_v3';
+    var steps = [
+        { title: 'Hoş geldiniz', text: 'Bu panelde müşterilerinizi ve faturalarınızı yönetir, tahsilatları takip edersiniz. Bu sihirbaz kısa bir tur; istediğiniz zaman tekrar açabilirsiniz.', link: null, linkText: null },
+        { title: 'Müşteriler', text: 'Önce müşteri kaydı oluşturun; faturalar müşteriye bağlanır. Müşteri listesinden cari hareketleri ve iletişimi yönetin.', link: '/customers', linkText: 'Müşterilere git' },
+        { title: 'Faturalar', text: 'Yeni fatura oluşturun, ödeme linkini paylaşın. Tek seferlik ve abonelik (yinelenen) faturalar için ayrı akışlar vardır.', link: '/', linkText: 'Ana sayfa / faturalar' },
+        { title: 'Mesajlar ve destek', text: 'Ekip içi mesajlaşma ve müşteri canlı destek oturumları aynı Mesajlar ekranında. Sol sekmeden kullanıcı seçin; Destek sekmesinden canlı talepleri yanıtlayın.', link: '/chat', linkText: 'Mesajlara git' },
+        { title: 'Rehberi tekrar açma', text: 'Kapattıysanız Mesajlar sayfasında Rehber sekmesine geçin veya /chat?guide=1 adresini kullanın.', link: '/chat?guide=1', linkText: 'Rehberi bu ekranda aç' }
+    ];
+
+    function loadStep() {
+        var raw = localStorage.getItem(key + '_step');
+        var n = parseInt(raw, 10);
+        if (isNaN(n) || n < 0 || n >= steps.length) n = 0;
+        return n;
+    }
+    function saveStep(i) { localStorage.setItem(key + '_step', String(i)); }
+    function isDone() { return localStorage.getItem(key + '_done') === '1'; }
+    function markDone() { localStorage.setItem(key + '_done', '1'); }
+
+    var i = loadStep();
+    var body = document.getElementById('officeOnboardingBody');
+    var progress = document.getElementById('officeOnboardingProgress');
+    var label = document.getElementById('officeOnboardingStepLabel');
+    var btnPrev = document.getElementById('officeOnboardingPrev');
+    var btnNext = document.getElementById('officeOnboardingNext');
+    var btnDone = document.getElementById('officeOnboardingDone');
+    var btnMin = document.getElementById('officeOnboardingMinimize');
+
+    function render() {
+        var s = steps[i];
+        var pct = ((i + 1) / steps.length) * 100;
+        progress.style.width = pct + '%';
+        label.textContent = (i + 1) + ' / ' + steps.length;
+        body.textContent = '';
+        var ht = document.createElement('div');
+        ht.className = 'office-onboarding__step-title';
+        ht.textContent = s.title;
+        body.appendChild(ht);
+        var pt = document.createElement('div');
+        pt.className = 'office-onboarding__step-text';
+        pt.textContent = s.text;
+        body.appendChild(pt);
+        if (s.link) {
+            var a = document.createElement('a');
+            a.href = s.link;
+            a.className = 'btn btn-sm btn-soft-primary mt-2 d-inline-flex align-items-center';
+            a.innerHTML = '<i class="ri-external-link-line me-1"></i>' + (s.linkText || 'Git');
+            body.appendChild(a);
+        }
+        btnPrev.disabled = i === 0;
+        btnNext.classList.toggle('d-none', i === steps.length - 1);
+        btnDone.classList.toggle('d-none', i !== steps.length - 1);
+    }
+
+    if (mode === 'dashboard' && isDone()) {
+        root.classList.add('is-dismissed');
+    }
+
+    btnPrev.addEventListener('click', function () { if (i > 0) { i--; saveStep(i); render(); } });
+    btnNext.addEventListener('click', function () { if (i < steps.length - 1) { i++; saveStep(i); render(); } });
+    btnDone.addEventListener('click', function () { markDone(); root.classList.add('is-dismissed'); });
+    btnMin.addEventListener('click', function () { root.classList.add('is-dismissed'); });
+    render();
+})();
+</script>

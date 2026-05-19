@@ -1,0 +1,1275 @@
+@{
+    Layout = null;
+    var link = ViewBag.Link as Crypto_Payment.Models.PaymentLink;
+    var invoice = link?.Invoice;
+    var customer = invoice?.Customer;
+    var method = link?.PaymentMethod;
+
+    var walletAddress = link?.CryptoWalletAddress ?? "";
+    var cryptoCur = link?.CryptoCurrency ?? "USDT_TRC20";
+    var amount = link?.ExpectedAmount ?? invoice?.SourceAmount ?? 0;
+    var curLabel = cryptoCur switch { "USDT_TRC20" => "USDT", "TRX" => "TRX", _ => cryptoCur };
+    var networkLabel = cryptoCur switch { "USDT_TRC20" => "Tron (TRC20)", "TRX" => "Tron", _ => "Tron" };
+    var sourceCur = invoice?.SourceCurrency ?? "USD";
+    var sourceAmount = invoice?.SourceAmount ?? 0;
+    var curSymbol = sourceCur switch { "USD" => "$", "EUR" or "EURO" => "€", "TRY" or "TL" => "₺", _ => sourceCur };
+    var expireUtc = link?.ExpiredDate?.ToString("yyyy-MM-ddTHH:mm:ssZ") ?? "";
+    var linkId = link?.Id ?? 0;
+    var orderName = invoice?.OrderName ?? "Ödeme";
+    var customerName = customer != null ? $"{customer.FirstName} {customer.LastName}" : (invoice?.Email ?? "");
+    var isCompleted = link?.Status == "completed";
+    var isExpired = link?.Status == "expired" || (link?.ExpiredDate.HasValue == true && link.ExpiredDate < DateTime.UtcNow);
+    var txHash = link?.ConfirmedTxHash ?? "";
+    var receivedAmt = link?.ReceivedAmount;
+    var isUSDT = cryptoCur == "USDT_TRC20";
+    var accentColor = isUSDT ? "#26a17b" : "#ef0027";
+    var accentColorRgb = isUSDT ? "38,161,123" : "239,0,39";
+    var invoiceId = invoice?.Id ?? 0;
+    var createdDate = link != null ? link.CreatedDate.ToString("dd MMM yyyy HH:mm", new System.Globalization.CultureInfo("tr-TR")) : "";
+    var hasExpiry = link?.ExpiredDate.HasValue == true;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ödeme — @orderName</title>
+    <link rel="shortcut icon" href="~/admin/velzon-dist/assets/images/favicon.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        /* ───── Chakra-inspired Design Tokens ───── */
+        :root {
+            --ck-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --ck-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+
+            --ck-bg: #111318;
+            --ck-bg-subtle: #171923;
+            --ck-bg-muted: #1e2231;
+            --ck-bg-elevated: #252a38;
+            --ck-border: rgba(255,255,255,.08);
+            --ck-border-hover: rgba(255,255,255,.16);
+
+            --ck-text: #f7fafc;
+            --ck-text-secondary: #a0aec0;
+            --ck-text-muted: #718096;
+            --ck-text-dim: #4a5568;
+
+            --ck-accent: @accentColor;
+            --ck-accent-rgb: @accentColorRgb;
+            --ck-accent-subtle: rgba(@(accentColorRgb),.12);
+            --ck-accent-muted: rgba(@(accentColorRgb),.06);
+
+            --ck-green: #48bb78;
+            --ck-green-rgb: 72,187,120;
+            --ck-red: #fc8181;
+            --ck-red-rgb: 252,129,129;
+            --ck-yellow: #ecc94b;
+            --ck-yellow-rgb: 236,201,75;
+            --ck-blue: #63b3ed;
+            --ck-blue-rgb: 99,179,237;
+            --ck-purple: #b794f4;
+
+            --ck-radius-sm: 8px;
+            --ck-radius-md: 12px;
+            --ck-radius-lg: 16px;
+            --ck-radius-xl: 20px;
+            --ck-radius-full: 9999px;
+
+            --ck-shadow-sm: 0 1px 3px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.24);
+            --ck-shadow-md: 0 4px 6px rgba(0,0,0,.15), 0 2px 4px rgba(0,0,0,.12);
+            --ck-shadow-lg: 0 10px 15px rgba(0,0,0,.2), 0 4px 6px rgba(0,0,0,.1);
+            --ck-shadow-xl: 0 20px 25px rgba(0,0,0,.25), 0 10px 10px rgba(0,0,0,.1);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--ck-font);
+            background: var(--ck-bg);
+            color: var(--ck-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Ambient glow behind card */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(var(--ck-accent-rgb),.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .page-wrap {
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ───── Brand Bar ───── */
+        .brand-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 24px;
+            opacity: 0;
+            animation: fadeIn .6s .1s ease forwards;
+        }
+        .brand-logo-wrap {
+            display: flex;
+            align-items: center;
+        }
+        .brand-logo-wrap img {
+            height: 34px;
+            width: auto;
+            filter: brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,.3));
+        }
+        .brand-name {
+            font-size: .85rem;
+            font-weight: 700;
+            letter-spacing: .6px;
+            color: var(--ck-text-secondary);
+        }
+
+        /* WandaPlay love footer */
+        .wp-love-footer {
+            text-align: center;
+            padding: 14px 16px 6px;
+            opacity: 0;
+            animation: fadeIn .5s .5s ease forwards;
+        }
+        .wp-love-text {
+            font-size: .78rem;
+            font-weight: 600;
+            color: var(--ck-text-dim);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .wp-love-text .heart {
+            color: #e53e3e;
+            font-size: 1rem;
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+        .wp-love-text .wp-name {
+            color: var(--ck-text-secondary);
+            font-weight: 700;
+        }
+        @@keyframes heartbeat {
+            0%,100% { transform: scale(1); }
+            15% { transform: scale(1.25); }
+            30% { transform: scale(1); }
+            45% { transform: scale(1.15); }
+            60% { transform: scale(1); }
+        }
+
+        /* ───── Main Container ───── */
+        .pay-container {
+            background: var(--ck-bg-subtle);
+            border: 1px solid var(--ck-border);
+            border-radius: var(--ck-radius-xl);
+            overflow: hidden;
+            box-shadow: var(--ck-shadow-xl);
+            opacity: 0;
+            animation: slideUp .5s .15s ease forwards;
+        }
+
+        /* ───── Header Banner ───── */
+        .pay-header {
+            background: linear-gradient(135deg, var(--ck-bg-muted) 0%, var(--ck-bg-subtle) 100%);
+            border-bottom: 1px solid var(--ck-border);
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .pay-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header-coin-icon {
+            width: 40px; height: 40px;
+            border-radius: var(--ck-radius-md);
+            background: var(--ck-accent-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .header-coin-icon svg { width: 22px; height: 22px; }
+        .header-info h3 {
+            font-size: .88rem;
+            font-weight: 700;
+            color: var(--ck-text);
+            line-height: 1;
+            margin-bottom: 3px;
+        }
+        .header-info span {
+            font-size: .72rem;
+            color: var(--ck-text-muted);
+        }
+        .header-network {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            border-radius: var(--ck-radius-full);
+            background: var(--ck-accent-subtle);
+            color: var(--ck-accent);
+            font-size: .68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .4px;
+        }
+        .header-network i { font-size: 12px; }
+
+        /* ───── Amount Display ───── */
+        .amount-block {
+            padding: 32px 24px 28px;
+            text-align: center;
+            border-bottom: 1px solid var(--ck-border);
+            position: relative;
+        }
+        .amount-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 14px;
+            border-radius: var(--ck-radius-full);
+            background: var(--ck-bg-muted);
+            border: 1px solid var(--ck-border);
+            font-size: .68rem;
+            font-weight: 600;
+            color: var(--ck-text-secondary);
+            margin-bottom: 16px;
+        }
+        .amount-tag i { font-size: 12px; color: var(--ck-accent); }
+        .amount-primary {
+            font-family: var(--ck-mono);
+            font-size: 2.6rem;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -2px;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, var(--ck-text) 30%, var(--ck-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .amount-coin {
+            font-family: var(--ck-font);
+            font-size: .9rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            -webkit-text-fill-color: var(--ck-accent);
+            margin-left: 4px;
+        }
+        .amount-secondary {
+            font-size: .82rem;
+            color: var(--ck-text-muted);
+            margin-top: 4px;
+        }
+        .amount-secondary span {
+            color: var(--ck-text-secondary);
+            font-weight: 600;
+        }
+
+        /* ───── Two-Column Layout ───── */
+        .dual-pane {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border-bottom: 1px solid var(--ck-border);
+        }
+        .pane {
+            padding: 20px;
+        }
+        .pane + .pane {
+            border-left: 1px solid var(--ck-border);
+        }
+        .pane-label {
+            font-size: .65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--ck-text-dim);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .pane-label i { font-size: 13px; color: var(--ck-text-muted); }
+
+        /* QR side */
+        .qr-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .qr-frame {
+            position: relative;
+            padding: 10px;
+            background: #ffffff;
+            border-radius: var(--ck-radius-md);
+            box-shadow: 0 2px 8px rgba(0,0,0,.15);
+        }
+        .qr-frame img {
+            display: block;
+            width: 130px;
+            height: 130px;
+            border-radius: 4px;
+        }
+        .qr-coin-badge {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            width: 30px; height: 30px;
+            border-radius: 8px;
+            background: var(--ck-accent);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 800;
+            box-shadow: 0 2px 6px rgba(0,0,0,.2);
+        }
+
+        /* Timer side */
+        .timer-container { display: flex; flex-direction: column; justify-content: center; }
+        .timer-display {
+            font-family: var(--ck-mono);
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            line-height: 1;
+            margin-bottom: 6px;
+            transition: color .3s;
+        }
+        .timer-display.safe { color: var(--ck-green); }
+        .timer-display.warn { color: var(--ck-yellow); }
+        .timer-display.danger { color: var(--ck-red); }
+        .timer-sub {
+            font-size: .72rem;
+            color: var(--ck-text-muted);
+            margin-bottom: 14px;
+        }
+        .progress-track {
+            height: 4px;
+            background: var(--ck-bg-elevated);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 1s linear, background .5s;
+            background: var(--ck-green);
+        }
+        .progress-fill.warn { background: var(--ck-yellow); }
+        .progress-fill.danger { background: var(--ck-red); }
+
+        /* ───── Wallet Address Section ───── */
+        .wallet-section {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--ck-border);
+        }
+        .wallet-label {
+            font-size: .65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--ck-text-dim);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .wallet-label i { font-size: 13px; color: var(--ck-text-muted); }
+        .wallet-card {
+            background: var(--ck-bg-muted);
+            border: 1px solid var(--ck-border);
+            border-radius: var(--ck-radius-md);
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all .15s ease;
+            position: relative;
+        }
+        .wallet-card:hover {
+            border-color: var(--ck-accent);
+            box-shadow: 0 0 0 3px rgba(var(--ck-accent-rgb),.1);
+        }
+        .wallet-card:active { transform: scale(.995); }
+        .wallet-card-icon {
+            width: 36px; height: 36px;
+            border-radius: var(--ck-radius-sm);
+            background: var(--ck-accent-subtle);
+            color: var(--ck-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .wallet-addr-text {
+            flex: 1;
+            font-family: var(--ck-mono);
+            font-size: .76rem;
+            font-weight: 500;
+            word-break: break-all;
+            line-height: 1.6;
+            color: var(--ck-text);
+            user-select: all;
+        }
+        .copy-action {
+            flex-shrink: 0;
+            width: 38px; height: 38px;
+            border-radius: var(--ck-radius-sm);
+            border: 1px solid var(--ck-border);
+            background: var(--ck-bg-elevated);
+            color: var(--ck-text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all .2s;
+        }
+        .copy-action:hover { background: var(--ck-accent-subtle); color: var(--ck-accent); border-color: var(--ck-accent); }
+        .copy-action.done { background: var(--ck-green); color: #fff; border-color: var(--ck-green); }
+
+        /* Amount copy row */
+        .amount-copy-row {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .amount-copy-pill {
+            flex: 1;
+            background: var(--ck-bg-muted);
+            border: 1px solid var(--ck-border);
+            border-radius: var(--ck-radius-sm);
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all .15s;
+        }
+        .amount-copy-pill:hover { border-color: var(--ck-accent); }
+        .amount-copy-pill .label { font-size: .65rem; color: var(--ck-text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+        .amount-copy-pill .value { font-family: var(--ck-mono); font-size: .82rem; font-weight: 600; color: var(--ck-text); }
+        .amount-copy-pill .coin { color: var(--ck-accent); font-size: .72rem; font-weight: 700; }
+        .amount-copy-btn {
+            width: 38px; height: 38px;
+            border-radius: var(--ck-radius-sm);
+            border: 1px solid var(--ck-border);
+            background: var(--ck-bg-elevated);
+            color: var(--ck-text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all .2s;
+            flex-shrink: 0;
+        }
+        .amount-copy-btn:hover { background: var(--ck-accent-subtle); color: var(--ck-accent); }
+        .amount-copy-btn.done { background: var(--ck-green); color: #fff; border-color: var(--ck-green); }
+
+        /* ───── Status Bar ───── */
+        .status-bar {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--ck-border);
+        }
+        .status-pill {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 20px;
+            border-radius: var(--ck-radius-md);
+            font-size: .82rem;
+            font-weight: 600;
+            transition: all .3s;
+        }
+        .status-pill.waiting {
+            background: rgba(var(--ck-blue-rgb),.08);
+            border: 1px solid rgba(var(--ck-blue-rgb),.15);
+            color: var(--ck-blue);
+        }
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* ───── Info Accordion ───── */
+        .info-accordion {
+            border-bottom: 1px solid var(--ck-border);
+        }
+        .info-toggle-btn {
+            width: 100%;
+            padding: 14px 24px;
+            background: none;
+            border: none;
+            color: var(--ck-text-muted);
+            font-family: var(--ck-font);
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: color .2s;
+        }
+        .info-toggle-btn:hover { color: var(--ck-text-secondary); }
+        .info-toggle-btn i { font-size: 16px; transition: transform .25s; }
+        .info-toggle-btn.active i { transform: rotate(180deg); }
+        .info-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height .3s ease, padding .3s ease;
+        }
+        .info-body.open {
+            max-height: 300px;
+        }
+        .info-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 9px 24px;
+        }
+        .info-row + .info-row { border-top: 1px solid rgba(255,255,255,.03); }
+        .info-key {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: .76rem;
+            color: var(--ck-text-muted);
+        }
+        .info-key i { font-size: 14px; color: var(--ck-text-dim); }
+        .info-val {
+            font-size: .76rem;
+            font-weight: 600;
+            color: var(--ck-text);
+            text-align: right;
+        }
+
+        /* ───── Steps / How-To ───── */
+        .steps-block {
+            padding: 20px 24px;
+        }
+        .steps-title {
+            font-size: .68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--ck-text-dim);
+            margin-bottom: 14px;
+        }
+        .step-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 10px 0;
+            position: relative;
+        }
+        .step-row + .step-row { border-top: 1px solid rgba(255,255,255,.02); }
+        .step-circle {
+            width: 28px; height: 28px;
+            border-radius: var(--ck-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            flex-shrink: 0;
+            font-weight: 700;
+        }
+        .step-1 .step-circle { background: rgba(var(--ck-accent-rgb),.12); color: var(--ck-accent); }
+        .step-2 .step-circle { background: rgba(var(--ck-blue-rgb),.12); color: var(--ck-blue); }
+        .step-3 .step-circle { background: rgba(var(--ck-green-rgb),.12); color: var(--ck-green); }
+        .step-content { padding-top: 4px; }
+        .step-content strong {
+            display: block;
+            font-size: .78rem;
+            font-weight: 600;
+            color: var(--ck-text);
+            margin-bottom: 2px;
+        }
+        .step-content p {
+            font-size: .72rem;
+            color: var(--ck-text-muted);
+            line-height: 1.5;
+        }
+        .step-content code {
+            font-family: var(--ck-mono);
+            font-size: .7rem;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: var(--ck-accent-subtle);
+            color: var(--ck-accent);
+        }
+
+        /* ───── Security Footer ───── */
+        .security-footer {
+            padding: 16px 24px;
+            background: var(--ck-bg-muted);
+            border-top: 1px solid var(--ck-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .security-footer i { font-size: 14px; color: var(--ck-green); }
+        .security-footer span { font-size: .7rem; color: var(--ck-text-dim); font-weight: 500; }
+
+        /* ───── Page Footer ───── */
+        .page-footer {
+            text-align: center;
+            padding: 20px 16px 8px;
+            font-size: .68rem;
+            color: var(--ck-text-dim);
+            opacity: 0;
+            animation: fadeIn .5s .4s ease forwards;
+        }
+        .page-footer a {
+            color: var(--ck-accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* ───── SUCCESS STATE ───── */
+        .result-card {
+            padding: 0;
+        }
+        .result-hero {
+            text-align: center;
+            padding: 40px 24px 32px;
+            position: relative;
+            overflow: hidden;
+        }
+        .result-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+        }
+        .result-hero.success::before { background: linear-gradient(90deg, var(--ck-green), #38b2ac); }
+        .result-hero.expired::before { background: linear-gradient(90deg, var(--ck-red), #e53e3e); }
+        .result-icon {
+            width: 72px; height: 72px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        .result-icon.success {
+            background: rgba(var(--ck-green-rgb),.1);
+            color: var(--ck-green);
+            box-shadow: 0 0 0 12px rgba(var(--ck-green-rgb),.05);
+            animation: popIn .5s cubic-bezier(.17,.67,.12,1.5);
+        }
+        .result-icon.expired {
+            background: rgba(var(--ck-red-rgb),.1);
+            color: var(--ck-red);
+            box-shadow: 0 0 0 12px rgba(var(--ck-red-rgb),.05);
+        }
+        .result-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 6px; }
+        .result-desc { font-size: .82rem; color: var(--ck-text-muted); line-height: 1.6; }
+
+        .result-amount-card {
+            margin: 20px 24px 0;
+            padding: 16px;
+            background: var(--ck-bg-muted);
+            border: 1px solid var(--ck-border);
+            border-radius: var(--ck-radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .result-amount-label { font-size: .72rem; color: var(--ck-text-muted); }
+        .result-amount-val {
+            font-family: var(--ck-mono);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--ck-green);
+        }
+
+        .tx-hash-block {
+            margin: 12px 24px 0;
+            padding: 14px;
+            background: var(--ck-bg-muted);
+            border: 1px solid var(--ck-border);
+            border-radius: var(--ck-radius-md);
+        }
+        .tx-hash-label {
+            font-size: .62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--ck-text-dim);
+            margin-bottom: 6px;
+        }
+        .tx-hash-value {
+            font-family: var(--ck-mono);
+            font-size: .7rem;
+            word-break: break-all;
+            line-height: 1.5;
+            color: var(--ck-text-secondary);
+        }
+        .tx-actions {
+            display: flex;
+            gap: 8px;
+            padding: 16px 24px 0;
+            justify-content: center;
+        }
+        .tx-action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 18px;
+            border-radius: var(--ck-radius-sm);
+            font-size: .78rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all .15s;
+            border: 1px solid var(--ck-border);
+            background: var(--ck-bg-muted);
+            color: var(--ck-text-secondary);
+            cursor: pointer;
+        }
+        .tx-action-btn:hover { border-color: var(--ck-accent); color: var(--ck-accent); }
+        .tx-action-btn.primary {
+            background: var(--ck-accent-subtle);
+            border-color: rgba(var(--ck-accent-rgb),.2);
+            color: var(--ck-accent);
+        }
+        .tx-action-btn.primary:hover { background: rgba(var(--ck-accent-rgb),.2); }
+
+        .result-details {
+            padding: 20px 0 0;
+        }
+
+        /* ───── Toast ───── */
+        .ck-toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(80px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: var(--ck-radius-md);
+            background: var(--ck-bg-elevated);
+            border: 1px solid var(--ck-border);
+            box-shadow: var(--ck-shadow-lg);
+            font-size: .82rem;
+            font-weight: 600;
+            color: var(--ck-text);
+            z-index: 9999;
+            opacity: 0;
+            transition: all .35s cubic-bezier(.17,.67,.38,1.2);
+            pointer-events: none;
+        }
+        .ck-toast .toast-icon {
+            width: 24px; height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .ck-toast.success .toast-icon { background: rgba(var(--ck-green-rgb),.15); color: var(--ck-green); }
+        .ck-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ───── Animations ───── */
+        @@keyframes fadeIn { to { opacity: 1; } }
+        @@keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+        @@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+        @@keyframes popIn { 0%{transform:scale(0);opacity:0} 100%{transform:scale(1);opacity:1} }
+        @@keyframes spin { to { transform: rotate(360deg); } }
+
+        .pay-container { transform: translateY(16px); }
+
+        /* ───── Responsive ───── */
+        @@media (max-width: 500px) {
+            .dual-pane { grid-template-columns: 1fr; }
+            .pane + .pane { border-left: none; border-top: 1px solid var(--ck-border); }
+            .qr-wrap { padding-top: 4px; padding-bottom: 4px; }
+            .amount-primary { font-size: 2rem; }
+            .timer-display { font-size: 1.6rem; }
+            .page-wrap { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+    <!-- Brand -->
+    <div class="brand-bar">
+        <div class="brand-logo-wrap">
+            <img src="https://wandaplay.com/assets/logo_dark.png" alt="WandaPlay" />
+        </div>
+    </div>
+
+    @if (isCompleted)
+    {
+    <!-- ═══════ SUCCESS ═══════ -->
+    <div class="pay-container result-card">
+        <div class="result-hero success">
+            <div class="result-icon success">
+                <i class="ri-checkbox-circle-fill"></i>
+            </div>
+            <div class="result-title">Ödeme Başarılı</div>
+            <div class="result-desc">Ödemeniz blockchain üzerinde doğrulandı ve başarıyla işlendi.</div>
+        </div>
+
+        @if (receivedAmt != null)
+        {
+        <div class="result-amount-card">
+            <span class="result-amount-label">Alınan Tutar</span>
+            <span class="result-amount-val">@receivedAmt?.ToString("N2") @curLabel</span>
+        </div>
+        }
+
+        @if (!string.IsNullOrEmpty(txHash))
+        {
+        <div class="tx-hash-block">
+            <div class="tx-hash-label">Transaction Hash</div>
+            <div class="tx-hash-value">@txHash</div>
+        </div>
+        <div class="tx-actions">
+            <a href="https://tronscan.org/#/transaction/@txHash" target="_blank" class="tx-action-btn primary">
+                <i class="ri-external-link-line"></i>TronScan
+            </a>
+            <button class="tx-action-btn" onclick="copyText('@txHash','Hash kopyalandı')">
+                <i class="ri-file-copy-line"></i>Hash Kopyala
+            </button>
+        </div>
+        }
+
+        <div class="result-details">
+            <div class="info-row">
+                <span class="info-key"><i class="ri-file-text-line"></i>Sipariş</span>
+                <span class="info-val">@orderName</span>
+            </div>
+            @if (!string.IsNullOrEmpty(customerName))
+            {
+            <div class="info-row">
+                <span class="info-key"><i class="ri-user-3-line"></i>Müşteri</span>
+                <span class="info-val">@customerName</span>
+            </div>
+            }
+            <div class="info-row">
+                <span class="info-key"><i class="ri-money-dollar-circle-line"></i>Fatura Tutarı</span>
+                <span class="info-val">@curSymbol@sourceAmount.ToString("N2", new System.Globalization.CultureInfo("tr-TR"))</span>
+            </div>
+            <div class="info-row">
+                <span class="info-key"><i class="ri-links-line"></i>Ağ</span>
+                <span class="info-val">@networkLabel</span>
+            </div>
+        </div>
+
+        <div class="security-footer">
+            <i class="ri-shield-check-fill"></i>
+            <span>Blockchain tarafından doğrulanmıştır</span>
+        </div>
+    </div>
+    }
+    else if (isExpired)
+    {
+    <!-- ═══════ EXPIRED ═══════ -->
+    <div class="pay-container result-card">
+        <div class="result-hero expired">
+            <div class="result-icon expired">
+                <i class="ri-time-line"></i>
+            </div>
+            <div class="result-title">Süre Doldu</div>
+            <div class="result-desc">Bu ödeme linkinin süresi dolmuştur.<br>Lütfen yeni bir ödeme linki talep edin.</div>
+        </div>
+        <div class="result-details">
+            <div class="info-row">
+                <span class="info-key"><i class="ri-file-text-line"></i>Sipariş</span>
+                <span class="info-val">@orderName</span>
+            </div>
+            @if (!string.IsNullOrEmpty(customerName))
+            {
+            <div class="info-row">
+                <span class="info-key"><i class="ri-user-3-line"></i>Müşteri</span>
+                <span class="info-val">@customerName</span>
+            </div>
+            }
+        </div>
+        <div class="security-footer">
+            <i class="ri-information-line" style="color:var(--ck-text-dim)"></i>
+            <span>Yeni ödeme linki için yöneticinize başvurun</span>
+        </div>
+    </div>
+    }
+    else
+    {
+    <!-- ═══════ WAITING ═══════ -->
+    <div class="pay-container">
+
+        <!-- Header -->
+        <div class="pay-header">
+            <div class="pay-header-left">
+                <div class="header-coin-icon">
+                    @if (isUSDT)
+                    {
+                    <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#26a17b"/><path d="M17.922 17.383v-.002c-.11.008-.677.042-1.942.042-1.01 0-1.721-.03-1.971-.042v.003c-3.888-.171-6.79-.848-6.79-1.658 0-.809 2.902-1.486 6.79-1.66v2.644c.254.018.982.061 1.988.061 1.207 0 1.812-.05 1.925-.06v-2.643c3.88.173 6.775.85 6.775 1.658 0 .81-2.895 1.485-6.775 1.657m0-3.59v-2.366h5.414V7.819H8.595v3.608h5.414v2.365c-4.4.202-7.709 1.074-7.709 2.118 0 1.044 3.309 1.915 7.709 2.118v7.582h3.913v-7.584c4.393-.202 7.694-1.073 7.694-2.116 0-1.043-3.301-1.914-7.694-2.117" fill="#fff"/></svg>
+                    }
+                    else
+                    {
+                    <svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#ef0027"/><path d="M21.932 9.913L16 7.09l-5.932 2.823L16 24.373l5.932-14.46z" fill="#fff"/><path d="M16 7.09v17.283l5.932-14.46L16 7.09z" fill="#fff" fill-opacity=".5"/></svg>
+                    }
+                </div>
+                <div class="header-info">
+                    <h3>@curLabel Ödeme</h3>
+                    <span>#@linkId &middot; @orderName</span>
+                </div>
+            </div>
+            <div class="header-network">
+                <i class="ri-shield-check-line"></i>
+                @networkLabel
+            </div>
+        </div>
+
+        <!-- Amount -->
+        <div class="amount-block">
+            <div class="amount-tag">
+                <i class="ri-exchange-funds-line"></i>
+                Gönderilecek Tutar
+            </div>
+            <div class="amount-primary">
+                @amount.ToString("N2", new System.Globalization.CultureInfo("en-US"))<span class="amount-coin">@curLabel</span>
+            </div>
+            <div class="amount-secondary">
+                ≈ <span>@curSymbol@sourceAmount.ToString("N2", new System.Globalization.CultureInfo("tr-TR"))</span>
+            </div>
+        </div>
+
+        <!-- QR + Timer -->
+        <div class="dual-pane">
+            <div class="pane">
+                <div class="pane-label"><i class="ri-qr-code-line"></i>QR Kod</div>
+                <div class="qr-wrap">
+                    <div class="qr-frame">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=@Uri.EscapeDataString(walletAddress)&margin=6&qzone=1" alt="QR" />
+                        <div class="qr-coin-badge">@(isUSDT ? "$" : "T")</div>
+                    </div>
+                </div>
+            </div>
+            <div class="pane">
+                <div class="pane-label"><i class="ri-timer-line"></i>Kalan Süre</div>
+                <div class="timer-container">
+                    @if (hasExpiry)
+                    {
+                    <div class="timer-display safe" id="countdown">--:--</div>
+                    <div class="timer-sub">Süre dolmadan ödeme yapın</div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="timerBar" style="width:100%"></div>
+                    </div>
+                    }
+                    else
+                    {
+                    <div class="timer-display safe" style="font-size:1.3rem;color:var(--ck-green)"><i class="ri-infinity-line" style="font-size:1.6rem;vertical-align:middle"></i></div>
+                    <div class="timer-sub">Süresiz ödeme linki</div>
+                    <div class="progress-track">
+                        <div class="progress-fill" style="width:100%;background:var(--ck-green)"></div>
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Wallet Address -->
+        <div class="wallet-section">
+            <div class="wallet-label"><i class="ri-wallet-3-line"></i>Gönderilecek Cüzdan Adresi</div>
+            <div class="wallet-card" onclick="copyWallet()" id="walletBox" title="Kopyalamak için tıklayın">
+                <div class="wallet-card-icon"><i class="ri-wallet-3-line"></i></div>
+                <span class="wallet-addr-text" id="walletAddr">@walletAddress</span>
+                <button class="copy-action" type="button" id="copyBtn">
+                    <i class="ri-file-copy-line" id="copyIcon"></i>
+                </button>
+            </div>
+            <!-- Amount copy -->
+            <div class="amount-copy-row">
+                <div class="amount-copy-pill" onclick="copyAmount()">
+                    <span class="label">Tutar</span>
+                    <span class="value" id="amountVal">@amount.ToString("N2", new System.Globalization.CultureInfo("en-US"))</span>
+                    <span class="coin">@curLabel</span>
+                </div>
+                <button class="amount-copy-btn" type="button" id="amountCopyBtn" onclick="copyAmount()">
+                    <i class="ri-file-copy-line" id="amountCopyIcon"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Status -->
+        <div class="status-bar">
+            <div class="status-pill waiting" id="statusPill">
+                <span class="status-dot"></span>
+                <span id="statusLabel">Ödeme bekleniyor</span>
+            </div>
+        </div>
+
+        <!-- Order Info -->
+        <div class="info-accordion">
+            <button class="info-toggle-btn" onclick="toggleAccordion(this)" type="button">
+                <span>Sipariş Bilgileri</span>
+                <i class="ri-arrow-down-s-line"></i>
+            </button>
+            <div class="info-body" id="infoBody">
+                <div class="info-row">
+                    <span class="info-key"><i class="ri-file-text-line"></i>Sipariş</span>
+                    <span class="info-val">@orderName</span>
+                </div>
+                @if (!string.IsNullOrEmpty(customerName))
+                {
+                <div class="info-row">
+                    <span class="info-key"><i class="ri-user-3-line"></i>Müşteri</span>
+                    <span class="info-val">@customerName</span>
+                </div>
+                }
+                <div class="info-row">
+                    <span class="info-key"><i class="ri-money-dollar-circle-line"></i>Fatura Tutarı</span>
+                    <span class="info-val">@curSymbol@sourceAmount.ToString("N2", new System.Globalization.CultureInfo("tr-TR"))</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key"><i class="ri-links-line"></i>Ağ</span>
+                    <span class="info-val">@networkLabel</span>
+                </div>
+                @if (invoiceId > 0)
+                {
+                <div class="info-row">
+                    <span class="info-key"><i class="ri-hashtag"></i>Fatura No</span>
+                    <span class="info-val">#@invoiceId</span>
+                </div>
+                }
+                @if (!string.IsNullOrEmpty(createdDate))
+                {
+                <div class="info-row">
+                    <span class="info-key"><i class="ri-calendar-line"></i>Oluşturulma</span>
+                    <span class="info-val">@createdDate</span>
+                </div>
+                }
+            </div>
+        </div>
+
+        <!-- Steps -->
+        <div class="steps-block">
+            <div class="steps-title">Nasıl Ödeme Yapılır?</div>
+            <div class="step-row step-1">
+                <span class="step-circle">1</span>
+                <div class="step-content">
+                    <strong>Adresi Kopyalayın</strong>
+                    <p>Yukarıdaki cüzdan adresini kopyalayın veya QR kodu taratın</p>
+                </div>
+            </div>
+            <div class="step-row step-2">
+                <span class="step-circle">2</span>
+                <div class="step-content">
+                    <strong>Tam Tutarı Gönderin</strong>
+                    <p>Cüzdanınızdan tam olarak <code>@amount.ToString("N2", new System.Globalization.CultureInfo("en-US")) @curLabel</code> gönderin</p>
+                </div>
+            </div>
+            <div class="step-row step-3">
+                <span class="step-circle">3</span>
+                <div class="step-content">
+                    <strong>Otomatik Onay</strong>
+                    <p>Ödemeniz blockchain üzerinde otomatik olarak doğrulanacaktır</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Footer -->
+        <div class="security-footer">
+            <i class="ri-shield-check-fill"></i>
+            <span>Tüm işlemler blockchain tarafından güvence altındadır</span>
+        </div>
+    </div>
+
+    <div class="wp-love-footer">
+        <span class="wp-love-text">I <span class="heart">❤️</span> <span class="wp-name">WandaPlay</span></span>
+    </div>
+    <div class="page-footer">
+        Powered by <a href="https://payment.wanda.to">WandaPlay</a>
+    </div>
+    }
+
+</div>
+
+<!-- Toast -->
+<div class="ck-toast success" id="ckToast">
+    <span class="toast-icon"><i class="ri-check-line"></i></span>
+    <span id="toastMsg">Kopyalandı</span>
+</div>
+
+<script>
+const LINK_ID = @linkId;
+const EXPIRE_STR = '@expireUtc';
+const CURRENT_STATUS = '@link?.Status';
+const HAS_EXPIRY = @(hasExpiry ? "true" : "false");
+const expireTime = EXPIRE_STR ? new Date(EXPIRE_STR) : null;
+const CREATED_STR = '@(link?.CreatedDate.ToString("yyyy-MM-ddTHH:mm:ssZ") ?? "")';
+const createdTime = CREATED_STR ? new Date(CREATED_STR) : null;
+const startTime = (expireTime && createdTime) ? createdTime : null;
+
+function showToast(msg) {
+    const t = document.getElementById('ckToast');
+    document.getElementById('toastMsg').textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function copyText(text, msg) {
+    navigator.clipboard.writeText(text).then(() => showToast(msg || 'Kopyalandı'));
+}
+
+function copyWallet() {
+    const addr = document.getElementById('walletAddr')?.textContent?.trim();
+    if (!addr) return;
+    navigator.clipboard.writeText(addr).then(() => {
+        const btn = document.getElementById('copyBtn');
+        const icon = document.getElementById('copyIcon');
+        btn.classList.add('done');
+        icon.className = 'ri-check-line';
+        showToast('Cüzdan adresi kopyalandı');
+        setTimeout(() => { btn.classList.remove('done'); icon.className = 'ri-file-copy-line'; }, 2500);
+    });
+}
+
+function copyAmount() {
+    const val = document.getElementById('amountVal')?.textContent?.trim();
+    if (!val) return;
+    navigator.clipboard.writeText(val).then(() => {
+        const btn = document.getElementById('amountCopyBtn');
+        const icon = document.getElementById('amountCopyIcon');
+        btn.classList.add('done');
+        icon.className = 'ri-check-line';
+        showToast('Tutar kopyalandı');
+        setTimeout(() => { btn.classList.remove('done'); icon.className = 'ri-file-copy-line'; }, 2500);
+    });
+}
+
+function toggleAccordion(btn) {
+    btn.classList.toggle('active');
+    document.getElementById('infoBody').classList.toggle('open');
+}
+
+function updateCountdown() {
+    if (!expireTime || !HAS_EXPIRY) return;
+    const now = new Date();
+    const diff = expireTime - now;
+    const el = document.getElementById('countdown');
+    const bar = document.getElementById('timerBar');
+    if (!el) return;
+
+    if (diff <= 0) {
+        el.textContent = 'SÜRE DOLDU';
+        el.className = 'timer-display danger';
+        if (bar) { bar.style.width = '0%'; bar.className = 'progress-fill danger'; }
+        setTimeout(() => window.location.reload(), 3000);
+        return;
+    }
+
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    if (h > 0) {
+        el.textContent = h.toString().padStart(2,'0') + ':' + m.toString().padStart(2,'0') + ':' + s.toString().padStart(2,'0');
+    } else {
+        el.textContent = m.toString().padStart(2, '0') + ':' + s.toString().padStart(2, '0');
+    }
+
+    if (startTime) {
+        const total = expireTime - startTime;
+        const elapsed = now - startTime;
+        const pct = Math.max(0, Math.min(100, ((total - elapsed) / total) * 100));
+        if (bar) bar.style.width = pct + '%';
+
+        if (pct < 20) {
+            el.className = 'timer-display danger';
+            if (bar) bar.className = 'progress-fill danger';
+        } else if (pct < 50) {
+            el.className = 'timer-display warn';
+            if (bar) bar.className = 'progress-fill warn';
+        } else {
+            el.className = 'timer-display safe';
+            if (bar) bar.className = 'progress-fill';
+        }
+    }
+}
+
+async function checkStatus() {
+    try {
+        const r = await fetch('/api/crypto-pay/' + LINK_ID + '/status');
+        if (!r.ok) return;
+        const d = await r.json();
+        if (d.status === 'completed') {
+            const pill = document.getElementById('statusPill');
+            if (pill) {
+                pill.className = 'status-pill';
+                pill.style.background = 'rgba(72,187,120,.08)';
+                pill.style.border = '1px solid rgba(72,187,120,.15)';
+                pill.style.color = 'var(--ck-green)';
+                pill.innerHTML = '<i class="ri-checkbox-circle-fill"></i><span>Ödeme Onaylandı!</span>';
+            }
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 100, spread: 60, origin: { y: 0.65 }, colors: ['#48bb78','#63b3ed','#ecc94b','#b794f4'] });
+                setTimeout(() => confetti({ particleCount: 60, spread: 100, origin: { y: 0.4 } }), 400);
+            }
+            setTimeout(() => window.location.reload(), 3500);
+        } else if (d.expired || d.status === 'expired') {
+            window.location.reload();
+        }
+    } catch (e) {}
+}
+
+if (CURRENT_STATUS === 'new' || CURRENT_STATUS === 'pending') {
+    if (HAS_EXPIRY) {
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    }
+    setInterval(checkStatus, 5000);
+    checkStatus();
+}
+</script>
+<div id="supportChatData" data-invoice-id="@invoiceId" data-customer-name="@customerName" data-order-name="@orderName" style="display:none;"></div>
+@await Html.PartialAsync("~/Views/Shared/_SupportChatWidget.cshtml")
+</body>
+</html>
