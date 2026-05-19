@@ -24,6 +24,14 @@ public class Invoice
     public int? RecurringDay { get; set; }          // Ayın kaçıncı günü (1-28)
     public DateTime? LastReminderDate { get; set; }  // Son hatırlatma tarihi
 
+    // Harici API entegrasyonu
+    public int? ApiClientId { get; set; }
+    public ApiClient? ApiClient { get; set; }
+    /// <summary>Harici sitenin sipariş / referans numarası.</summary>
+    public string? ExternalReference { get; set; }
+    /// <summary>Ödeme durumu değişince POST atılacak merchant webhook URL.</summary>
+    public string? MerchantWebhookUrl { get; set; }
+
     // Müşteri ilişkisi
     public int? CustomerId { get; set; }
     public Customer? Customer { get; set; }

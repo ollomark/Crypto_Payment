@@ -1,5 +1,7 @@
 using System.Threading.RateLimiting;
+using Crypto_Payment.Authentication;
 using Crypto_Payment.Manager;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Crypto_Payment.Data;
@@ -102,9 +104,16 @@ builder.Services.AddScoped<IPermissionService, PermissionManager>();
 builder.Services.AddScoped<IApprovalService, ApprovalManager>();
 builder.Services.AddScoped<IExpenseService, ExpenseManager>();
 builder.Services.AddScoped<IWithdrawalRequestService, WithdrawalRequestManager>();
+builder.Services.AddScoped<IExternalPaymentService, ExternalPaymentService>();
+builder.Services.AddSingleton<IExternalWebhookService, ExternalWebhookService>();
 builder.Services.AddScoped<IPushNotificationService, NoOpPushNotificationService>();
 builder.Services.AddHttpClient<ITelegramBotService, TelegramBotManager>();
 builder.Services.AddHttpClient<ITronService, TronManager>();
+builder.Services.AddHttpClient("ExternalWebhook", c => c.Timeout = TimeSpan.FromSeconds(15));
+
+builder.Services.AddAuthentication()
+    .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>(
+        ApiKeyAuthenticationOptions.SchemeName, _ => { });
 builder.Services.AddHostedService<InvoiceReminderWorker>();
 builder.Services.AddHostedService<CryptoPaymentWorker>();
 builder.Services.AddHostedService<PushNotificationWorker>();
@@ -133,6 +142,11 @@ builder.Services.AddRateLimiter(options =>
     options.AddFixedWindowLimiter("callback", opt =>
     {
         opt.PermitLimit = 30;
+        opt.Window = TimeSpan.FromMinutes(1);
+    });
+    options.AddFixedWindowLimiter("external-api", opt =>
+    {
+        opt.PermitLimit = 60;
         opt.Window = TimeSpan.FromMinutes(1);
     });
 });
@@ -458,6 +472,25 @@ using (var scope = app.Services.CreateScope())
 
                 -- v204: Müşteri doğum günü (toplu e-posta segmenti)
                 ALTER TABLE ""Customers"" ADD COLUMN IF NOT EXISTS ""DateOfBirth"" DATE NULL;
+
+                -- v210: Harici site API entegrasyonu
+                CREATE TABLE IF NOT EXISTS ""ApiClients"" (
+                    ""Id"" SERIAL PRIMARY KEY,
+                    ""Name"" TEXT NOT NULL DEFAULT '',
+                    ""ApiKeyHash"" TEXT NOT NULL DEFAULT '',
+                    ""ApiKeyPrefix"" TEXT NOT NULL DEFAULT '',
+                    ""WebhookSecret"" TEXT NOT NULL DEFAULT '',
+                    ""DefaultWebhookUrl"" TEXT NULL,
+                    ""IsActive"" BOOLEAN NOT NULL DEFAULT TRUE,
+                    ""CreatedDate"" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                    ""CreatedByUserId"" TEXT NULL
+                );
+                CREATE UNIQUE INDEX IF NOT EXISTS ""IX_ApiClients_ApiKeyHash"" ON ""ApiClients"" (""ApiKeyHash"");
+
+                ALTER TABLE ""Invoices"" ADD COLUMN IF NOT EXISTS ""ApiClientId"" INTEGER NULL REFERENCES ""ApiClients""(""Id"") ON DELETE SET NULL;
+                ALTER TABLE ""Invoices"" ADD COLUMN IF NOT EXISTS ""ExternalReference"" TEXT NULL;
+                ALTER TABLE ""Invoices"" ADD COLUMN IF NOT EXISTS ""MerchantWebhookUrl"" TEXT NULL;
+                CREATE INDEX IF NOT EXISTS ""IX_Invoices_ApiClientId_OrderNumber"" ON ""Invoices"" (""ApiClientId"", ""OrderNumber"");
 
             ");
             logger.LogInformation("RecurringInvoices, ApprovalRequests, Expenses, SystemLogs, WithdrawalRequests tabloları kontrol edildi/oluşturuldu.");
