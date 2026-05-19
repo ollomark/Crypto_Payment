@@ -27,6 +27,7 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole, string>
     public DbSet<CustomerCollection> CustomerCollections { get; set; }
     public DbSet<StaffPayment> StaffPayments { get; set; }
     public DbSet<StaffProfile> StaffProfiles { get; set; }
+    public DbSet<ApiClient> ApiClients { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -214,5 +215,18 @@ public class AppDbContext : IdentityDbContext<User, IdentityRole, string>
             .HasIndex(p => p.ExpenseId);
         modelBuilder.Entity<StaffPayment>()
             .HasIndex(p => new { p.PeriodYear, p.PeriodMonth });
+
+        modelBuilder.Entity<ApiClient>()
+            .HasIndex(a => a.ApiKeyHash)
+            .IsUnique();
+
+        modelBuilder.Entity<Invoice>()
+            .HasOne(i => i.ApiClient)
+            .WithMany()
+            .HasForeignKey(i => i.ApiClientId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Invoice>()
+            .HasIndex(i => new { i.ApiClientId, i.OrderNumber });
     }
 }

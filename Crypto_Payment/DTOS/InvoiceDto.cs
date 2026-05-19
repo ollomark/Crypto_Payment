@@ -28,6 +28,11 @@ public class InvoiceDto
     [Required(ErrorMessage = "Callback URL zorunludur.")]
     public string CallbackUrl { get; set; } = "";
 
+    // Harici API
+    public int? ApiClientId { get; set; }
+    public string? ExternalReference { get; set; }
+    public string? MerchantWebhookUrl { get; set; }
+
     // Müşteri seçimi
     public int? CustomerId { get; set; }
     

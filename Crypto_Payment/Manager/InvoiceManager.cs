@@ -11,12 +11,18 @@ public class InvoiceManager : IInvoiceService
     private readonly AppDbContext _db;
     private readonly IPlisioService _plisioService;
     private readonly IInvoiceItemService _invoiceItemService;
+    private readonly IExternalWebhookService _webhookService;
 
-    public InvoiceManager(AppDbContext db, IPlisioService plisioService, IInvoiceItemService invoiceItemService)
+    public InvoiceManager(
+        AppDbContext db,
+        IPlisioService plisioService,
+        IInvoiceItemService invoiceItemService,
+        IExternalWebhookService webhookService)
     {
         _db = db;
         _plisioService = plisioService;
         _invoiceItemService = invoiceItemService;
+        _webhookService = webhookService;
     }
 
     public async Task<List<InvoiceDto>> GetAllAsync()
@@ -221,7 +227,10 @@ public class InvoiceManager : IInvoiceService
                 RegistrationStatus = true,
                 CreatedDate = DateTime.UtcNow,
                 IsRecurring = dto.IsRecurring,
-                RecurringDay = dto.IsRecurring ? dto.RecurringDay : null
+                RecurringDay = dto.IsRecurring ? dto.RecurringDay : null,
+                ApiClientId = dto.ApiClientId,
+                ExternalReference = dto.ExternalReference,
+                MerchantWebhookUrl = dto.MerchantWebhookUrl
             };
             
             _db.Invoices.Add(invoice);
@@ -279,9 +288,15 @@ public class InvoiceManager : IInvoiceService
     {
         var invoice = await _db.Invoices.FirstOrDefaultAsync(x => x.Id == id);
         if (invoice == null) throw new KeyNotFoundException("Fatura bulunamadı.");
-        
+
+        var previousStatus = invoice.Status;
+        if (previousStatus == status) return;
+
         invoice.Status = status;
         await _db.SaveChangesAsync();
+
+        if (invoice.ApiClientId.HasValue)
+            await _webhookService.NotifyInvoiceStatusChangedAsync(id, previousStatus, status);
     }
     
     public async Task UpdateRegistrationStatusAsync(int id, bool registrationStatus)
