@@ -1,0 +1,378 @@
+@{
+    ViewBag.Title = "API Anahtarları";
+    Layout = "_Layout";
+    var baseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL")
+        ?? Environment.GetEnvironmentVariable("APP_URL")
+        ?? $"{Context.Request.Scheme}://{Context.Request.Host}";
+    var paymentsApiUrl = baseUrl.TrimEnd('/') + "/api/v1/payments";
+}
+
+<div class="container-fluid">
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box d-sm-flex align-items-center justify-content-between bg-galaxy-transparent">
+            <h4 class="mb-sm-0">Harici Site API Anahtarları</h4>
+            <div class="page-title-right">
+                <ol class="breadcrumb m-0">
+                    <li class="breadcrumb-item"><a href="/">Ana Sayfa</a></li>
+                    <li class="breadcrumb-item active">API Anahtarları</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-4 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <p class="text-uppercase fw-medium text-muted mb-0">Toplam İstemci</p>
+                <h4 class="fs-22 fw-semibold mt-3 mb-0" id="stat-total">0</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <p class="text-uppercase fw-medium text-muted mb-0">Aktif</p>
+                <h4 class="fs-22 fw-semibold mt-3 mb-0 text-success" id="stat-active">0</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-md-6">
+        <div class="card card-animate border-primary border-opacity-25">
+            <div class="card-body">
+                <p class="text-uppercase fw-medium text-muted mb-1">API tabanı</p>
+                <code class="small text-break">@paymentsApiUrl</code>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header border-0">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <h5 class="card-title mb-0 flex-grow-1"><i class="ri-key-2-line me-1"></i>API İstemcileri</h5>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="openCreateModal()">
+                        <i class="ri-add-line me-1"></i>Yeni API Anahtarı
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info border-0 mb-4" role="alert">
+                    <i class="ri-information-line me-1"></i>
+                    Harici siteleriniz bu anahtarlarla ödeme oluşturabilir. Anahtar yalnızca oluşturulduğunda bir kez gösterilir.
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Ad</th>
+                                <th>Anahtar (ön ek)</th>
+                                <th>Webhook URL</th>
+                                <th>Durum</th>
+                                <th>Oluşturulma</th>
+                                <th class="text-end">İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">
+                                    <span class="spinner-border spinner-border-sm text-primary"></span> Yükleniyor…
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="emptyState" class="text-center py-5 d-none">
+                    <i class="ri-key-2-line text-muted" style="font-size:56px;"></i>
+                    <h5 class="mt-3">Henüz API anahtarı yok</h5>
+                    <p class="text-muted">Harici bir site entegre etmek için yeni anahtar oluşturun.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<!-- Oluştur modal -->
+<div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-primary-subtle">
+                <h5 class="modal-title"><i class="ri-add-line me-2"></i>Yeni API Anahtarı</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="createForm">
+                <div class="modal-body">
+                    <div id="createFormError" class="alert alert-danger d-none py-2"></div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Uygulama / site adı <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="f-name" required maxlength="120" placeholder="Örn: Benim Mağazam" />
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-medium">Varsayılan webhook URL</label>
+                        <input type="url" class="form-control" id="f-webhook" placeholder="https://siteniz.com/webhooks/payment" />
+                        <div class="form-text">Ödeme durumu değişince POST atılır (isteğe bağlı).</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Vazgeç</button>
+                    <button type="submit" class="btn btn-primary" id="createBtn">
+                        <span id="createBtnText">Oluştur</span>
+                        <span id="createBtnSpinner" class="spinner-border spinner-border-sm d-none"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Anahtar göster (tek seferlik) -->
+<div class="modal fade" id="secretsModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0">
+            <div class="modal-header bg-success-subtle">
+                <h5 class="modal-title text-success"><i class="ri-shield-check-line me-2"></i>Anahtarlar oluşturuldu</h5>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning border-0 mb-4">
+                    <strong>Önemli:</strong> Bu bilgileri şimdi kopyalayın. Sayfayı kapattıktan sonra API anahtarı tekrar gösterilmez.
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-medium">API Key (X-Api-Key)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control font-monospace" id="secret-apiKey" readonly />
+                        <button type="button" class="btn btn-outline-secondary" onclick="copyField('secret-apiKey')"><i class="ri-file-copy-line"></i></button>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-medium">Webhook Secret (imza doğrulama)</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control font-monospace" id="secret-webhook" readonly />
+                        <button type="button" class="btn btn-outline-secondary" onclick="copyField('secret-webhook')"><i class="ri-file-copy-line"></i></button>
+                    </div>
+                </div>
+                <div class="mb-0">
+                    <label class="form-label fw-medium">Örnek istek</label>
+                    <pre class="bg-light rounded p-3 small mb-0" id="secret-example"></pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" onclick="closeSecretsModal()">Kopyaladım, kapat</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const API_BASE = '/api/admin/api-clients';
+const PAYMENTS_API = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(paymentsApiUrl));
+let allClients = [];
+
+function esc(s) {
+    if (s == null) return '';
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+function formatDate(iso) {
+    if (!iso) return '—';
+    try { return new Date(iso).toLocaleString('tr-TR'); } catch { return iso; }
+}
+
+async function loadClients() {
+    const tbody = document.getElementById('clientsTableBody');
+    try {
+        const res = await fetch(API_BASE);
+        if (res.status === 401 || res.status === 403) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Bu sayfaya erişim yetkiniz yok.</td></tr>';
+            return;
+        }
+        if (!res.ok) throw new Error('Liste alınamadı');
+        allClients = await res.json();
+        renderClients();
+    } catch {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Yükleme hatası</td></tr>';
+    }
+}
+
+function renderClients() {
+    const tbody = document.getElementById('clientsTableBody');
+    const empty = document.getElementById('emptyState');
+    document.getElementById('stat-total').textContent = allClients.length;
+    document.getElementById('stat-active').textContent = allClients.filter(c => c.isActive).length;
+
+    if (!allClients.length) {
+        tbody.innerHTML = '';
+        empty.classList.remove('d-none');
+        return;
+    }
+    empty.classList.add('d-none');
+
+    tbody.innerHTML = allClients.map(c => {
+        const nameAttr = esc(c.name).replace(/"/g, '&quot;');
+        return `
+        <tr class="${c.isActive ? '' : 'table-secondary opacity-75'}">
+            <td class="fw-medium">${esc(c.name)}</td>
+            <td><code>${esc(c.apiKeyPrefix)}</code></td>
+            <td class="small text-break">${c.defaultWebhookUrl ? esc(c.defaultWebhookUrl) : '<span class="text-muted">—</span>'}</td>
+            <td>${c.isActive
+                ? '<span class="badge bg-success-subtle text-success">Aktif</span>'
+                : '<span class="badge bg-secondary-subtle text-secondary">Pasif</span>'}</td>
+            <td class="small text-muted">${formatDate(c.createdDate)}</td>
+            <td class="text-end text-nowrap">
+                ${c.isActive ? `
+                <button type="button" class="btn btn-sm btn-soft-warning" title="Anahtarı yenile" data-id="${c.id}" data-name="${nameAttr}" onclick="regenerateKey(this)">
+                    <i class="ri-refresh-line"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-soft-danger" title="Devre dışı" data-id="${c.id}" data-name="${nameAttr}" onclick="deactivateClient(this)">
+                    <i class="ri-delete-bin-line"></i>
+                </button>` : '<span class="text-muted small">—</span>'}
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function openCreateModal() {
+    document.getElementById('createForm').reset();
+    document.getElementById('createFormError').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('createModal')).show();
+}
+
+function showSecrets(data) {
+    document.getElementById('secret-apiKey').value = data.apiKey || '';
+    document.getElementById('secret-webhook').value = data.webhookSecret || '';
+    document.getElementById('secret-example').textContent =
+`POST ${PAYMENTS_API}
+X-Api-Key: ${data.apiKey}
+
+{
+  "amount": 99.99,
+  "sourceCurrency": "USD",
+  "cryptoCurrency": "USDT_TRX",
+  "email": "musteri@example.com",
+  "orderNumber": "ORD-001",
+  "orderName": "Sipariş"
+}`;
+    new bootstrap.Modal(document.getElementById('secretsModal')).show();
+}
+
+function closeSecretsModal() {
+    bootstrap.Modal.getInstance(document.getElementById('secretsModal'))?.hide();
+}
+
+function copyField(id) {
+    const el = document.getElementById(id);
+    el.select();
+    el.setSelectionRange(0, 99999);
+    navigator.clipboard?.writeText(el.value).then(() => {
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Kopyalandı', showConfirmButton: false, timer: 1200 });
+    }).catch(() => document.execCommand('copy'));
+}
+
+document.getElementById('createForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const err = document.getElementById('createFormError');
+    err.classList.add('d-none');
+    const btn = document.getElementById('createBtn');
+    const txt = document.getElementById('createBtnText');
+    const spin = document.getElementById('createBtnSpinner');
+    txt.classList.add('d-none');
+    spin.classList.remove('d-none');
+    btn.disabled = true;
+
+    const name = document.getElementById('f-name').value.trim();
+    const webhook = document.getElementById('f-webhook').value.trim();
+
+    try {
+        const res = await fetch(API_BASE, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, defaultWebhookUrl: webhook || null })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            err.textContent = data.message || data.title || 'Oluşturulamadı';
+            err.classList.remove('d-none');
+            return;
+        }
+        bootstrap.Modal.getInstance(document.getElementById('createModal'))?.hide();
+        await loadClients();
+        showSecrets(data);
+        Swal.fire({ icon: 'success', title: 'API istemcisi oluşturuldu', timer: 2000, showConfirmButton: false });
+    } catch {
+        err.textContent = 'Sunucuya ulaşılamadı.';
+        err.classList.remove('d-none');
+    } finally {
+        txt.classList.remove('d-none');
+        spin.classList.add('d-none');
+        btn.disabled = false;
+    }
+});
+
+async function regenerateKey(btn) {
+    const id = btn.dataset.id;
+    const name = btn.dataset.name;
+    const r = await Swal.fire({
+        title: 'API anahtarını yenile?',
+        html: `<strong>${name}</strong> için yeni anahtar üretilecek.<br>Eski anahtar anında geçersiz olur.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Evet, yenile',
+        cancelButtonText: 'Vazgeç',
+        confirmButtonColor: '#f7b84b'
+    });
+    if (!r.isConfirmed) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/${id}/regenerate-key`, { method: 'POST' });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            Swal.fire('Hata', data.message || 'İşlem başarısız', 'error');
+            return;
+        }
+        await loadClients();
+        showSecrets(data);
+    } catch {
+        Swal.fire('Hata', 'Sunucuya ulaşılamadı', 'error');
+    }
+}
+
+async function deactivateClient(btn) {
+    const id = btn.dataset.id;
+    const name = btn.dataset.name;
+    const r = await Swal.fire({
+        title: 'Devre dışı bırak?',
+        text: `${name} artık API ile ödeme oluşturamaz.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Evet',
+        cancelButtonText: 'Vazgeç',
+        confirmButtonColor: '#f06548'
+    });
+    if (!r.isConfirmed) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            await loadClients();
+            Swal.fire({ icon: 'success', title: 'Devre dışı bırakıldı', timer: 1500, showConfirmButton: false });
+        } else {
+            const d = await res.json().catch(() => ({}));
+            Swal.fire('Hata', d.message || 'İşlem başarısız', 'error');
+        }
+    } catch {
+        Swal.fire('Hata', 'Sunucuya ulaşılamadı', 'error');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadClients);
+</script>
+}
